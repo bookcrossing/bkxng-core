@@ -1311,7 +1311,7 @@ function bookcrossing_book_comment($form, $form_state, $book = array()) {
     (function(d){
       var js, id = 'facebook-jssdk'; if (d.getElementById(id)) {return;}
       js = d.createElement('script'); js.id = id; js.async = true;
-      js.src = '//connect.facebook.net/en_US/all.js';
+      js.src = '//connect.facebook.net/ru_RU/all.js';
       d.getElementsByTagName('head')[0].appendChild(js);
     }(document));";
  
@@ -2341,6 +2341,11 @@ function bookcrossing_field_extra_fields() {
     ),
     'facepile' => array(
       'label' => t('Facepile'),
+      'description' => '',
+      'weight' => 0,
+    ),
+    'fb_recommend_bar' => array(
+      'label' => t('Facebook recommendation bar'),
       'description' => '',
       'weight' => 0,
     ),

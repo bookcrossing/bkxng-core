@@ -380,7 +380,7 @@ function bookcrossing_view_book($book = array()) {
     (function(d){
       var js, id = 'facebook-jssdk'; if (d.getElementById(id)) {return;}
       js = d.createElement('script'); js.id = id; js.async = true;
-      js.src = '//connect.facebook.net/en_US/all.js';
+      js.src = '//connect.facebook.net/ru_RU/all.js';
       d.getElementsByTagName('head')[0].appendChild(js);
     }(document));";
  
@@ -398,10 +398,16 @@ function bookcrossing_view_book($book = array()) {
   bookcrossing_add_fb_js($book['bid'], url('book/' . $book['bid'], array('absolute' => TRUE)));
 
   $build['facepile'] = array(
-    '#markup' => '<script src="http://connect.facebook.net/en_US/all.js#appId=' . variable_get('fboauth_id', '') . '&amp;xfbml=1"></script><fb:facepile href="' . url($_GET['q'], array('absolute' => TRUE)) . '" action="bookcrossing_by:bookmark" width="300" size="large" max_rows="3"></fb:facepile>',
+    '#markup' => '<fb:facepile href="' . url($_GET['q'], array('absolute' => TRUE)) . '" action="bookcrossing_by:bookmark" width="300" size="large" max_rows="3"></fb:facepile>',
   );
+//    '#markup' => '<script src="http://connect.facebook.net/ru_RU/all.js#appId=' . variable_get('fboauth_id', '') . '&amp;xfbml=1"></script><fb:facepile href="' . url($_GET['q'], array('absolute' => TRUE)) . '" action="bookcrossing_by:bookmark" width="300" size="large" max_rows="3"></fb:facepile>',
 
   $data_href = url('book/' . $book['bid'], array('absolute' => TRUE));
+
+  $build['fb_recommend_bar'] = array(
+    '#markup' => '<div class="fb-recommendations-bar" data-href="' . $data_href . '" data-trigger="onvisible" data-read-time="40" data-action="like" data-side="right"></div>',
+  );
+
   $build['fb_comments'] = array(
     '#markup' => '<div class="fb-comments" data-href="' . $data_href . '" data-num-posts="3" data-width="635"></div>',
   );
@@ -558,9 +564,6 @@ function bookcrossing_book_added($bcid = '') {
 
 
 
-
-
-
 //  $output = '<div class="bcid-wrapper"><div class="bcid-number-wrapper">';
 //  $output .= '<div class="bcid-number">' . t('This is the number of your book') . '<br />(BookcrossingID):</div>';
 //  $output .= '<div class="bcid">' . $bcid . '</div>';
@@ -568,7 +571,7 @@ function bookcrossing_book_added($bcid = '') {
 
   $book = bookcrossing_load_by_bcid($bcid);
 
-  //drupal_add_js('http://connect.facebook.net/en_US/all.js', 'external');
+//  drupal_add_js('http://connect.facebook.net/ru_RU/all.js', 'external');
 
   $app_id = variable_get('fboauth_id', '');
   $init = "window.fbAsyncInit = function() {
@@ -585,11 +588,11 @@ function bookcrossing_book_added($bcid = '') {
     (function(d){
       var js, id = 'facebook-jssdk'; if (d.getElementById(id)) {return;}
       js = d.createElement('script'); js.id = id; js.async = true;
-      js.src = '//connect.facebook.net/en_US/all.js';
+      js.src = '//connect.facebook.net/ru_RU/all.js';
       d.getElementsByTagName('head')[0].appendChild(js);
     }(document));
   ";
- 
+
   drupal_add_js($init, 'inline');
 
   $parents = taxonomy_get_parents_all($book['place']->tid);
