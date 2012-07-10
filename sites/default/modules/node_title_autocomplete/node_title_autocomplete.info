@@ -1,0 +1,5 @@
+name = Node Title Autocomplete
+description = Autocompletion for node title in node adding form.
+
+core = 7.x
+version = VERSION

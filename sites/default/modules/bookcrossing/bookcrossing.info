@@ -1,0 +1,6 @@
+name = Bookcrossing
+description = Creates node type book for and adding other features for bookcrossing.
+
+version = VERSION
+core = 7.x
+ 

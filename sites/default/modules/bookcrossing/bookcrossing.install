@@ -1,0 +1,279 @@
+<?php
+
+/**
+ * @file
+ * Creates node type during installation of bookcrossing module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function bookcrossing_install() {
+  // adding book node type
+  $bookcrossing_node_type = array(
+    'type' => 'bookcrossing',
+    'name' => t('Book'),
+    'base' => 'node_content',
+    'description' => t('Use this node type for adding book desription.'),
+    'custom' => 0,
+    'module' => 'bookcrossing',
+    'modified' => 1,
+    'locked' => 0,
+  );
+  
+  $bookcrossing_node_type = node_type_set_defaults($bookcrossing_node_type);
+  node_type_save($bookcrossing_node_type);
+  
+  // adding isbn field to book
+/*  $isbn_field = array(
+    'field_name' => 'field_bookcrossing_isbn',
+    'type' => 'text',
+//    'locked' => TRUE,
+    'cardinality' => 1,
+  );
+  field_create_field($isbn_field);
+  
+  $isbn_instance = array(
+    'field_name' => 'field_bookcrossing_isbn',
+    'entity_type' => 'node',
+    'label' => 'ISBN',
+    'bundle' => 'bookcrossing',
+    'required' => TRUE,
+    'weight' => 1,
+  );
+  field_create_instance($isbn_instance);
+  
+  // adding author field to book
+  $author_field = array(
+    'field_name' => 'field_bookcrossing_author',
+    'type' => 'text',
+//    'locked' => TRUE,
+    'cardinality' => 1,
+  );
+  field_create_field($author_field);
+  
+  $author_instance = array(
+    'field_name' => 'field_bookcrossing_author',
+    'entity_type' => 'node',
+    'label' => 'Author',
+    'bundle' => 'bookcrossing',
+    'required' => TRUE,
+    'weight' => 3,
+  );
+  field_create_instance($author_instance);
+  
+  // adding image field to book
+  $image_field = array(
+    'field_name' => 'field_bookcrossing_image',
+    'type' => 'image',
+    'cardinality' => 1,
+//    'locked' => TRUE,
+    'indexes' => array('fid' => array('fid')),
+    'settings' => array(
+      'uri_scheme' => 'public',
+      'default_image' => FALSE,
+    ),
+    'storage' => array(
+      'type' => 'field_sql_storage',
+      'settings' => array(),
+    ),
+  );
+  field_create_field($image_field);
+
+  $image_instance = array(
+    'field_name' => 'field_bookcrossing_image',
+    'entity_type' => 'node',
+    'label' => 'Book image',
+    'bundle' => 'bookcrossing',
+    'required' => TRUE,
+    'settings' => array(
+      'file_directory' => 'field/book-images',
+      'file_extensions' => 'png gif jpg jpeg',
+      'max_filesize' => '',
+      'max_resolution' => '',
+      'min_resolution' => '',
+      'alt_field' => TRUE,
+      'title_field' => TRUE,
+    ),
+    'weight' => 6,
+    'widget' => array(
+      'type' => 'image_image',
+      'settings' => array(
+        'progress_indicator' => 'throbber',
+        'preview_image_style' => 'thumbnail',
+      ),
+    ),
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+        'type' => 'image',
+        'settings' => array('image_style' => 'large', 'image_link' => ''),
+        'weight' => -1,
+      ),
+      'teaser' => array(
+        'label' => 'hidden',
+        'type' => 'image',
+        'settings' => array('image_style' => 'medium', 'image_link' => 'content'),
+        'weight' => -1,
+      ),
+    ),
+  );
+  field_create_instance($image_instance);
+  
+  // adding year of the book field to book
+  $year_field = array(
+    'field_name' => 'field_bookcrossing_year',
+    'type' => 'list_integer',
+    'settings' => array('allowed_values_function' => 'bookcrossing_year_list'),
+//    'locked' => TRUE,
+    'cardinality' => 1,
+  );
+  field_create_field($year_field);
+  
+  $year_instance = array(
+    'field_name' => 'field_bookcrossing_year',
+    'entity_type' => 'node',
+    'label' => 'Year',
+    'bundle' => 'bookcrossing',
+    'required' => TRUE,
+    'weight' => 3,
+  );
+  field_create_instance($year_instance);
+  
+  // adding genre field to book
+  $genre_field = array(
+    'field_name' => 'field_bookcrossing_genre',
+    'type' => 'list_text',
+//    'locked' => TRUE,
+    'cardinality' => 1,
+  );
+  field_create_field($genre_field);
+  
+  $genre_instance = array(
+    'field_name' => 'field_bookcrossing_genre',
+    'entity_type' => 'node',
+    'label' => 'Genre',
+    'bundle' => 'bookcrossing',
+    'required' => TRUE,
+    'weight' => 4,
+  );
+  field_create_instance($genre_instance);
+  
+  // adding cover field to book
+  $cover_field = array(
+    'field_name' => 'field_bookcrossing_cover',
+    'type' => 'list_text',
+//    'locked' => TRUE,
+    'cardinality' => 1,
+  );
+  field_create_field($cover_field);
+  
+  $cover_instance = array(
+    'field_name' => 'field_bookcrossing_cover',
+    'entity_type' => 'node',
+    'label' => 'Cover',
+    'bundle' => 'bookcrossing',
+    'required' => TRUE,
+    'weight' => 5,
+  );
+  field_create_instance($cover_instance);
+  
+  // adding decsription field to book
+  $description_field = array(
+    'field_name' => 'field_bookcrossing_description',
+    'type' => 'text_long',
+//    'locked' => TRUE,
+    'cardinality' => 1,
+  );
+  field_create_field($description_field);
+  
+  $description_instance = array(
+    'field_name' => 'field_bookcrossing_description',
+    'entity_type' => 'node',
+    'label' => 'Description',
+    'bundle' => 'bookcrossing',
+    'required' => TRUE,
+    'weight' => 7,
+  );
+  field_create_instance($description_instance);*/
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function bookcrossing_uninstall() {
+  node_type_delete('bookcrossing');
+  
+//  $field_names = array(
+//    'field_bookcrossing_isbn',
+//    'field_bookcrossing_author',
+//    'field_bookcrossing_image',
+//    'field_bookcrossing_year',
+//    'field_bookcrossing_genre',
+//    'field_bookcrossing_cover',
+//    'field_bookcrossing_description',
+//  );
+//  
+//  foreach ($field_names as $field_name) {
+//    $instance = array(
+//      'field_name' => $field_name,
+//      'entity_type' => 'node',
+//      'bundle' => 'bookcrossing',
+//    );
+//    
+//    field_delete_instance($instance);
+//  }
+}
+
+/**
+ * Implements hook_schema().
+ */
+function bookcrossing_schema() {
+  $schema = array();
+  
+  $schema['bookcrossing_bcid'] = array(
+    'description' => 'Each bcid identifies a unique book.',
+    'fields' => array(
+      'bid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'bcid' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'nid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('bid'),
+  );
+  
+  $schema['bookcrossing_user_places'] = array(
+    'fields' => array(
+      'uid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'place_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'indexes' => array(
+      'uid' => array('uid'),
+    ),
+  );
+  
+  return $schema;
+}

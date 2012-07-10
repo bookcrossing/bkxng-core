@@ -1,0 +1,4 @@
+name = Paginator 3000
+description = Оформление для постраничной навигации
+core = 7.x
+

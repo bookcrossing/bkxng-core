@@ -1,0 +1,9 @@
+<?php
+
+/**
+ * @file
+ * Add validation rules to date
+ */
+
+include_once DRUPAL_ROOT . '/' . drupal_get_path('module', 'date_validation') . '/' . 'date_validation.validators.inc';
+

@@ -1,0 +1,14 @@
+name = Bookcrossing site theme
+core = 7.x
+
+stylesheets[all][] = style.css
+
+regions[header_sidebar_first] = Left sidebar in header
+regions[header_sidebar_second] = Right sidebar in header
+regions[sidebar_first] = Left sidebar
+regions[sidebar_second] = Right sidebar
+regions[content] = Content
+regions[before_content] = Region before content
+regions[after_content] = Region after content
+regions[footer_text] = Text in footer
+regions[footer_menu] = Menu in footer

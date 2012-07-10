@@ -1,0 +1,132 @@
+<?php
+
+/**
+ * @file
+ * field_validation installation file
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function field_validation_schema() {
+  $schema['field_validation_rule'] = array(
+    'description' => 'Stores rule definitions',
+    'export' => array(
+      'key' => 'name',
+      'key name' => 'Name',
+      'primary key' => 'ruleid',
+      'identifier' => 'rule', 
+      'default hook' => 'default_field_validation_rule',
+      'api' => array(
+        'owner' => 'field_validation',
+        'api' => 'default_field_validation_rules',
+        'minimum_version' => 1,
+        'current_version' => 1,
+      ),
+    ),
+    'fields' => array(
+      'ruleid' => array(
+        'type' => 'serial',
+        'description' => 'Unique identifier of the validation rule',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'rulename' => array(
+        'type' => 'varchar',
+        'description' => 'Name of the validation rule',
+        'not null' => TRUE,
+        'default' => '',
+        'length' => 255,
+      ),
+      'name' => array(
+        'type' => 'varchar',
+        'description' => 'Machine name of the validation rule',
+        'not null' => TRUE,
+        'default' => '',
+        'length' => 32,
+      ),
+      'field_name' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'col' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => 'value'
+      ),			
+      'entity_type' => array(
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'bundle' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+      'validator' => array(
+        'type' => 'varchar',
+        'description' => 'The validator key',
+        'not null' => TRUE,
+        'default' => '',
+        'length' => 255,
+      ),
+      'data' => array(
+        'type' => 'varchar',
+        'description' => 'Additional rule data',
+        'not null' => FALSE,
+        'length' => 255,
+      ),
+      'error_message' => array(
+        'type' => 'varchar',
+        'description' => 'Rule error message',
+        'not null' => FALSE,
+        'length' => 255,
+      ),
+    ),
+    'primary key' => array('ruleid'),
+    'indexes' => array(
+      'field_name_bundle' => array('field_name', 'entity_type', 'bundle'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Add 'col' to schema.
+ */
+function field_validation_update_7000(&$sandbox) {
+  $col = array(
+    'type' => 'varchar',
+    'length' => 32,
+    'not null' => TRUE,
+    'default' => 'value'
+  );
+  db_add_field('field_validation_rule', 'col', $col);
+}
+
+/**
+ * Add 'name' and 'status' to schema.
+ */
+function field_validation_update_7001(&$sandbox) {
+  $name = array(
+    'type' => 'varchar',
+    'description' => 'Machine name of the rule',
+    'not null' => TRUE,
+    'default' => '',
+    'length' => 32,
+  );
+  db_add_field('field_validation_rule', 'name', $name);
+  
+  $result = db_query("SELECT ruleid FROM {field_validation_rule}");
+  foreach($result as $record){
+    //Just use ruleid as machine name, to make it works. You could change the machine name later.
+    db_query("UPDATE {field_validation_rule} SET name = :name WHERE ruleid = :ruleid", array(':name' => $record->ruleid, ':ruleid' => $record->ruleid));
+  } 
+}

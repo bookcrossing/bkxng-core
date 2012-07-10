@@ -1,0 +1,314 @@
+<?php
+
+/**
+ * @file
+ * Add validation rules to field instance.
+ */
+
+include_once DRUPAL_ROOT . '/' . drupal_get_path('module', 'field_validation') . '/' . 'field_validation.validators.inc';
+include_once DRUPAL_ROOT . '/' . drupal_get_path('module', 'field_validation') . '/' . 'field_validation.rules.inc';
+
+/**
+ * Implements hook_menu().
+ */
+function field_validation_menu() {
+  $items = array();
+
+	foreach (entity_get_info() as $entity_type => $entity_info) {
+    if ($entity_info['fieldable']) {
+      foreach ($entity_info['bundles'] as $bundle_name => $bundle_info) {
+        if (isset($bundle_info['admin'])) {
+          // Extract path information from the bundle.
+          $path = $bundle_info['admin']['path'];
+          // Different bundles can appear on the same path (e.g. %node_type and
+          // %comment_node_type). To allow field_ui_menu_load() to extract the
+          // actual bundle object from the translated menu router path
+          // arguments, we need to identify the argument position of the bundle
+          // name string ('bundle argument') and pass that position to the menu
+          // loader. The position needs to be casted into a string; otherwise it
+          // would be replaced with the bundle name string.
+          if (isset($bundle_info['admin']['bundle argument'])) {
+            $bundle_arg = $bundle_info['admin']['bundle argument'];
+            $bundle_pos = (string) $bundle_arg;
+          }
+          else {
+            $bundle_arg = $bundle_name;
+            $bundle_pos = '0';
+          }
+          // This is the position of the %field_ui_menu placeholder in the
+          // items below.
+          $field_position = count(explode('/', $path)) + 1;
+
+          // Extract access information, providing defaults.
+          $access = array_intersect_key($bundle_info['admin'], drupal_map_assoc(array('access callback', 'access arguments')));
+          $access += array(
+            'access callback' => 'user_access',
+            'access arguments' => array('administer site configuration'),
+          );
+
+          $items["$path/fields/%field_ui_menu/validation"] = array(
+            'load arguments' => array($entity_type, $bundle_arg, $bundle_pos, '%map'),
+            'title' => 'Validation',
+            'page callback' => 'field_validation_callback_dispatch',
+            'page arguments' => array($field_position),
+            'type' => MENU_LOCAL_TASK,
+            'file' => 'field_validation.admin.inc',
+          ) + $access;
+					
+          $items[$path.'/fields/%field_ui_menu/validation/add'] = array(
+            'load arguments' => array($entity_type, $bundle_arg, $bundle_pos, '%map'),
+            'title' => 'Add validation',
+            'page callback' => 'drupal_get_form',
+            'page arguments' => array('field_validation_manage_rule', $field_position, 'add'),
+            'type' => MENU_CALLBACK,
+            'file' => 'field_validation.admin.inc',
+          ) + $access;
+					
+          $items["$path/fields/%field_ui_menu/validation/edit"] = array(
+            'load arguments' => array($entity_type, $bundle_arg, $bundle_pos, '%map'),
+            'title' => 'Edit rule',
+            'page callback' => 'drupal_get_form',
+            'page arguments' => array('field_validation_manage_rule', $field_position, 'edit'),
+            'type' => MENU_CALLBACK,
+            'file' => 'field_validation.admin.inc',
+          ) + $access;
+		  
+          $items["$path/fields/%field_ui_menu/validation/overwrite"] = array(
+            'load arguments' => array($entity_type, $bundle_arg, $bundle_pos, '%map'),
+            'title' => 'Overwrite rule',
+            'page callback' => 'drupal_get_form',
+            'page arguments' => array('field_validation_manage_rule', $field_position, 'overwrite'),
+            'type' => MENU_CALLBACK,
+            'file' => 'field_validation.admin.inc',
+          ) + $access;		  
+					
+          $items["$path/fields/%field_ui_menu/validation/delete"] = array(
+            'load arguments' => array($entity_type, $bundle_arg, $bundle_pos, '%map'),
+            'title' => 'Delete rule',
+            'page callback' => 'drupal_get_form',
+            'page arguments' => array('field_validation_delete_rule'),
+            'type' => MENU_CALLBACK,
+            'file' => 'field_validation.admin.inc',
+          ) + $access;
+        }
+      }
+    }
+  }
+	
+  return $items;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function field_validation_theme() {
+  return array(
+    'field_validation_manage_add_rule' => array(
+      'variables' => array(
+        'instance' => NULL,
+      ),
+    ),
+    'field_validation_manage_overview' => array(
+      'variables' => array(
+        'rules' => NULL,
+        'instance' => NULL,
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_module_implements_alter().
+ * 
+ * Ensures the call to field_validation_form_field_ui_field_overview_form_alter()
+ * function runs after any invocation of the form_alter() by other modules, e.g.
+ * Field Group module.
+ */
+function field_validation_module_implements_alter(&$implementations, $hook) {
+  if ($hook == 'form_alter' && array_key_exists('field_validation', $implementations)) {
+    $group = $implementations['field_validation'];
+    unset($implementations['field_validation']);
+    $implementations['field_validation'] = $group;
+  }
+}
+
+/**
+ * Implements hook_field_attach_validate().
+ */
+function field_validation_field_attach_validate($entity_type, $entity, &$errors) {
+  list($id, $vid, $bundle) = entity_extract_ids($entity_type, $entity);
+  
+  //$rules = field_validation_get_bundle_rules($entity_type, $bundle);
+  //using ctools to get validation rules of this bundle
+  ctools_include('export');
+  $rules = ctools_export_load_object('field_validation_rule', 'conditions', array('entity_type'=>$entity_type, 'bundle' => $bundle));
+  if($rules){
+    foreach ($rules as $rule_obj) {
+	  //Convert object to array. There are a lot validators using array now, in the future we will change them to object.
+	  $rule = (array)$rule_obj;
+	  if(!empty($rule['disabled'])){
+	    continue;
+	  }
+      $field_name = $rule['field_name'];
+      $field = field_info_field($field_name);
+      $languages = field_available_languages($entity_type, $field);
+      foreach ($languages as $langcode) {
+        //debug($errors);
+        $items = isset($entity->{$field_name}[$langcode]) ? $entity->{$field_name}[$langcode] : array();
+        //$errors[$rule['field_name']][$langcode] = module_invoke_all("field_validation_validate", $rule['validator'], $items, $rule, $errors);
+        //module_invoke_all("field_validation_validate", $rule['validator'], $rule, $langcode, $items,  $errors);
+        //field_validation_field_validation_validate($rule['validator'], $rule, $langcode, $items,  $errors);
+        //module_invoke_all does not work here, so i call it directly.
+        foreach(module_implements("field_validation_validate") as $module){
+          $function = $module . '_' . "field_validation_validate";
+          if (function_exists($function)) {
+            $function($rule['validator'], $rule, $entity, $langcode, $items,  $errors);
+          }
+        }
+      }			
+    }
+  }
+}
+
+/**
+ * Theme the 'add rule' list
+ */
+function theme_field_validation_manage_add_rule($variables) {
+  $instance = $variables['instance'];
+  $output = '';
+  $validators = field_validation_get_validators();
+
+  if ($validators) {
+    $output = '<h3>' . t('Add a validation rule') . '</h3>';
+    $output .= '<dl>';
+    foreach ($validators as $validator_key => $validator_info) {
+      $item = '';
+      $path = isset($_GET['q']) ? $_GET['q'] : '';
+      $url = $path.'/add/' . $validator_key;
+      $components = ' (' . implode(', ', $validator_info['field_types']) . ')';
+      $item = '<dt>' . l($validator_info['name'], $url, array("query" => drupal_get_destination())) . '</dt>';
+      $item .= '<dd>';
+      if ($validator_info['description']) {
+        $item .= $validator_info['description'] . ' ';
+      }
+      $item .= $components . '</dd>';
+      $output .= $item;
+    }
+    $output .= '</dl>';
+  }
+  return $output;
+}
+
+/**
+ * Implements hook_field_delete().
+ */
+function field_validation_field_delete($entity_type, $entity, $field, $instance, $langcode, &$items) {
+  $rules = field_validation_get_field_rules($instance);
+  if ($rules) {
+    foreach (array_keys($rules) as $ruleid) {
+      field_validation_dynamic_delete_rule($ruleid);
+    }
+  }
+}
+
+/**
+ * Save a validation rule. Data comes from the admin form
+ * or nodeapi function in case of node clone
+ */
+function field_validation_rule_save($values) {
+  // save rules data
+  if($values['action'] == 'add' || $values['action'] == 'overwrite'){
+    drupal_write_record('field_validation_rule', $values);
+    $ruleid = $values['ruleid'];
+    if ($ruleid) {
+      module_invoke_all('field_validation', 'rule', 'add', $values);
+    }
+  }
+
+  if($values['action'] == 'edit'){
+    drupal_write_record('field_validation_rule', $values, 'ruleid');
+    $ruleid = $values['ruleid'];
+    if ($ruleid) {
+      module_invoke_all('field_validation', 'rule', 'edit', $values);
+    }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ * Using hook_form_field_ui_field_overview_form_alter.
+ */
+function field_validation_form_field_ui_field_overview_form_alter(&$form, &$form_state) {
+  $entity_type = $form['#entity_type'];
+  $bundle = $form['#bundle'];
+
+  $bundle = field_extract_bundle($entity_type, $bundle);
+  $admin_path = _field_ui_bundle_admin_path($entity_type, $bundle);
+	
+  $table = &$form['fields'];
+  $table['#header'][6]['colspan'] = 3;
+  $instances = field_info_instances($entity_type, $bundle);
+	
+  foreach(element_children($table) as $key){
+    if(array_key_exists($key, $instances)){
+      $field = field_info_field($instances[$key]['field_name']);
+      $admin_field_path = $admin_path . '/fields/' . $instances[$key]['field_name'];
+      $table[$key]['validation'] = array(
+        '#type' => 'link',
+        '#title' => t('validate'),
+        '#href' => $admin_field_path . '/validation',
+        '#options' => array('attributes' => array('title' => t('Manage validation rules.'))),
+      );
+    }
+    else {
+      $table[$key]['validation'] = array('#markup' => '');
+    }
+  }
+}
+
+/**
+ * Load a validation rule.
+ *
+ * @param $name
+ *   This validation rule's name value.
+ * @return
+ *   An array of options for the specified validation rule.
+ */
+function field_validation_rule_load($name) {
+  // Use Ctools export API to fetch this rule.
+  ctools_include('export');
+  $result = ctools_export_load_object('field_validation_rule', 'names', array($name));
+  if (isset($result[$name])) {
+    return $result[$name];
+  }
+}
+
+/**
+ * Implementation of hook_ctools_plugin_directory().
+ */
+function field_validation_ctools_plugin_directory($module, $plugin) {
+  if ($module == 'ctools' && $plugin == 'export_ui') {
+    return 'plugins/' . $plugin;
+  }
+}
+
+/**
+ * Implementation of hook_ctools_plugin_api().
+ *
+ * Tell Ctools that we support the default_field_validation_rules API.
+ */
+function field_validation_ctools_plugin_api($owner, $api) {
+  if ($owner == 'field_validation' && $api == 'default_field_validation_rules') {
+    return array('version' => 1);
+  }
+}
+
+/**
+ * Delete a rule.
+ */
+function field_validation_dynamic_delete_rule($ruleid) {
+  // delete rule
+  db_delete('field_validation_rule')
+  ->condition('ruleid', $ruleid)
+  ->execute();
+}

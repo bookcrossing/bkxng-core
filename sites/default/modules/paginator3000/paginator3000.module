@@ -1,0 +1,96 @@
+<?php
+function paginator3000_init() {
+    drupal_add_css(drupal_get_path('module', 'paginator3000').'/paginator3000.css');
+    drupal_add_js(drupal_get_path('module', 'paginator3000').'/paginator3000.js');
+}
+
+function paginator3000pager($tags = array(), $limit = 10, $element = 0, $parameters = array(), $quantity = 9) { 
+    global $pager_total, $pager_page_array;
+
+    $output = '';
+    if ($pager_total[$element] > 1) {
+        $current = $pager_page_array[$element] ? $pager_page_array[$element] : 0;
+        $pager_max = $pager_total[$element] ? $pager_total[$element] : 0;
+        $output = '';
+
+        $output .= '<div id="paginator" class="paginator">';
+        // --------- If no js --------
+        $pager_middle = ceil($quantity / 2);
+        $pager_current = $current + 1;
+        $pager_first = $pager_current - $pager_middle + 1;
+        $pager_last = $pager_current + $quantity - $pager_middle;
+        $i = $pager_first;
+        if ($pager_last > $pager_max) {
+            $i = $i + ($pager_max - $pager_last);
+            $pager_last = $pager_max;
+        }
+        if ($i <= 0) {
+            $pager_last = $pager_last + (1 - $i);
+            $i = 1;
+        }
+
+        $li_first = theme('pager_first', array('text' => (isset($tags[0]) ? $tags[0] : t('« first')), 'element' => $element, 'parameters' => $parameters));
+        $li_previous = theme('pager_previous', array('text' => (isset($tags[1]) ? $tags[1] : t('‹ previous')), 'element' => $element, 'interval' => 1, 'parameters' => $parameters));
+        $li_next = theme('pager_next', array('text' => (isset($tags[3]) ? $tags[3] : t('next ›')), 'element' => $element, 'interval' => 1, 'parameters' => $parameters));
+        $li_last = theme('pager_last', array('text' => (isset($tags[4]) ? $tags[4] : t('last »')), 'element' => $element, 'parameters' => $parameters));
+        $show_first = ( $i > 1 ) ? true : false ;
+
+        if ( $li_previous ) $items[] = array( 'class' => array('pager-previous'), 'data' => $li_previous );
+        if ( $show_first && $li_first ) $items[] = array( 'class' => array('pager-first'), 'data' => $li_first );
+
+        if ($i != $pager_max) {
+            if ($i > 2) $items[] = array( 'class' => array('pager-ellipsis'), 'data' => '<span>...</span>' );
+
+            for (; $i <= $pager_last && $i <= $pager_max; $i++) {
+                if ($i < $pager_current ) $items[] = array( 'class' => array('pager-item'), 'data' => theme('pager_previous', array('text' => $i, 'element' => $element, 'interval' => ($pager_current - $i), 'parameters' => $parameters)));
+                if ($i == $pager_current) $items[] = array( 'class' => array('pager-current'), 'data' => '<span>' . $i . '</span>' );
+                if ($i > $pager_current) $items[] = array( 'class' => array('pager-item'), 'data' => theme('pager_next', array('text' => $i, 'element' => $element, 'interval' => ($i - $pager_current), 'parameters' => $parameters)));
+            }
+            if ($i < $pager_max) $items[] = array( 'class' => array('pager-ellipsis'), 'data' => '<span>...</span>' );
+        }
+
+        $show_last = ( $pager_max  > ($i-1) ) ? true : false ;
+
+        if ( $li_next) $items[] = array( 'class' => array('pager-next'), 'data' => $li_next );
+        if ( $show_last && $li_last) $items[] = array( 'class' => array('pager-last'), 'data' => $li_last );
+        $output .=theme('item_list', array('items' => $items, 'attributes' => array('class' => array('pager'))));
+        // --------- END If no js --------
+
+        $output .= '</div>';
+        $output .= <<<HERE
+<script type="text/javascript">
+    jQuery('#paginator').paginator({
+        pagesTotal : $pager_max,
+        pagesSpan : $limit,
+        pageCurrent : $current,
+        baseUrl : function(num) {
+            var str = window.location.search;
+            if (str) {
+                if(str.indexOf('page=') + 1) {
+                    var loc = str.replace(/page=[0-9]+/, 'page=' + num);
+                }
+                else {
+                    var loc = str + '&page=' + num;
+                }
+            }
+            else {
+                var loc = '?page=' + num;
+            }
+            window.location.search = loc;
+        },
+        returnOrder : false,
+        lang : {
+            next : "следующая",
+            last : "последняя",
+            prior : "предыдущая",
+            first : "первая",
+            arrowRight : String.fromCharCode(8594),
+            arrowLeft : String.fromCharCode(8592)
+        }
+    });
+</script>
+HERE;
+
+        return $output . '<div class="pager-total"><div class="pager-total-text">' . format_plural($pager_total[$element], '1 <span>'.t('page').'</span>', '@count <span>'.t('pages').'</span>') . '</div></div>';
+    }
+}

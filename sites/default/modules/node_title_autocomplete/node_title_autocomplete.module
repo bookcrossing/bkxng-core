@@ -1,0 +1,100 @@
+<?php
+
+
+
+/**
+
+ * @file
+
+ * Functions for node title autocompletion.
+
+ */
+
+
+
+/**
+
+ * Implements hook_menu().
+
+ */
+
+function node_title_autocomplete_menu() {
+
+  $paths = array();
+
+  
+
+  $paths['ajax/node-title-autocompletion'] = array(
+
+    'title' => 'Node title autocompletion',
+
+    'page callback' => 'node_title_autocomplete_results',
+
+    'access callback' => TRUE,
+
+    'type' => MENU_CALLBACK,
+
+  );
+
+  
+
+  return $paths;
+
+}
+
+
+
+/**
+
+ * Menu callback: returns array of suggestions.
+
+ * 
+
+ * @return json data
+
+ */
+
+function node_title_autocomplete_results($string = '') {
+
+  $suggestions = array();
+
+  if (!empty($string)) {
+    $suggestions = db_select('node', 'n')->fields('n', array('title'))->condition('title', $string . '%', 'LIKE')->execute()->fetchCol();
+  }
+  
+
+  drupal_json_output(drupal_map_assoc($suggestions));
+
+}
+
+
+
+/**
+
+ * Implementation of hook_init().
+
+ */
+
+//function node_title_autocomplete_init() {
+
+//  global $base_url;
+
+//  drupal_add_library('system', 'ui.autocomplete');
+
+//  drupal_add_js('jQuery(document).ready(function () { jQuery(".node-form #edit-title").autocomplete({source: "' . $base_url . '/ajax/node-title-autocompletion", minLength: 2}) });', 'inline');
+
+//}
+
+
+
+/**
+
+ * Implements hook_form_FORM_ID_alter().
+
+ */
+
+function node_title_autocomplete_form_bookcrossing_node_form_alter(&$form, $form_state) {
+
+  $form['title']['#autocomplete_path'] = 'ajax/node-title-autocompletion';
+
+}
