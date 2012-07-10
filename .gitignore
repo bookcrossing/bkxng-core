@@ -7,3 +7,5 @@ sites/*/private
 
 # Other
 files/*
+backup/*
+dumper.php

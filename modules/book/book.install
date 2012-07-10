@@ -28,6 +28,9 @@ function book_uninstall() {
   menu_cache_clear_all();
 }
 
+/**
+ * Creates the book content type.
+ */
 function _book_install_type_create() {
   // Create an additional node type.
   $book_node_type = array(
@@ -35,7 +38,7 @@ function _book_install_type_create() {
     'name' => t('Book page'),
     'base' => 'node_content',
     'description' => t('<em>Books</em> have a built-in hierarchical navigation. Use for handbooks or tutorials.'),
-    'custom' => 0,
+    'custom' => 1,
     'modified' => 1,
     'locked' => 0,
   );

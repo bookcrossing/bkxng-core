@@ -4,6 +4,9 @@
  * @file
  * Default theme implementation to display a single Drupal page.
  *
+ * The doctype, html, head and body tags are not in this template. Instead they
+ * can be found in the html.tpl.php template in this directory.
+ *
  * Available variables:
  *
  * General utility variables:
@@ -64,6 +67,7 @@
  * @see template_preprocess()
  * @see template_preprocess_page()
  * @see template_process()
+ * @see html.tpl.php
  */
 ?>
 
@@ -103,7 +107,7 @@
 
     <?php if ($main_menu || $secondary_menu): ?>
       <div id="navigation"><div class="section">
-        <?php print theme('links__system_main_menu', array('links' => $main_menu, 'attributes' => array('id' => 'main-menu', 'class' => array('links', 'inline', 'clearfix')), 'heading' => '')); ?>
+        <?php print theme('links__system_main_menu', array('links' => $main_menu, 'attributes' => array('id' => 'main-menu', 'class' => array('links', 'inline', 'clearfix')), 'heading' => t('Main menu'))); ?>
         <?php print theme('links__system_secondary_menu', array('links' => $secondary_menu, 'attributes' => array('id' => 'secondary-menu', 'class' => array('links', 'inline', 'clearfix')), 'heading' => t('Secondary menu'))); ?>
       </div></div> <!-- /.section, /#navigation -->
     <?php endif; ?>
