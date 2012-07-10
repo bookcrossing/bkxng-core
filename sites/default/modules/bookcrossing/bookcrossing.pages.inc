@@ -405,7 +405,7 @@ function bookcrossing_view_book($book = array()) {
   $data_href = url('book/' . $book['bid'], array('absolute' => TRUE));
 
   $build['fb_recommend_bar'] = array(
-    '#markup' => '<div class="fb-recommendations-bar" data-href="' . $data_href . '" data-trigger="onvisible" data-read-time="40" data-action="like" data-side="right"></div>',
+    '#markup' => '<div class="fb-recommendations-bar" data-href="' . $data_href . '" data-trigger="onvisible" data-read-time="20" data-action="like" data-side="right" data-num_recommendations="3"></div>',
   );
 
   $build['fb_comments'] = array(
