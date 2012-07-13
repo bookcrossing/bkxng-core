@@ -12,3 +12,6 @@ regions[before_content] = Region before content
 regions[after_content] = Region after content
 regions[footer_text] = Text in footer
 regions[footer_menu] = Menu in footer
+regions[banners_footer] = Banners in footer
+
+regions[debug_n_scripts] = Debug and scripts

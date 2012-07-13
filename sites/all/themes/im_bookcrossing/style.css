@@ -126,6 +126,22 @@ body {
   font-size: 12px;
 }
 
+#banners-wrapper {
+  width: 960px;
+  margin: 20px auto;
+  background-color: transparent;
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  font-size: 12px;
+}
+
+#debug-wrapper {
+  width: 960px;
+  margin: 0 auto;
+  background-color: transparent;
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  font-size: 8px;
+}
+
 #header-wrapper {
   padding: 20px 0 10px;
   position: relative;

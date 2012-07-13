@@ -130,3 +130,9 @@
     <div class="ira-young"><?php print '<div class="design-by">' . t('Design by') . '</div>' . $ira_yohng; ?></div>
   </div><!-- /#footer-wrapper -->
 </div><!-- /#page-wrapper -->
+<div id="banners-wrapper">
+    <?php print render($page['banners_footer']); ?>
+</div>
+<div id="debug-wrapper">
+    <?php print render($page['debug_n_scripts']); ?>
+</div>
