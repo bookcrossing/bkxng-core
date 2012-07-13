@@ -300,7 +300,7 @@ function bookcrossing_view_history($history) {
     }
 
     if ($place['place_left']) {
-      $output .= '<div class="place-left">' . t('Released') . ':<div class="place-date-left">' . format_date($place['time_left']) . ',' . $place['place_left']->name . '</div></div>';
+      $output .= '<div class="place-left">' . t('Released') . ':<div class="place-date-left">' . format_date($place['time_left']) . ', ' . $place['place_left']->name . '</div></div>';
     }
 
     $output .= '</div></div></div>';
