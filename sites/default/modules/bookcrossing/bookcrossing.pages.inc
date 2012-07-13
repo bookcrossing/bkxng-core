@@ -286,13 +286,13 @@ function bookcrossing_view_history($history) {
       $vars = array('path' => $filepath, 'alt' => $alt, 'title' => $alt);
       $vars['style_name'] = 'user-in-history';
       $image = theme('image_style', $vars);
-      $user_link = l($image, 'http://www.facebook.com/profile.php?id=' . $fbid, array('html' => TRUE));
+      $user_link = l($image, 'http://www.facebook.com/profile.php?id=' . $fbid . '&sk=app_bookcrossing_by', array('html' => TRUE));
     }
     $output .= '<div class="place-wrapper clearfix">
                   <div class="history-comment' . $my_comment_class . '">' . $comment . '</div>
                   <div class="history-user-foto">' . $user_link . '</div>
                   <div class="history-user-info">'
-        . l($place['user']->name, $fbid ? 'http://www.facebook.com/profile.php?id=' . $fbid : 'user/' . $place['user']->uid)
+        . l($place['user']->name, $fbid ? 'http://www.facebook.com/profile.php?id=' . $fbid . '&sk=app_bookcrossing_by' : 'user/' . $place['user']->uid)
         . '<div class="history-places">';
 
     if ($place['place']) {

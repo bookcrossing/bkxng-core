@@ -1035,7 +1035,7 @@ function bookcrossing_book_status($book = array()) {
 
   if ($book['status']) {
     if ($fbid = bookcrossing_load_fbid($book['user']->uid)) {
-      $user_link = l($book['user']->name, 'http://www.facebook.com/profile.php?id=' . $fbid, array('html' => TRUE, 'attributes' => array('target' => '_blank')));
+      $user_link = l($book['user']->name, 'http://www.facebook.com/profile.php?id=' . $fbid . '&sk=app_bookcrossing_by', array('html' => TRUE, 'attributes' => array('target' => '_blank')));
     }
     else {
       $user_link = l($book['user']->name, 'user/' . $book['user']->uid);
@@ -2415,7 +2415,7 @@ function bookcrossing_render_field($field) {
     $attributes = array();
     if ($field['entity_type'] == 'user' && $field['properties']['entity_render_key'] == 'name') {
       if ($fbid = bookcrossing_load_fbid($field['entity']->uid)) {
-        $path = 'http://www.facebook.com/profile.php?id=' . $fbid;
+        $path = 'http://www.facebook.com/profile.php?id=' . $fbid . '&sk=app_bookcrossing_by';
         $attributes = array('target' => '_blank');
       }
     }
@@ -2460,7 +2460,7 @@ function bookcrossing_render_user_picture($field) {
 
     if (!empty($field['entity']->uid) && user_access('access user profiles')) {
       if ($fbid = bookcrossing_load_fbid($field['entity']->uid)) {
-        return l($image, 'http://www.facebook.com/profile.php?id=' . $fbid, array('html' => TRUE, 'attributes' => array('target' => '_blank')));
+        return l($image, 'http://www.facebook.com/profile.php?id=' . $fbid . '&sk=app_bookcrossing_by', array('html' => TRUE, 'attributes' => array('target' => '_blank')));
       }
       else {
         return l($image, 'user/' . $field['entity']->uid, array('html' => TRUE));
