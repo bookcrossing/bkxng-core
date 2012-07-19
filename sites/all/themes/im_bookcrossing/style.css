@@ -59,8 +59,12 @@ ul.item-list li, ul.menu li, ul.links li {
   list-style: none;
 }
 
-a, a:hover, a:visited {
-/*  color: #4B97FF;*/
+a, a:visited {
+  color: #4B97FF;
+  text-decoration:none;
+}
+
+a:hover {
   color: blue;
 }
 
