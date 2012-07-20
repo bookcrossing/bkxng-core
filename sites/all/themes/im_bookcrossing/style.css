@@ -5,7 +5,26 @@
 
 .red-color {color: red;}
 .underlined {text-decoration: underline;}
-.rotate {/* Safari */-webkit-transform: rotate(180deg);/* Firefox */-moz-transform: rotate(180deg);/* IE */-ms-transform: rotate(180deg);/* Opera */-o-transform: rotate(180deg);/* Internet Explorer */filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);}
+.x-small {font-size:10px;}
+.small {font-size:11px;}
+.rotate {transform: rotate(180deg);/* Safari */-webkit-transform: rotate(180deg);/* Firefox */-moz-transform: rotate(180deg);/* IE */-ms-transform: rotate(180deg);/* Opera */-o-transform: rotate(180deg);/* Internet Explorer */filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);}
+
+.dropdown-arrow {
+  position: relative;
+  top: -1px;
+  border-style: solid dashed dashed;
+  border-color: transparent;
+  border-top-color: #777;
+  display: -moz-inline-box;
+  display: inline-block;
+  font-size: 0;
+  height: 0;
+  line-height: 0;
+  width: 0;
+  border-width: 3px 3px 0;
+  padding-top: 1px;
+  left: 4px;
+}
 
 .pages-header h2 {
   margin-bottom: 20px;
@@ -60,12 +79,13 @@ ul.item-list li, ul.menu li, ul.links li {
 }
 
 a, a:visited {
-  color: #4B97FF;
-  text-decoration:none;
+  color: #3B59A9;
+  text-decoration: none;
 }
 
 a:hover {
-  color: blue;
+  /*color: blue;*/
+  text-decoration: underline;
 }
 
 input[type="submit"] {
@@ -802,8 +822,13 @@ div.my-shelf a:hover {
 
 #paginator a {
   font-family: Tahoma, Verdana, Segoe, sans-serif;
-  color: #4B97FF;
+  /*color: #4B97FF;*/
+  color: #3B59A9;
   font-size: 11px;
+  text-decoration: none;
+}
+
+#paginator a:hover {
   text-decoration: underline;
 }
 
@@ -914,8 +939,13 @@ div.my-shelf a:hover {
 }
 
 .node-bookcrossing.view-mode-catalog a {
-  color: #4B97FF;
+  /*color: #4B97FF;*/
+  color: #3B59A9;
   text-decoration: none;
+}
+
+.node-bookcrossing.view-mode-catalog a:hover {
+  text-decoration: underline;
 }
 
 .letters-wrapper {

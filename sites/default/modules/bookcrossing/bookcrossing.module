@@ -2595,7 +2595,7 @@ function theme_bookcrossing_main_menu($variables) {
       }
 
       if ($i == $variables['visible']) {
-        $output .= '<li id="main-menu-more">' . t('more') . '<ul id="main-menu-more-wrapper">';
+        $output .= '<li id="main-menu-more">' . t('more') . '  <span class="dropdown-arrow"></span><ul id="main-menu-more-wrapper">';
       }
 
       $output .= '<li' . drupal_attributes(array('class' => $class)) . '>';
