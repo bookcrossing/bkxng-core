@@ -115,6 +115,7 @@ table {
 
 body {
   background-color: #C9E0FF;
+  background-image: url("images/nav-lines.png");
 }
 
 .block {
@@ -134,7 +135,7 @@ body {
 
 .copyleft {
   float: left;
-  background: url("/sites/all/themes/im_bookcrossing/images/copyleft.svg") no-repeat scroll 5px 0 transparent;
+  background: url("images/copyleft.svg") no-repeat scroll 5px 0 transparent;
   margin-top: 2px;
   padding-right: 5px;
   padding-left: 5px;  
@@ -535,7 +536,7 @@ div.my-shelf a:hover {
 }
 
 .book-no-image-container {
-  background-color: #693E2B;
+  background-image: url("images/dustnscratches.png");
 }
 
 .node-bookcrossing.view-mode-default .book-no-image-container,
@@ -802,7 +803,8 @@ div.my-shelf a:hover {
 }
 
 .catalog-controls {
-  background-color: #F2F2F2;
+  background-color: #F5F5F5;
+  /*background-image: url("images/paint-splatter.png");*/
   position: relative;
   height: 50px;
   border-top: 1px solid #C9C9C9;
