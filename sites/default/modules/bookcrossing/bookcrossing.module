@@ -950,7 +950,7 @@ function bookcrossing_meta_og($book) {
     '#tag' => 'meta',
     '#attributes' => array(
       'property' => 'og:image',
-      'content' => isset($book['node']->field_bookcrossing_image[LANGUAGE_NONE]) ? file_create_url($book['node']->field_bookcrossing_image[LANGUAGE_NONE][0]['uri']) : file_create_url('public://no-image/' . $book['color'] . '.png'),
+      'content' => isset($book['node']->field_bookcrossing_image[LANGUAGE_NONE]) ? file_create_url($book['node']->field_bookcrossing_image[LANGUAGE_NONE][0]['uri']) : file_create_url('public://no-image/' . $book['color'] . '.jpg'),
     ),
   );
   drupal_add_html_head($image, 'og_image');
