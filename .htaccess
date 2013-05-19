@@ -22,7 +22,6 @@ DirectoryIndex index.php index.html index.htm
 # Override PHP settings that cannot be changed at runtime. See
 # sites/default/default.settings.php and drupal_initialize_variables() in
 # includes/bootstrap.inc for settings that can be changed at runtime.
-php_value memory_limit 256M
 
 # PHP 5, Apache 1 and 2.
 <IfModule mod_php5.c>
@@ -32,6 +31,7 @@ php_value memory_limit 256M
   php_flag session.auto_start               off
   php_value mbstring.http_input             pass
   php_value mbstring.http_output            pass
+  php_value memory_limit 32M
   php_flag mbstring.encoding_translation    off
 </IfModule>
 

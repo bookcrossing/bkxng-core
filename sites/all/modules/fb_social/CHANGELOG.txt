@@ -1,0 +1,31 @@
+fb_social 7.x-2.0-beta4
+
+Issue #1372456 : Wrong file name in the info file
+Issue #1397362 : Undefined index: plugin_comments_seo
+Issue #1396618 : use https to get locales
+Issue #1389768 : Add facebook subscribe plugin
+Issue #1327830 : Pull Comments Directly From Graph API
+Issue #815568 : Views support
+Issue #1366972 : Fatal error when I try to create an unpublished node
+Issue #1372928 : Strip language option removes part of URL
+Issue #1371416 by acouch : Undefined comment property in _fb_social_comments_comments_count()
+Issue #1365722 : Add support for OAuth boolean flag
+Issue #1367254 Add force_wall attribute for like-box plugin
+Issue #1366972 : Fatal error when I try to create an unpublished node
+
+fb_social 7.x-2.0-beta3
+
+* Added support for html5
+* Load facebook script only when needed (i.e. when there is a plugin in the page)
+* Consolidate "settings" and "preset building" under site/build
+* Implement theme_fb_social_plugin as template file for easy preprocessing
+* Plugins (as in ctools plugin) can use real theme preporcess functions
+* Right implementation of hook_field_extra_fields
+* Make "comments" and "like" extra fields have higher weight by default (sink down in the node view)
+* Plugins can be shown in different node mode views (see #1275670) You will need to edit and resave some of your presets
+* Added number of facebook comments in the node links
+* Flexible caching nr of comments in the node links
+* Dont restrict opengraph metatags to nodes only
+* Moved Opengraph metatags setting from preset to a global setting
+
+

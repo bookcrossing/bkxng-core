@@ -1,0 +1,17 @@
+name = "fb social"
+description = "Provides integration with Facebook social plugins"
+dependencies[] = "ctools"
+package = "Facebook Social Plugins"
+core =7.x
+
+configure = admin/structure/fbsocial
+
+files[] = plugins/views/fb_social_handler_field.inc
+files[] = plugins/export_ui/fb_social_presets_ui.inc
+
+; Information added by drupal.org packaging script on 2012-07-14
+version = "7.x-2.0-beta4+1-dev"
+core = "7.x"
+project = "fb_social"
+datestamp = "1342225304"
+
