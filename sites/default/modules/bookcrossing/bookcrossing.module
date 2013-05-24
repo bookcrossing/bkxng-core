@@ -496,18 +496,23 @@ function bookcrossing_books_table($books, $mode, $num_in_row = 3, $release_link 
  * Formatting string with book authors and year
  */
 function bookcrossing_author_and_year($book) {
-  $output = array();
+  $authors = array();
+  $publish_year = "";
   
   foreach ($book['node']->field_bookcrossing_author[LANGUAGE_NONE] as $tid) {
     $term = taxonomy_term_load($tid['tid']);
-    $output[] = $term->name;
+    $authors[] = $term->name;
   }
+  $output = "<span class=\"book-authors\">" . implode(', ', $authors);
   
   if (isset($book['node']->field_bookcrossing_year[LANGUAGE_NONE])) {
-    $output[] = $book['node']->field_bookcrossing_year[LANGUAGE_NONE][0]['value'];
+    $publish_year = $book['node']->field_bookcrossing_year[LANGUAGE_NONE][0]['value'];
+    $output .= ",</span> <span class=\"book-publish-year\">" . $publish_year . "</span>";
+  } else {
+    $output .= "</span>";
   }
-  
-  return implode(', ', $output);
+
+  return $output;
 }
 
 /**
@@ -1357,7 +1362,7 @@ function bookcrossing_book_comment($form, $form_state, $book = array()) {
 
        if (country != '' && city != '' && location != '' && message != '') {
          FB.api(
-         '/me/bookcrossing_by:release?book={$path}&country=' + country + '&city=' + city + '&location=' + place + '&message=' + message,
+         'https://graph.facebook.com/me/bookcrossing_by:release?book={$path}&country=' + country + '&city=' + city + '&location=' + place + '&message=' + message,
          'post',
            function(response) {
              if (!response || response.error) {

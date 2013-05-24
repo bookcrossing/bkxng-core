@@ -22,9 +22,11 @@ function fboauth_uninstall() {
   variable_del('fboauth_secret');
   variable_del('fboauth_user_email');
   variable_del('fboauth_user_username');
+  variable_del('fboauth_user_picture');
   variable_del('fboauth_user_profile');
   variable_del('fboauth_user_properties');
   variable_del('fboauth_user_connections');
+  variable_del('fboauth_user_fields');
 }
 
 /**
@@ -78,4 +80,3 @@ function _fboauth_change_user_mail_field($action = 'install') {
   db_change_field('users', 'mail', 'mail', $schema['users']['fields']['mail']);
   return $res;
 }
-

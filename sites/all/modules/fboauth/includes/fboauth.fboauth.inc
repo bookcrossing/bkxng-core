@@ -80,11 +80,15 @@ function fboauth_action_connect($app_id, $access_token) {
   }
   // If the Facebook e-mail address matches an existing account, bind them
   // together and log in as that account.
-  elseif (!empty($fbuser->email) && ($account = array_shift(user_load_multiple(array(), array('mail' => $fbuser->email))))) {
-    fboauth_save($account->uid, $fbuser->id);
-
+  elseif (!empty($fbuser->email) && ($account = user_load_by_mail($fbuser->email))) {
+    // If the user is already logged in, associate the two accounts.
+    if ($user->uid) {
+      fboauth_save($user->uid, $fbuser->id);
+      drupal_set_message(t('You\'ve connected your account with Facebook.'));
+    }
     // Logins will be denied if the user's account is blocked.
-    if (fboauth_login_user($account)) {
+    elseif (fboauth_login_user($account)) {
+      fboauth_save($account->uid, $fbuser->id);
       drupal_set_message(t('You\'ve connected your account with Facebook.'));
     }
   }
@@ -114,7 +118,7 @@ function fboauth_action_connect($app_id, $access_token) {
     }
     // Since user's can't create new accounts on their own, show an error.
     else {
-      drupal_set_message('Your Facebook e-mail address does not match any existing accounts. If you have an account, you must first log in before you can connect your account to Facebook. Creation of new accounts on this site is disabled.');
+      drupal_set_message(t('Your Facebook e-mail address does not match any existing accounts. If you have an account, you must first log in before you can connect your account to Facebook. Creation of new accounts on this site is disabled.'));
     }
   }
 }
@@ -130,7 +134,12 @@ function fboauth_action_deauth($app_id, $access_token) {
 
   // If successful, also remove the uid-fbid pairing.
   if (!is_array($result) && $result) {
+    $fbid = fboauth_fbid_load($user->uid);
     fboauth_save($user->uid, NULL);
+
+    // Allow other modules to hook into a deauth event.
+    module_invoke_all('fboauth_deauthorize', $user->uid, $fbid);
+
     drupal_set_message(t('Your account has been disconnected from Facebook.'));
   }
   else {
@@ -142,18 +151,26 @@ function fboauth_action_deauth($app_id, $access_token) {
 /**
  * Given a Facebook user object, associate or save a Drupal user account.
  */
-function fboauth_create_user($fbuser) {
+function fboauth_create_user($fbuser, $options = array()) {
+  // Set default options.
+  $defaults = array(
+    'username' => variable_get('fboauth_user_username', 'username'),
+    'picture' => (variable_get('user_pictures', 0) && variable_get('fboauth_user_picture', 'picture')) ? 'picture' : '',
+    'status' => variable_get('user_register', 1) == 1 ? 1 : 0,
+  );
+  $options += $defaults;
+
   // Use their Facebook user name (if defined), otherwise their real name.
   // If an account already exists with that name, increment until the namespace
   // is available.
-  if (variable_get('fboauth_user_username', 'username') == 'username' && !empty($fbuser->username)) {
+  if ($options['username'] === 'username' && !empty($fbuser->username)) {
     $username = $fbuser->username;
   }
   else {
     $username = $fbuser->name;
   }
-  $query = "SELECT uid FROM {users} WHERE name = ':name'";
-  $uid = db_query("SELECT uid FROM {users} WHERE name = :name", array(':name' => $username))->fetchField();
+  $query = "SELECT uid FROM {users} WHERE name = :name";
+  $uid = db_query($query, array(':name' => $username))->fetchField();
   $i = 0;
   while ($uid) {
     $i++;
@@ -169,7 +186,7 @@ function fboauth_create_user($fbuser) {
     'mail' => !empty($fbuser->email) ? $fbuser->email : '',
     'init' => !empty($fbuser->email) ? $fbuser->email : '',
     // If user_register is "1", then no approval required.
-    'status' => variable_get('user_register', 1) == 1 ? 1 : 0,
+    'status' => $options['status'],
     'timezone' => variable_get('date_default_timezone'), // TODO: is this appropriate in sites with no default?
     'fboauth' => TRUE, // Signify this is being imported by Facebook OAuth.
     'fboauth_fbid' => $fbuser->id, // So that other modules can load the account.
@@ -194,7 +211,7 @@ function fboauth_create_user($fbuser) {
   $account = user_save(NULL, $edit);
 
   // Retrieve the user's picture from Facebook and save it locally.
-  if ($account->uid && variable_get('user_pictures', 0)) {
+  if ($account->uid && $options['picture'] === 'picture') {
     $picture_directory =  file_default_scheme() . '://' . variable_get('user_picture_path', 'pictures');
     if(file_prepare_directory($picture_directory, FILE_CREATE_DIRECTORY)){
       $picture_result = drupal_http_request('https://graph.facebook.com/' . $fbuser->id . '/picture?type=large');
@@ -289,7 +306,9 @@ function fboauth_access_token($code, $action_name, $app_id = NULL, $app_secret =
   $authentication_result = drupal_http_request($token_url);
 
   if ($authentication_result->code != 200) {
-    watchdog('fboauth', 'Facebook OAuth could not acquire an access token from Facebook. We queried the following URL: <code><pre>@url</pre></code>. Facebook\'s servers returned an error @error: <code><pre>@return</pre></code>', array('@url' => $token_url, '@error' => $authentication_result->code, '@return' => check_plain(print_r($authentication_result->data, TRUE))));
+    $error = !empty($authentication_result->error) ? $authentication_result->error : t('(no error returned)');
+    $data = !empty($authentication_result->data) ? print_r($authentication_result->data, TRUE) : t('(no data returned)');
+    watchdog('fboauth', 'Facebook OAuth could not acquire an access token from Facebook. We queried the following URL: <code><pre>@url</pre></code>. Facebook\'s servers returned an error @error: <code><pre>@return</pre></code>', array('@url' => $token_url, '@error' => $error, '@return' => $data));
   }
   else {
     // The result from Facebook comes back in a query-string-like format,
@@ -466,51 +485,58 @@ function fboauth_user_properties($include_common = FALSE) {
     ),
   );
 
-  if ($include_common) {
-    $properties += array(
-      'id' => array(
-        'label' => t('Facebook ID'),
-      ),
-      'name' => array(
-        'label' => t('Full name'),
-        'field_types' => array('text'),
-      ),
-      'first_name' => array(
-        'label' => t('First name'),
-        'field_types' => array('text'),
-      ),
-      'last_name' => array(
-        'label' => t('Last name'),
-        'field_types' => array('text'),
-      ),
-      'gender' => array(
-        'label' => t('Gender'),
-        'field_types' => array('text', 'list_text'),
-      ),
-      'locale' => array(
-        'label' => t('Locale'),
-      ),
-      'link' => array(
-        'label' => t('Facebook profile link'),
-        'field_types' => array('text'),
-      ),
-      'username' => array(
-        'label' => t('Username'),
-      ),
-      'third_party_id' => array(
-        'label' => t('3rd-party ID'),
-      ),
-      'timezone' => array(
-        'label' => t('Timezone'),
-      ),
-      'updated_time' => array(
-        'label' => t('Updated time'),
-      ),
-      'verified' => array(
-        'label' => t('Verified')
-      ),
-    );
-    ksort($properties);
+  // Common properties. Always defined so that modules may alter if needed.
+  $common = array(
+    'id' => array(
+      'label' => t('Facebook ID'),
+    ),
+    'name' => array(
+      'label' => t('Full name'),
+      'field_types' => array('text'),
+    ),
+    'first_name' => array(
+      'label' => t('First name'),
+      'field_types' => array('text'),
+    ),
+    'last_name' => array(
+      'label' => t('Last name'),
+      'field_types' => array('text'),
+    ),
+    'gender' => array(
+      'label' => t('Gender'),
+      'field_types' => array('text', 'list_text'),
+    ),
+    'locale' => array(
+      'label' => t('Locale'),
+    ),
+    'link' => array(
+      'label' => t('Facebook profile link'),
+      'field_types' => array('text'),
+    ),
+    'username' => array(
+      'label' => t('Username'),
+    ),
+    'third_party_id' => array(
+      'label' => t('3rd-party ID'),
+    ),
+    'timezone' => array(
+      'label' => t('Timezone'),
+    ),
+    'updated_time' => array(
+      'label' => t('Updated time'),
+    ),
+    'verified' => array(
+      'label' => t('Verified')
+    ),
+  );
+  $properties += $common;
+
+  drupal_alter('fboauth_user_properties', $properties);
+  ksort($properties);
+
+  // Filter out unneeded properties.
+  if (!$include_common) {
+    $properties = array_diff_key($properties, $common);
   }
 
   return $properties;
@@ -668,9 +694,9 @@ function fboauth_graph_query($id, $access_token = NULL, $parameters = array(), $
     $parameters['access_token'] = $access_token;
   }
 
-  if ($method == 'GET') {
+  if ($method == 'GET' || $method == 'DELETE') {
     $graph_url = url('https://graph.facebook.com/' . $id, array('absolute' => TRUE, 'query' => $parameters));
-    $graph_result = drupal_http_request($graph_url);
+    $graph_result = drupal_http_request($graph_url, array('headers' => array(), 'method' => $method));
   }
   elseif ($method == 'POST') {
     $graph_url = 'https://graph.facebook.com/' . $id;
@@ -678,7 +704,7 @@ function fboauth_graph_query($id, $access_token = NULL, $parameters = array(), $
     $graph_result = drupal_http_request($graph_url, array('headers' => array(), 'method' => $method, 'data' => $post_data));
   }
   else {
-    drupal_set_message(t('Invalid request type "@type" for Facebook graphy query. Must be either @get or @post.', array('@type' => $method, '@get' => 'GET', '@post' => 'POST')), 'error');
+    drupal_set_message(t('Invalid request type "@type" for Facebook graphy query. Must be either @get, @post, or @delete.', array('@type' => $method, '@get' => 'GET', '@post' => 'POST', '@delete' => 'DELETE')), 'error');
   }
 
   // If the response contains a redirect (such as to an image), return the
@@ -717,4 +743,66 @@ function fboauth_method_invoke($method, $access_token, $parameters = array()) {
   $query_string = drupal_http_build_query($parameters);
   $result = drupal_http_request('https://api.facebook.com/method/' . $method . '?' . $query_string);
   return json_decode($result->data);
+}
+
+/**
+ * Process a deauthorization request from Facebook.
+ *
+ * @see https://developers.facebook.com/docs/authentication/signed_request/
+ */
+function fboauth_deauthorize() {
+  // A signed_request key is used when a deauth url is provided by the app.
+  if (isset($_POST['signed_request'])) {
+    $app_secret = variable_get('fboauth_secret', '');
+    $signed_request = fboauth_parse_signed_request($_POST['signed_request'], $app_secret);
+
+    if ($signed_request && $deauth_uid = fboauth_uid_load($signed_request['user_id'])) {
+      fboauth_save($deauth_uid, NULL);
+      watchdog('fboauth', 'The account for UID @uid has been disconnected from Facebook by the user via Facebook.', array('@uid' => $deauth_uid));
+
+      // Allow other modules to hook into a deauth event.
+      module_invoke_all('fboauth_deauthorize', $deauth_uid, $signed_request['user_id']);
+    }
+  }
+}
+
+/**
+ * Parse a signed_request from Facebook.
+ *
+ * @see http://developers.facebook.com/docs/authentication/signed_request/
+ */
+function fboauth_parse_signed_request($signed_request, $secret) {
+  list($encoded_signature, $payload) = explode('.', $signed_request, 2);
+
+  // Decode the data.
+  $signature = fboauth_base64_url_decode($encoded_signature);
+  $data = json_decode(fboauth_base64_url_decode($payload), true);
+
+  if (strtoupper($data['algorithm']) !== 'HMAC-SHA256') {
+    watchdog('fboauth', 'A Facebook deauthorization request failed: Unknown signed request algorithm. Expected HMAC-SHA256.');
+    return null;
+  }
+
+  // Check the signature.
+  $expected_signature = hash_hmac('sha256', $payload, $secret, $raw = true);
+  if ($signature !== $expected_signature) {
+    watchdog('fboauth', 'A Facebook deauthorization request failed: Bad Signed JSON signature!');
+    return null;
+  }
+
+  return $data;
+}
+
+/**
+ * Helper function for signed_requests from Facebook.
+ *
+ * @param $input
+ *   A string of text passed back from a Facebook signed request.
+ * @return
+ *   The decoded string.
+ *
+ * @see fboauth_parse_signed_request()
+ */
+function fboauth_base64_url_decode($input) {
+  return base64_decode(strtr($input, '-_', '+/'));
 }

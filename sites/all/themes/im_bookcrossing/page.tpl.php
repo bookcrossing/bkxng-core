@@ -109,7 +109,15 @@
     <?php print render($page['header_sidebar_second']); ?>
     <div style="clear:left;"></div>
     <div id="help-link"><?php print l(t('Help'), variable_get('bookcrossing_help_link', '')); ?></div>
+
+    <div id="fb-wrapper">
+      <div class="fb-like" data-href="http://www.facebook.com/bookcrossing.by" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false" data-font="tahoma"></div>
+    </div>
+    <div id="github-wrapper">
+      <iframe src="/github-btn.html?user=bookcrossing&repo=core&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="130" height="20"></iframe>
+    </div>
   </div><!-- /#header-wrapper -->
+
   
   <?php print render($page['under_content']); ?>
   
@@ -130,6 +138,33 @@
     <div class="ira-young"><?php print '<div class="design-by">' . t('Design by') . '</div>' . $ira_yohng; ?></div>
   </div><!-- /#footer-wrapper -->
 </div><!-- /#page-wrapper -->
+<div id="back-top" style="display:none;">
+  <script type="text/javascript">
+		/*<![CDATA[*/
+    (function ($) {
+			$(document).ready(function(){
+				$("#back-top").hide();
+				$(function () {
+					$(window).scroll(function () {
+						if ($(this).scrollTop() > 50) {
+							$('#back-top').fadeIn();
+						} else {
+							$('#back-top').fadeOut();
+						}
+					});
+					$('#back-top a').click(function () {
+						$('body,html').animate({
+							scrollTop: 0
+						}, 300);
+						return false;
+					});
+				});
+			});
+    })(jQuery);
+		/*]]>*/
+		</script>
+  <a href="#"><?php print t('back to top'); ?></a>
+</div><!-- /#back-top -->
 <div id="banners-wrapper">
     <?php print render($page['banners_footer']); ?>
 </div>

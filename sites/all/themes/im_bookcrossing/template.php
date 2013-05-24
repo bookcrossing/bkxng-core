@@ -28,3 +28,41 @@ function im_bookcrossing_fboauth_action__connect($variables) {
   $suffix = t('using yout Facebook account.');
   return $prefix . ' <a ' . $attributes . ' href="' . $url . '">' . t('log in') . '</a> ' . $suffix;
 }
+
+/**
+ * Implements hook_theme().
+ * 
+ * In this case, overrides three user functions
+ */
+function im_bookcrossing_theme() {
+  return array(
+    'user_login' => array(
+      'template' => 'page-no-login',
+      'arguments' => array('form' => NULL),
+    ),
+    'user_register' => array(
+      'template' => 'page-no-login',
+      'arguments' => array('form' => NULL),
+    ),
+    'user_pass' => array(
+      'template' => 'page-no-login',
+      'arguments' => array('form' => NULL),
+    ),
+  );
+}
+
+
+function im_bookcrossing_preprocess_user_login(&$variables) {
+  $variables['intro_text'] = t('Awesome login form');
+  $variables['rendered'] = drupal_render($variables['form']);
+}
+
+function im_bookcrossing_preprocess_user_register(&$variables) {
+  $variables['intro_text'] = t('Awesome registration form');
+  $variables['rendered'] = drupal_render($variables['form']);
+}
+
+function im_bookcrossing_preprocess_user_pass(&$variables) {
+  $variables['intro_text'] = t('Awesome password reset form');
+  $variables['rendered'] = drupal_render($variables['form']);
+}

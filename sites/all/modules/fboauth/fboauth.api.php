@@ -51,8 +51,9 @@ function hook_fboauth_actions() {
     // Optionally define a theme function for printing out your link (not
     // including the "theme_" prefix). If you use this option, you must register
     // this function in hook_theme(). If you don't use this option, the link
-    // will be output with the theme_fboauth_action() function.
-    // 'theme callback' => 'mymodule_fboauth_action',
+    // will be output with the theme_fboauth_action() function or the automatic
+    // suggestion theme_fboauth_action__[action_name]().
+    // 'theme' => 'mymodule_fboauth_action',
   );
   return $actions;
 }
@@ -116,4 +117,76 @@ function hook_fboauth_user_save($account, $fbuser) {
     'real_name' => $fbuser->name,
   );
   drupal_write_record('mytable', $mydata);
+}
+
+/**
+ * Alter the list of Facebook properties that can be mapped to fields.
+ *
+ * @param $properties
+ *   An associative array of Faceboook properties.
+ *
+ * @see fboauth_user_properties()
+ */
+function hook_fboauth_user_properties_alter(&$properties) {
+  // Allow the location property to be mapped to Geofield typed fields.
+  $properties['location']['field_types'][] = 'geofield';
+}
+
+/**
+ * Alter the list of Field API field types that are supported as targets.
+ *
+ * @param $convert_info
+ *   An associative array of field types and callbacks.
+ *
+ * @see fboauth_field_convert_info()
+ */
+function hook_fboauth_field_convert_info_alter(&$convert_info) {
+  // Provide a callback for mapping Facebook properties to Geofields.
+  $convert_info['geofield'] = array(
+    'label' => t('Geofield'),
+    'callback' => 'example_convert_geofield',
+  );
+}
+
+/**
+ * Example callback for conversion of Facebook location property to a Geofield.
+ *
+ * For more callback examples, check the list in fboauth_field_convert_info().
+ *
+ * @param $facebook_property_name
+ *   The name of the property being converted from Facebook's structure into
+ *   a Drupal data structure.
+ * @param $fbuser
+ *   An object representing the Facebook user. Typically the property to be
+ *   converted will be at $fbuser->$facebook_property_name.
+ * @param $field
+ *   The Field module field configuration array.
+ * @param $instance
+ *   The Field module field instance configuration array.
+ */
+function example_convert_geofield($facebook_property_name, $fbuser, $field, $instance) {
+  if (!empty($fbuser->$facebook_property_name)) {
+    // Perform conversion from Facebook's location information to geo info.
+    // Conversion code here...
+    return array('lat' => $lat, 'lon' => $long);
+  }
+  return NULL;
+}
+
+/**
+ * Hook to respond to a deauthorization event from Facebook.
+ *
+ * This hook will fire if the Facebook app has configured the deauthorize
+ * callback option on facebook.com. If your site were hosted at example.com,
+ * this URL should be configured to be http://example.com/fboauth/deauthorize.
+ *
+ * @param $uid
+ *   A Drupal user UID.
+ * @param $fbid
+ *   The Facebook user account ID that requested the deauthorization.
+ * @return
+ *   None.
+ */
+function hook_fboauth_deauthorize($uid, $fbid) {
+  watchdog('fboauth', 'hook_fboauth_deauthorize called with uid = !uid and fbid = !fbid', array('!uid' => $uid, '!fbid' => $fbid));
 }

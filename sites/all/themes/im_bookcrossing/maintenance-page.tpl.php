@@ -61,6 +61,20 @@
         </div> <!-- /content -->
       </div> <!-- /content-wrapper -->
     </div> <!-- /container -->
+
+    <div class="twitter-wrapper">
+      <p><?php print t('You may follow maintenance status on our twitter timeline'); ?></p>
+      <div style="text-align:center;">
+        <a class="twitter-timeline" href="https://twitter.com/search?q=from%3Abookcrossing_by+OR+to%3Abookcrossing_by" data-widget-id="335417286196346882" width="920" height="590" data-chrome="noheader noborders noscrollbar transparent"><?php echo t('Tweets around Bookcrossing Belarus'); ?></a>
+        <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+<!--
+        <a class="twitter-timeline" href="https://twitter.com/bookcrossing_by" data-widget-id="332080748033085440" width="920" height="590" data-chrome="noheader noborders noscrollbar transparent">Твиты пользователя @bookcrossing_by</a>
+        <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+"://platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+-->        
+      </div>
+    </div> <!-- /twitter-wrapper -->
+
+<!--
     <?php
       $fb_image = theme('image', array('path' => path_to_theme() . '/images/fb.png', 'alt' => t('Bookcrossing on facebook')));
       $tw_image = theme('image', array('path' => path_to_theme() . '/images/tw.png', 'alt' => t('Bookcrossing on twitter')));
@@ -69,6 +83,8 @@
       $l .= l($tw_image, variable_get('bookcrossing_twitter_link', ''), array('html' => TRUE, 'attributes' => array('target'=>'_blank')));
       print '<div id="links">' . $l . '</div>';
     ?>
+-->
+
   </div> <!-- /page -->
 </body>
 </html>

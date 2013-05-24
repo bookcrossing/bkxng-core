@@ -9,6 +9,11 @@
  * Menu callback: catalog page.
  */
 function bookcrossing_catalog_page($type = 'title', $mode = 'tile') {
+  $catalog_title_constant = t('Books for Bookcrossing');
+  $catalog_title_type = $type;
+  $catalog_title_view = $mode;
+  $catalog_title_descr = '';
+  $catalog_title_value = '';
   $limit = 30;
   $sort_types = bookcrossing_catalog_get_sort_types();
 
@@ -36,12 +41,20 @@ function bookcrossing_catalog_page($type = 'title', $mode = 'tile') {
     
     if (isset($_GET['place'])) {
       $books = $function($_GET['place']);
+      $catalog_title_descr = t('place');
+      $catalog_title_value = ucfirst($_GET['place']);
     }
     elseif (isset($_GET['country'])) {
       $books = $function();
+      $catalog_title_descr = t('country');
+      $catalog_title_value = ucfirst($_GET['country']);
     }
     else {
       $books = $function($_GET['sort']);
+      if($type == 'place') {
+        $catalog_title_descr = t('city');
+      }
+      $catalog_title_value = ucfirst($_GET['sort']);
     }
   }
   elseif (isset($_GET['find'])) {
@@ -95,6 +108,14 @@ function bookcrossing_catalog_page($type = 'title', $mode = 'tile') {
   
   $output .= bookcrossing_catalog_letters($letters);
 //  drupal_set_message('<pre>' . print_r($letters, 1) . '</pre>');
+
+  $catalog_title = $catalog_title_constant;
+  if(!empty($catalog_title_value)) {
+    $catalog_title .= ' (' . $catalog_title_value . ')';
+  }
+  $catalog_title .= ' - ' . t('sorted by ' . $catalog_title_type . 's') . ', ' . t($catalog_title_view . ' view');
+  $tmp = 'Книги для буккроссинга (Минск) - сортировка по авторам, детальный вид | Буккроссинг Беларусь';
+  drupal_set_title($catalog_title);
 
   return $output;
 }

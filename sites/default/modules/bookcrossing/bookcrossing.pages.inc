@@ -212,7 +212,7 @@ function bookcrossing_change_comment($bid = '', $js = 'ajax') {
 }
 
 /**
- * Menu callback: view histroy page.
+ * Menu callback: view history page.
  */
 function bookcrossing_view_history($history) {
   $build = node_view($history['node'], 'history');
@@ -398,7 +398,7 @@ function bookcrossing_view_book($book = array()) {
   bookcrossing_add_fb_js($book['bid'], url('book/' . $book['bid'], array('absolute' => TRUE)));
 
   $build['facepile'] = array(
-    '#markup' => '<fb:facepile href="' . url($_GET['q'], array('absolute' => TRUE)) . '" action="bookcrossing_by:bookmark" width="300" size="large" max_rows="3"></fb:facepile>',
+    '#markup' => '<fb:facepile href="' . url($_GET['q'], array('absolute' => TRUE)) . '" action="bookcrossing_by:bookmark" width="200" size="large" max_rows="3"></fb:facepile>',
   );
 //    '#markup' => '<script src="http://connect.facebook.net/ru_RU/all.js#appId=' . variable_get('fboauth_id', '') . '&amp;xfbml=1"></script><fb:facepile href="' . url($_GET['q'], array('absolute' => TRUE)) . '" action="bookcrossing_by:bookmark" width="300" size="large" max_rows="3"></fb:facepile>',
 
@@ -426,7 +426,7 @@ function bookcrossing_add_fb_js($bid, $path = '', $type = 'bookmark') {
   $msg_success = t('Post was successful! Action ID: ');
   $like = "function like(){
       FB.api(
-        '/me/bookcrossing_by:bookmark?book=$path',
+        'https://graph.facebook.com/me/bookcrossing_by:bookmark?book=$path',
         'post',
 	function(response) {
 	  var msg = '$msg_text';
@@ -612,7 +612,7 @@ function bookcrossing_book_added($bcid = '') {
 
            if (country != '' && city != '' && location != '') {
              FB.api(
-               '/me/bookcrossing_by:release?book={$path}&country=' + country + '&city=' + city + '&location=' + place + '&message=' + message,
+               'https://graph.facebook.com/me/bookcrossing_by:release?book={$path}&country=' + country + '&city=' + city + '&location=' + place + '&message=' + message,
                'post',
                 function(response) {
                   if (!response || response.error) {

@@ -12,6 +12,13 @@ function fboauth_menu() {
     'file' => 'includes/fboauth.fboauth.inc',
     'type' => MENU_CALLBACK,
   );
+  $items['fboauth/deauthorize'] = array(
+    'title' => 'Facebook deauthorize',
+    'page callback' => 'fboauth_deauthorize',
+    'access callback' => TRUE,
+    'file' => 'includes/fboauth.fboauth.inc',
+    'type' => MENU_CALLBACK,
+  );
   $items['admin/config/people/fboauth'] = array(
     'title' => t('Facebook OAuth settings'),
     'page callback' => 'drupal_get_form',
@@ -69,9 +76,10 @@ function fboauth_block_info() {
  */
 function fboauth_block_view($delta) {
   $block = array();
-  $app_id = isset($app_id) ? $app_id : variable_get('fboauth_id', '');
-  if ($app_id && !fboauth_fbid_load()) {
-    $block['content'] = fboauth_action_display('connect');
+  if (variable_get('fboauth_id', '') && !fboauth_fbid_load()) {
+    // Set the redirect to the current page (unless we're on the login page).
+    $redirect = (arg(0) === 'user' && (arg(1) === 'login' || arg(1) == '')) ? NULL : $_GET['q'];
+    $block['content'] = fboauth_action_display('connect', $redirect);
   }
   return $block;
 }
@@ -125,6 +133,17 @@ function fboauth_form_user_profile_form_alter(&$form, &$form_state) {
   // The account settings move around in this form.
   $account_form = isset($form['account']) ? $form['account'] : $form;
 
+  // If a user has created/linked an account through a Facebook login, remove
+  // the current password field until they set a password.
+  // See http://drupal.org/node/1398782.
+  if ($fbid && $form['#user']->pass == '') {
+    if (empty($form_state['input'])) {
+      drupal_set_message(t('Please set a password to secure your account details.'), 'warning', FALSE);
+    }
+    unset($account_form['current_pass']);
+    $account_form['current_pass_required_values']['#value'] = array();
+  }
+
   // Inject the Facebook options after the e-mail settings. No weights are on
   // these elements by default, so we have to put it in order.
   $temp_form = array();
@@ -159,13 +178,11 @@ function fboauth_fboauth_actions() {
     'file' => 'includes/fboauth.fboauth.inc',
     'callback' => 'fboauth_action_connect',
     'permissions' => array_keys(fboauth_user_connect_permissions()),
-    'theme callback' => 'fboauth_connect_link',
   );
   $actions['deauth'] = array(
     'title' => t('Deauthorize'),
     'file' => 'includes/fboauth.fboauth.inc',
     'callback' => 'fboauth_action_deauth',
-    'theme callback' => 'fboauth_deauth_link',
   );
   return $actions;
 }
@@ -222,7 +239,7 @@ function fboauth_fbid_load($uid = NULL) {
   $uid = isset($uid) ? $uid : $GLOBALS['user']->uid;
   $result = db_query("SELECT fbid FROM {fboauth_users} WHERE uid = :uid", array(':uid' => $uid));
   $fbid = $result->fetchField();
-  return $fbid ? (int) $fbid : FALSE;
+  return $fbid ? $fbid : FALSE;
 }
 
 /**
@@ -266,9 +283,9 @@ function fboauth_save($uid, $fbid) {
 /**
  * Output a Facebook link.
  *
- * This is simply a convience function for outputing a link. If wanting to
- * customize the display of the link, override the theme_fboauth_connect_link()
- * function in your theme.
+ * This is simply a convenience function for outputing a link. If wanting to
+ * customize the display of the link, override the
+ * theme_fboauth_action__connect() function in your theme.
  *
  * @param $action_name
  *   The name of the action to display (usually as a link or button). Facebook
@@ -321,6 +338,11 @@ function fboauth_action_link_properties($action_name, $redirect = NULL, $app_id 
   }
   elseif (!empty($_GET['destination'])) {
     $query['destination'] = $_GET['destination'];
+  }
+
+  // Remove the destination path if it's pointing to the front page.
+  if (isset($query['destination']) && $query['destination'] === variable_get('site_frontpage', 'node')) {
+    unset($query['destination']);
   }
 
   $return = array(
@@ -399,9 +421,11 @@ function theme_fboauth_action__connect($variables) {
   $link = $variables['properties'];
   $url = url($link['href'], array('query' => $link['query']));
   $link['attributes']['class'] = isset($link['attributes']['class']) ? $link['attributes']['class'] : 'facebook-action-connect';
+  $link['attributes']['rel'] = 'nofollow';
   $attributes = isset($link['attributes']) ? drupal_attributes($link['attributes']) : '';
   $title = isset($link['title']) ? check_plain($link['title']) : '';
-  return '<a ' . $attributes . ' href="' . $url . '"><img src="http://static.ak.fbcdn.net/images/fbconnect/login-buttons/connect_light_medium_short.gif" alt="' . $title . '" /></a>';
+  $src = ($GLOBALS['is_https'] ? 'https' : 'http') . '://www.facebook.com/images/fbconnect/login-buttons/connect_light_medium_short.gif';
+  return '<a ' . $attributes . ' href="' . $url . '"><img src="' . $src . '" alt="' . $title . '" /></a>';
 }
 
 /**
@@ -411,10 +435,10 @@ function theme_fboauth_user_form_connect($variables) {
   $uid = $variables['uid'];
   $fbid = $variables['fbid'];
   if ($fbid) {
-    $output = t('Your account is connected with Facebook. (<a href="!url">More info</a>)', array('!url' => url('user/' . $uid . '/fboauth')));
+    $output = t('Your account is connected with Facebook. (<a href="!url">More info</a>)', array('!url' => url('user/' . $uid . '/fboauth', array('query' => drupal_get_destination()))));
   }
   else {
-    $output = fboauth_action_display('connect');
+    $output = fboauth_action_display('connect', $_GET['q']);
     $output .= '<div class="description">' . t('Connect with Facebook to login with your Facebook account instead of a password.') . '</div>';
   }
   return $output;

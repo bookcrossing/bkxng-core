@@ -15,11 +15,16 @@ Installation
    and create a new application, usually simply the name of your website such as
    "example.com".
 
-2. Copy the entire fboauth directory the Drupal sites/all/modules directory.
+2. While setting up your application, set the "Deauthorize Callback" to
+   "http://example.com/fboauth/deauthorize". This will allow Facebook OAuth to
+   cleanup user information if the application is disconnected from the Facebook
+   site.
 
-3. Login as an administrator. Enable the module on the Modules page.
+3. Copy the entire fboauth directory the Drupal sites/all/modules directory.
 
-4. Configure the Facebook OAuth module settings under "Configuration" ->
+4. Login as an administrator. Enable the module on the Modules page.
+
+5. Configure the Facebook OAuth module settings under "Configuration" ->
    "People" -> "Facebook OAuth settings". Copy and paste the App ID and
    App Secret from your newly created Facebook application's settings.
 
@@ -31,13 +36,13 @@ Installation
    If you have installed the Profile module, you may also map information
    between your Profile fields and Facebook's available fields.
 
-5. You can enable the Facebook connect button either by enabling the included
+6. You can enable the Facebook connect button either by enabling the included
    Facebook OAuth block under "Structure" -> "Blocks", or you can print out the
    link manually in your theme with the following code:
 
    <?php print fboauth_action_display('connect'); ?>
 
-6. Click on the Facebook Connect button to bind your Facebook account together
+7. Click on the Facebook Connect button to bind your Facebook account together
    with your user account. If you are logged out when you connect for the first
    time, a new account will be created for you. If you are logged in when you
    click the connect button, your existing account will be associated with your
@@ -143,8 +148,9 @@ function mymodule_fboauth_actions() {
     // Optionally define a theme function for printing out your link (not
     // including the "theme_" prefix). If you use this option, you must register
     // this function in hook_theme(). If you don't use this option, the link
-    // will be output with the theme_fboauth_action() function.
-    // 'theme callback' => 'mymodule_fboauth_action',
+    // will be output with the theme_fboauth_action() function or the automatic
+    // suggestion theme_fboauth_action__[action_name]().
+    // 'theme' => 'mymodule_fboauth_action',
   );
   return $actions;
 }
@@ -187,6 +193,16 @@ function will be executed.
 
 More information about Facebook OAuth's other hooks are documented in the 
 fboauth.api.php file included with this module.
+
+Deauthorization or access revocation from Facebook.
+---------------------------------------------------
+If a user revokes access to the application from the Facebook side, and the
+application has provided a Deauthorize callback URL (see Install step 2 above),
+Facebook will notify your site that the user has disconnected their account from
+your site.
+
+A hook is provided to allow other modules to respond to this event as well - see
+hook_fboauth_user_deauthorize() in fboauth.api.php file.
 
 Support
 -------

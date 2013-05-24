@@ -18,6 +18,15 @@
 
 User-agent: *
 Crawl-delay: 10
+#Custom SEO rules
+Disallow: /content/
+Disallow: /book-draft/
+Disallow: /taxonomy/
+Disallow: /avtory/
+Disallow: /?q=content/
+Disallow: /?q=book-draft/
+Disallow: /?q=taxonomy/
+Disallow: /?q=avtory/
 # Directories
 Disallow: /includes/
 Disallow: /misc/
