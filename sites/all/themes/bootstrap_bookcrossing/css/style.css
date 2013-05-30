@@ -1,0 +1,1742 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+.red-color {color: red;}
+.underlined {text-decoration: underline;}
+.x-small {font-size:10px;}
+.small {font-size:11px;}
+.mirror-rotate {transform: scale(-1, 1); -webkit-transform: scale(-1, 1); -moz-transform: scale(-1, 1); -ms-transform: scale(-1, 1); -o-transform: scale(-1, 1); /* Internet Explorer */filter: progid:DXImageTransform.Microsoft.BasicImage(rotation=3);}
+
+.dropdown-arrow {
+  position: relative;
+  top: -1px;
+  border-style: solid dashed dashed;
+  border-color: transparent;
+  border-top-color: #777;
+  display: -moz-inline-box;
+  display: inline-block;
+  font-size: 0;
+  height: 0;
+  line-height: 0;
+  width: 0;
+  border-width: 3px 3px 0;
+  padding-top: 1px;
+  left: 4px;
+}
+
+.pages-header h2 {
+  margin-bottom: 20px;
+}
+
+.pages-header p {
+  padding: 0 30px 10px 20px;
+}
+
+li {
+  margin-left: 15px;
+}
+
+label {
+  margin-top: 30px;
+}
+
+#skip-link {
+  left: 50%;
+  margin-left: -6.75em;
+  margin-top: 0;
+  position: absolute !important;
+  width: auto;
+  z-index: 50;
+}
+
+#skip-link a, #skip-link a:link, #skip-link a:visited {
+  background: none repeat scroll 0 0 #444444;
+  border-radius: 0 0 10px 10px;
+  color: #FFFFFF;
+  display: block;
+  height: 25px;
+  padding: 10px 10px 2px;
+  text-decoration: none;
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  font-size: 10px;
+  text-align: center;
+  width: 200px;
+}
+
+#autocomplete li {
+  margin-left: 0;
+  padding-left: 5px;
+}
+
+#edit-place {
+  margin-top: 30px;
+}
+
+ul.item-list li, ul.menu li, ul.links li {
+  list-style: none;
+}
+
+a, a:visited {
+  color: #3B59A9;
+  text-decoration: none;
+}
+
+a:hover {
+  /*color: blue;*/
+  text-decoration: underline;
+}
+
+input[type="submit"] {
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 12px;
+  color: #333;
+}
+
+/*input.form-autocomplete {
+  border: 1px solid #CCCCCC;
+  min-height: 20px;
+  background-position: 100% 4px !important;
+}*/
+
+table {
+  width: 100%;
+}
+
+/**
+ * Layout
+ */
+#nav-and-release-book-wrapper {
+  background-color: #F3F0C2;
+  position: relative;
+}
+
+body {
+  background-color: #C9E0FF;
+  background-image: url("images/nav-lines.png");
+}
+
+.block {
+  margin-bottom: 20px;
+}
+
+#footer-wrapper .block {
+  margin-bottom: 5px;
+}
+
+.footer-div {
+  margin: 0 auto;
+  padding: 10px;
+  text-align: center;
+  width: 228px;
+}
+
+.copyleft {
+  float: left;
+  background: url("images/copyleft.svg") no-repeat scroll 5px 0 transparent;
+  margin-top: 2px;
+  padding-right: 5px;
+  padding-left: 5px;  
+  height: 11px;
+  width: 11px;
+}
+
+#fb-wrapper {
+  padding-left:21px;
+  height: 21px;
+  float:left;
+  width:120px;
+}
+
+#github-wrapper {
+  clear:right;
+}
+
+#page-wrapper {
+  width: 960px;
+  margin: 0 auto;
+  background-color: white;
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  font-size: 12px;
+}
+
+#banners-wrapper {
+  width: 960px;
+  margin: 20px auto;
+  background-color: transparent;
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  font-size: 12px;
+}
+
+#debug-wrapper {
+  width: 960px;
+  margin: 0 auto;
+  background-color: transparent;
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  font-size: 8px;
+}
+
+#header-wrapper {
+  padding: 20px 0 10px;
+  position: relative;
+}
+
+#header-wrapper #help-link {
+  position: absolute;
+  top: 23px;
+  right: 10px
+}
+
+#header-wrapper #help-link a {
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  color: #333;
+  font-size: 11px;
+}
+
+#header-wrapper .region {
+  float: left;
+  display: inline;
+}
+
+#header-wrapper .region-header-sidebar-first {
+  width: 200px;
+  margin-right: 20px;
+}
+
+#header-wrapper .region-header-sidebar-second {
+  width: 480px;
+}
+
+#back-top {
+/*  bottom: 29px;
+  right: 45px; */
+  top: 189px;
+  right: 0px;
+  margin: 0px;
+  position: fixed;
+  z-index: 10000;
+}
+
+#back-top a { 
+  background: none;
+  background-color: rgba(255, 102, 0, 0.602);
+  text-shadow: 1px 0px 1px rgba(255, 255, 255, 0.953);
+/*  background-color: rgba(0, 0, 0, 0.102);
+  color: #777777;
+  text-shadow: 0px 1px 0px rgba(255, 255, 255, 0.953); */
+  border-radius: 5px 0px 0px 5px;
+  color: #fff;
+  font-size: 15px;
+  font-family: "Tahoma", "Verdana", "Segoe", sans-serif;
+  cursor: pointer;
+  padding: 16px 14px 17px 14px;
+  text-decoration: none;
+}
+
+.region-sidebar-first {
+  float: left;
+  display: inline;
+  width: 190px;
+}
+
+.region-after-content, .region-under-content {
+  padding: 30px;
+}
+
+.region-sidebar-second {
+  float: left;
+  display: inline;
+  width: 170px;  
+}
+
+.two-sidebars .region-content {
+  width: 600px;
+  float: left;
+  display: inline;
+}
+
+.sidebar-first .region-content {
+  float: left;
+  display: inline;
+}
+
+.page-user #content-wrapper {
+  padding-left: 50px;
+  padding-right: 10px;
+}
+
+#content-wrapper {
+  padding: 7px 20px 0;
+  min-height: 670px;
+}
+
+#content-wrapper, #footer-wrapper {
+  clear: both;
+}
+
+.region-content {
+  position: relative;
+}
+
+#footer-wrapper {
+  margin-top: 10px;
+  border-top: 1px solid #CCC;
+  padding: 10px;
+  color: #666;
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  position: relative;
+}
+
+#footer-wrapper a {
+  color: #666;
+  text-decoration: underline;
+}
+
+#footer-wrapper a:hover {
+  text-decoration: none;
+}
+
+/**
+ * Main menu with dropdown
+ */
+ul#main-menu {
+  position: relative;
+  font-weight: bold;
+}
+
+ul#main-menu li {
+  margin: 5px 0;
+}
+
+ul#main-menu li:hover {
+  
+}
+
+ul#main-menu a {
+  text-decoration: none;
+  padding: 5px 10px;
+  color: black;
+}
+
+ul#main-menu a.active,
+ul#main-menu a:hover {
+  background-color: white;
+}
+
+li#main-menu-more {
+  position: relative;
+  cursor: pointer;
+  width: 50px;
+  padding: 5px 0 5px 5px;
+  margin: 0 !important;
+}
+
+li#main-menu-more:hover {
+  background-color: white;
+}
+
+li#main-menu-more:hover #main-menu-more-wrapper {
+  display: block;
+  background-color: white;
+}
+
+li#main-menu-more:hover #main-menu-more-wrapper a {
+  background-color: white;
+}
+
+li#main-menu-more:hover #main-menu-more-wrapper a:hover {
+  background-color: #F3F0C2;
+}
+
+#main-menu-more-wrapper {
+  display: none;
+  position: absolute;
+  width: 150px;
+  top: 24px;
+  left: -1px;
+  border-color: #F3F0C2;
+  border-width: 0px 1px 1px 1px;
+  border-style: solid;
+  box-shadow: 0 6px 4px 0 #E5E5E5;
+  z-index: 2;
+}
+
+#nav-and-release-book-wrapper ul#main-menu li {
+  float: left;
+}
+
+ul#main-menu #main-menu-more-wrapper li {
+  display: block;
+  float: none;
+  margin: 0 !important;
+}
+
+ul#main-menu #main-menu-more-wrapper li a {
+  padding: 5px 0 5px 5px;
+  background-color: #F3F0C2;
+  display: block;
+}
+
+/**
+ * Release buttion
+ */
+ #release-button {
+  background-color: #008CD7;
+  background-image: url("images/btn_gradients.png");
+  background-position: 0 13%;
+  position: absolute;
+  left: 42%;
+  top: 0;
+  border: none;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 0 0 2px #fff, 0 0 0 3px #c9c9c9;
+}
+/*  
+  border-color: #676C6D;
+  border-style: solid;
+  border-width: 0 1px 1px 1px;
+*/
+
+#release-button a {
+  color: white;
+  font-weight: bolder;
+  font-size: 13px;
+  padding: 7px 20px;
+  text-decoration: none;
+  display: block;
+}
+
+#release-button a:hover {
+  text-decoration: underline;
+}
+
+/**
+ * User links
+ */
+a.my-profile {
+  font-weight: bolder;
+  color: #333;
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  padding-left: 22px;
+  background: url('images/user_ico.gif') center left no-repeat;
+}
+
+a.logout-link {
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  color: #F30;
+  font-size: 9px;
+  margin-left: 5px;
+}
+
+.my-name span {
+  padding-left: 22px;
+  background: url('images/user_ico.gif') center left no-repeat;
+}
+
+.my-name span,
+.my-shelf a {
+  font-weight: bolder;
+  color: #333;
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+}
+
+#login-wrapper {
+  position: absolute;
+  top: 5px;
+  right: 0px;
+}
+
+div.my-shelf a {
+  line-height: 12px;
+  padding: 4px 10px 6px;
+  padding-left: 28px;
+  background: url('images/shelf.png') 4px 2px no-repeat;
+}
+
+div.my-name, div.my-shelf {
+  display: inline;
+/*  padding: 4px 10px 6px;*/
+}
+
+div.my-shelf a.active,
+div.my-shelf a:hover {
+  background-color: white;
+}
+
+/**
+ * Logo
+ */
+ a#logo {
+   position: relative;
+   top: 10px;
+   left: 20px;
+   float: left;
+   margin-right: 100px;
+ }
+ 
+ /**
+  * BCID form
+  */
+.bcid-title {
+  font-size: 16px;
+  font-weight: bold;
+/*  margin-bottom: 5px;*/
+} 
+ 
+.bcid-description {
+  clear: left;
+  font-size: 10px;
+  font-weight: normal;
+  margin-bottom: 0px;
+  margin-top: 5px;
+  color: #333;
+}
+
+.form-item-existed-book-bcid-first-part, .form-item-existed-book-bcid-second-part,
+.form-item-bcid-first-part, .form-item-bcid-second-part {
+  float: left;
+  margin: 5px 0;
+}
+
+.form-item-existed-book-bcid-first-part input,
+.form-item-bcid-first-part input {
+  width: 61px;
+}
+
+.form-item-existed-book-bcid-second-part input,
+.form-item-bcid-second-part input {
+  width: 74px;
+}
+
+.form-item-existed-book-bcid-first-part input, .form-item-existed-book-bcid-second-part input,
+.form-item-bcid-first-part input, .form-item-bcid-second-part input {
+  font-size: 20px;
+  text-transform: uppercase;
+}
+
+.bcid-separator {
+  margin: 5px;
+  float: left;
+  font-size: 20px;
+}
+
+.bcid-submit {
+  padding-top: 8px;
+  padding-left: 3px;
+}
+
+#edit-existed-book-submit {
+  margin-top: 7px;
+  margin-left: 10px;
+}
+
+/**
+ * Front page book
+ */
+.node-bookcrossing.view-mode-front_page {
+  float: left;
+}
+
+.node-bookcrossing.view-mode-front_page .book-no-image,
+.node-bookcrossing.view-mode-front_page .field-name-field-bookcrossing-image {
+  padding: 20px;
+}
+
+.book-no-image, .view-mode-front_page .field-name-field-bookcrossing-image {
+/*  border: 1px solid #CCC;  */
+  border: none;
+}
+
+.book-no-image {
+  text-align: center;
+  position: relative;
+}
+
+.node-bookcrossing.view-mode-front_page .book-no-image {
+  padding: 22px 20px;
+}
+
+.book-no-image {
+  text-align: center;
+  position: relative;
+}
+
+.view-mode-default .book-no-image {
+  width: 200px;
+}
+
+.view-mode-book_cover .book-no-image {
+  width: 118px;
+  margin-bottom: 0px;
+}
+
+.book-no-image-container {
+  background-image: url("images/dustnscratches.png");
+}
+
+.node-bookcrossing.view-mode-default .book-no-image-container,
+.node-bookcrossing.view-mode-front_page .book-no-image-container {
+  width: 180px;
+  height: 280px;
+  padding: 10px;
+}
+
+.node-bookcrossing.view-mode-book_shelf_with_bcid .book-no-image-container,
+.node-bookcrossing.view-mode-book_shelf .book-no-image-container {
+  width: 50px;
+  height: 80px;
+  padding: 5px;
+}
+
+.node-bookcrossing.view-mode-catalog .book-no-image-container {
+  width: 50px;
+  height: 80px;
+  padding: 5px;
+}
+
+.node-bookcrossing.view-mode-found_book .book-no-image-container {
+  width: 80px;
+  height: 128px;
+  padding: 10px;
+}
+
+.node-bookcrossing.view-mode-book_cover .book-no-image-container {
+  width: 98px;
+  height: 158px;
+  padding: 11px;
+}
+
+.node-bookcrossing.view-mode-history .book-no-image-container {
+  padding: 5px;
+  width: 90px;
+  height: 120px;
+}
+
+.book-no-image-title {
+  position: absolute;
+  font-size: 14px;
+  font-weight: bold;
+  overflow: hidden;
+  margin: 2px;
+}
+
+.node-bookcrossing.view-mode-default .book-no-image-title,
+.node-bookcrossing.view-mode-front_page .book-no-image-title {
+  top: 90px;
+  width: 176px;
+}
+
+.node-bookcrossing.view-mode-book_shelf_with_bcid .book-no-image-title,
+.node-bookcrossing.view-mode-book_shelf .book-no-image-title {
+  top: 20px;
+  width: 50px;
+}
+
+.node-bookcrossing.view-mode-found_book .book-no-image-title {
+  width: 80px;
+  top: 20px;
+}
+
+.node-bookcrossing.view-mode-book_cover .book-no-image-title {
+  width: 92px;
+  top: 40px;
+}
+
+.book-no-image-year {
+  font-size: 9px; 
+  font-weight: bold; 
+  position: absolute;
+}
+
+.node-bookcrossing.view-mode-default .book-no-image-year,
+.node-bookcrossing.view-mode-front_page .book-no-image-year {
+  bottom: 40px;
+  width: 176px;
+}
+
+.node-bookcrossing.view-mode-found_book .book-no-image-year {
+  bottom: 10px;
+  width: 80px;
+}
+
+.node-bookcrossing.view-mode-book_shelf_with_bcid .book-no-image-year,
+.node-bookcrossing.view-mode-book_shelf .book-no-image-year {
+  width: 50px;
+}
+
+.node-bookcrossing.view-mode-book_cover .book-no-image-year {
+  width: 100px;
+  bottom: 10px;
+}
+
+.book-no-image a {
+  display: block;
+  color: white;
+  border: 2px solid #CCC;
+  text-decoration: none;
+}
+
+.node-bookcrossing.view-mode-default .book-no-image a,
+.node-bookcrossing.view-mode-front_page .book-no-image a {
+  width: 176px;
+  height: 276px;
+}
+
+.node-bookcrossing.view-mode-book_shelf_with_bcid .book-no-image a,
+.node-bookcrossing.view-mode-book_shelf .book-no-image a {
+  width: 46px;
+  height: 76px;
+}
+
+.node-bookcrossing.view-mode-found_book .book-no-image a {
+  width: 76px;
+  height: 126px;
+}
+
+.node-bookcrossing.view-mode-catalog .book-no-image a {
+  width: 46px;
+  height: 76px;
+}
+
+.node-bookcrossing.view-mode-history .book-no-image a {
+  width: 86px;
+  height: 116px;
+}
+
+.node-bookcrossing.view-mode-book_cover .book-no-image a {
+  width: 96px;
+  height: 156px;
+}
+
+#edit-place .fieldset-wrapper {
+  position: relative;
+}
+
+.my-places-list-wrapper {
+  min-width: 700px;
+  position: absolute;
+  left: 140px;
+  top: 12px;
+}
+
+.my-places-list-wrapper .form-item {
+  margin: 0;
+  float: left;
+  margin-right: 10px;
+}
+
+.form-item-country label, .form-item-city label, .form-item-new-place label {
+  font-weight: normal;
+  float: left;
+  margin-top: 2px;
+  width: 80px;
+}
+
+.form-item-my-places-list[style="display: none; "] + #my-places-list-description {
+  display: none;
+}
+
+#my-places-list-description {
+  float: left;
+  line-height: 18px;
+}
+
+.place-or {
+  position: absolute;
+  top: 33px;
+  left: 19px;
+}
+
+#edit-create-or-select .form-item {
+  margin: 0;
+}
+
+#edit-create-or-select  {
+  line-height: 40px;
+}
+
+#edit-search {
+  width: 395px;
+  font-size: 20px;
+}
+
+.form-item-search {
+  float: left;
+  margin: 5px 0;
+}
+
+#bookcrossing-search-form .form-submit {
+  padding-top: 9px;
+  padding-left: 5px;
+}
+
+.search-description {
+  clear: left;
+  font-size: 10px;
+  font-weight: normal;
+  margin-bottom: 0px;
+  color: #333;
+}
+
+.search-title {
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.searching-for {
+  margin-bottom: 5px;
+  font-size: 14px;
+  color: #333;
+}
+
+.searching-for a {
+  margin-left: 10px;
+  font-size: 12px;
+}
+
+/**
+ * Catalog
+ */
+.view-mode-catalog .group-left {
+  width: 60px;
+  margin-right: 10px;
+}
+
+.view-mode-catalog .group-right {
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  color: #B0B0B0;
+  font-size: 12px;
+  width: 230px;
+  line-height: 14px;
+}
+
+.view-mode-catalog h2.node-title {
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  color: #4B97FF;
+  font-size: 12px;
+  line-height: 12px;
+  margin-bottom: 0;
+  max-height: 25px;
+  overflow: hidden;
+}
+
+.book-authors {
+  display: inline-block;
+  max-height: 15px;
+  overflow: hidden;
+}
+
+.book-status-string {
+  margin-top: 15px;
+}
+
+.catalog-container {
+  border-bottom: 1px solid #C9C9C9;
+  padding-bottom: 10px;
+  clear: both;
+}
+
+.catalog-group {
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  color: #333;
+  font-size: 21px;
+  font-weight: bolder;
+  margin-left: 10px;
+  margin-bottom: 5px;
+  margin-top: 5px;
+}
+
+.catalog-controls {
+  background-color: #F5F5F5;
+  /*background-image: url("images/paint-splatter.png");*/
+  position: relative;
+  height: 50px;
+  border-top: 1px solid #C9C9C9;
+}
+
+#paginator {
+  width: 260px;
+  height: 50px;
+  background: white;
+  margin: 0;
+  position: absolute;
+  top: 0;
+  right: 90px;
+  padding: 0;
+  padding-top: 8px;
+}
+
+#paginator a {
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  /*color: #4B97FF;*/
+  color: #3B59A9;
+  font-size: 11px;
+  text-decoration: none;
+}
+
+#paginator a:hover {
+  text-decoration: underline;
+}
+
+.paginator td span {
+  padding: 0;
+}
+
+.paginator td span strong {
+  background-color: #FF6600;
+  color: white;
+  text-decoration: none;
+  padding: 0px 4px;
+}
+
+.paginator .scroll_trough {
+  background: #CCCCCC;
+  height: 5px;
+}
+
+.paginator .scroll_thumb {
+  background: #FF6600;
+  height: 5px;
+}
+
+.paginator .current_page_mark {
+  height: 5px;
+}
+
+.pager-total {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 90px;
+  height: 50px;
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  color: #666;
+  
+}
+
+.pager-total .pager-total-text {
+  padding: 5px 0 0 20px;
+  font-size: 21px;
+}
+
+.pager-total-text span {
+  color: #666;
+  font-size: 11px;
+  display: block;
+}
+
+.catalog-sorts {
+  position: absolute;
+  bottom: 5px;
+  left: 30px;
+}
+
+.catalog-view-types {
+  position: absolute;
+  bottom: 5px;
+  left: 350px;
+}
+
+.catalog-view-types a,
+.catalog-sorts a {
+  color: #868686;
+  font-size: 12px;
+  text-decoration: none;
+  padding: 5px 10px;
+}
+
+.catalog-view-types a {
+  padding: 5px 10px 5px 25px;
+}
+
+.catalog-view-types a.active,
+.catalog-view-types a:hover,
+.catalog-sorts a.active,
+.catalog-sorts a:hover {
+  background-color: white;
+}
+
+.catalog-view-tile {
+  background: url('images/tile.png') 5px 4px no-repeat;
+}
+
+.catalog-view-covers {
+  background: url('images/list.png') 5px 4px no-repeat;
+}
+
+.covers-container {
+  width: 720px;
+  margin: 20px auto 10px;
+}
+
+.node-bookcrossing.view-mode-book_cover {
+  float: left;
+  display: inline;
+  width: 120px;
+  height: 180px;
+}
+
+.node-bookcrossing.view-mode-catalog {
+  float: left;
+  display: inline;
+  width: 305px;
+  margin-top: 10px;
+  height: 90px;
+}
+
+.node-bookcrossing.view-mode-catalog a {
+  /*color: #4B97FF;*/
+  color: #3B59A9;
+  text-decoration: none;
+}
+
+.node-bookcrossing.view-mode-catalog a:hover {
+  text-decoration: underline;
+}
+
+.letters-wrapper {
+  clear: both;
+}
+
+.letters-container {
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  color: #333;
+  font-size: 12px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.letters-container span,
+.letters-container a {
+  margin: 0 3px;
+  line-height: 40px;
+}
+
+.letters-container a {
+  color: #4B97FF;
+  text-decoration: none;
+}
+
+/**
+ * Reserve BCID
+ */
+#reserve-bcid {
+  border: 1px solid #666666;
+  width: 160px;
+  height: 37px;
+  float: left;
+  text-align: center;
+}
+
+#reserve-bcid {
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  color: #039;
+  font-size: 12px;
+  font-weight: bolder;
+  float: left;
+  padding-top: 23px;
+}
+
+#reserve-bcid-description {
+  float: left;
+  padding-left: 20px;
+  padding-top: 5px;
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  color: #333;
+  font-size: 12px;
+  width:660px;
+
+}
+
+.bcid-container {
+  float: left;
+  width: 160px;
+  height: 37px;
+  padding-top: 23px;
+  text-align: center;
+  border: 1px solid #666666;
+  margin-right: 18px;
+}
+
+.bcid-container a {
+  color: #333;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.page-user h3.block-title {
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  color: #333;
+  font-size: 16px;
+  font-weight: bolder;
+  margin-bottom: 10px;
+}
+
+/**
+ * FAQ, Facebook link, Twitter link blocks
+ */
+#block-bookcrossing-faq-link {
+  padding: 10px 20px 10px 0;
+}
+ 
+#block-bookcrossing-facebook-and-twitter-link a {
+  margin-right: 90px;
+}
+ 
+/**
+ * Footer elements
+ */  
+#footer-wrapper ul.menu {
+  text-align: center;
+}
+  
+#footer-wrapper ul.menu li {
+  display: inline;
+  border-right: 1px solid #666;
+  margin-left: 20px;
+  padding-right: 20px;
+}
+
+#footer-wrapper ul.menu li.last {
+  border-right: 0;
+  padding-right: 0;
+}
+
+.region-footer-text {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.ira-young {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 120px;
+}
+
+.design-by {
+  float: left;
+  margin-top: 8px;
+  margin-right: 2px;
+}
+
+/**
+ * Book page
+ */
+.page-book .ds-2col .group-left {
+  width: 220px;
+}
+
+.page-book .ds-2col .group-right {
+  width: 700px;
+}
+
+h2.node-title {
+  font-size: 22px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  line-height: 20px;
+  color: black;
+}
+
+.view-mode-history h2.node-title {
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  color: #333;
+  font-size: 13px;
+  line-height: 13px;
+}
+
+.view-mode-history {
+  margin-left: 20px;
+}
+
+.view-mode-history .group-left {
+  width: 451px;
+  padding-left: 10px;
+  min-height: 1px;
+}
+
+.view-mode-history .group-right {
+  width: 300px;
+}
+
+.view-mode-history .group-middle {
+  width: 100px;
+  margin: 0 10px 30px 20px;
+}
+
+.node {
+  line-height: 18px;
+  color: #333;
+}
+
+.node .field-label {
+  color: #B0B0B0;
+  font-weight: normal;
+}
+
+.status-label {
+  width: 100px;
+  float: left;
+  color: #B0B0B0;
+}
+
+.view-mode-history .field-label,
+.view-mode-history .status-label {
+  width: 80px;
+  font-weight: normal;
+  color: #333;
+  font-size: 11px;
+}
+
+.view-mode-history ul.status-info {
+  margin-top: 10px;
+}
+
+.view-mode-history ul.status-info li {
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  color: #333;
+  font-size: 11px;
+  font-weight: bolder;
+}
+
+ul.status-info {
+  list-style: none;
+}
+
+ul.status-info li {
+  margin: 0;
+}
+
+.view-mode-default .field-label {
+  width: 100px;
+}
+
+.view-mode-default .field-name-field-bookcrossing-author {
+  margin-bottom: 10px;
+}
+
+.view-mode-default .field-name-field-bookcrossing-genre {
+  margin-bottom: 20px;
+}
+
+.view-mode-default ul.book-links {
+  margin-top: 20px;
+  list-style: none;
+}
+
+.oz-link {
+  margin: 0 0 0 100px;
+  background: url('/sites/default/files/images/misc/oz-icon.png') no-repeat 5px #dfe;
+  color: #3B59A9 !important;
+  border: 1px dashed #bdc;
+  padding: 8px 5px 7px 27px !important;
+}
+
+.view-mode-default .field-name-field-bookcrossing-description {
+  margin: 40px 50px 20px 15px;
+  text-align: justify;
+  min-height: 60px;
+}
+
+.view-mode-found_book .group-left {
+  width: 100px;
+  margin-right: 30px;
+  margin-bottom: 10px;
+}
+
+.view-mode-found_book .group-right {
+  float: left;
+  width: auto;
+}
+
+.view-mode-found_book h2.node-title {
+  font-size: 18px;
+  line-height: 18px;
+  margin-bottom: 10px;
+}
+
+
+.view-mode-book_shelf_with_bcid h2.node-title a,
+.view-mode-book_shelf_with_bcid h2.node-title,
+.view-mode-book_shelf h2.node-title a,
+.view-mode-book_shelf h2.node-title {
+  font-weight: bolder;
+  font-size: 12px;
+  margin-bottom: 0px;
+  line-height: 12px;
+  color: #333;
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+}
+
+.page-user table {
+  width: auto;
+  background-color: #F5F5F5;
+}
+
+.page-user td {
+  width: 265px;
+  padding: 10px 15px 10px 20px;
+  border: 1px solid #D1D1D1;
+}
+
+.view-mode-book_shelf_with_bcid .group-left,
+.view-mode-book_shelf .group-left {
+  width: 60px;
+  margin-right: 10px;
+}
+
+.view-mode-book_shelf_with_bcid .field-label,
+.view-mode-book_shelf .field-label {
+  color: #333;
+}
+
+.page-user .books-bcid {
+  margin-top: 23px;
+}
+
+.favourites-books-title,
+.released-books-title,
+.found-books-title {
+  font-size: 16px;
+  line-height: 16px;
+  font-weight: bolder;
+  margin-bottom: 10px;
+  margin-top: 20px;
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  color: #333;
+}
+
+/*.view-mode-found_book .field-name-field-bookcrossing-author {
+  float: left;
+}*/
+
+.view-mode-found_book ul.status-info {
+  margin-top: 20px;
+}
+
+.view-mode-found_book .field-label {
+  width: 80px;
+}
+
+.view-mode-found_book .status-label {
+  width: 75px;
+}
+
+.view-mode-found_book .group-footer {
+  border-top: 1px solid #D9D9D9;
+  margin-top: 10px;
+  padding-left: 130px;
+  padding-top: 25px;
+}
+
+.view-mode-found_book #bookcrossing-book-comment fieldset {
+  border: 0;
+}
+
+.view-mode-found_book #bookcrossing-book-comment fieldset legend {
+  color: black;
+  font-size: 14px;
+  font-weight: bolder;
+}
+
+#bookcrossing-book-comment #cities-wrapper,
+#bookcrossing-book-comment .form-item-country {
+  /*float: left;*/
+
+}
+
+#bookcrossing-book-comment select {
+  min-width: 150px;
+}
+
+#bookcrossing-book-comment .form-item-country {
+  margin-right: 20px;
+}
+
+#bookcrossing-book-comment #places-wrapper {
+  clear: both;
+}
+
+#bookcrossing-book-comment input[type="submit"] {
+/*  background-color: #FFCC33;
+  color: #5C4E33;
+  padding: 7px 30px;
+  border: 1px solid #D7D4C9; */
+} 
+
+/**
+ * Book history
+ */
+.place-wrapper {
+  border-top: 1px solid #D9D9D9;
+  padding: 10px;
+  clear: both;
+}
+
+.history-comment {
+  width: 481px;
+  min-height: 1px;
+  float: left;
+  text-align: justify;
+}
+
+.history-user-foto {
+  float: left;
+  margin: 0 10px;
+  width: 50px;
+  height: 50px;
+}
+
+.history-user-info {
+  float: left;
+  width: 325px;
+}
+
+.history-user-info a {
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  font-size: 11px;
+  font-weight: bolder;
+  margin-bottom: 5px;
+}
+
+.place-found, .place-left {
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  color: #333;
+  font-size: 11px;
+  font-weight: bolder;
+}
+
+.place-found {
+  margin-bottom: 10px;
+}
+
+.place-date-left, .place-date-found {
+  font-weight: normal;
+}
+
+.my-comment {
+  margin-bottom: 20px;
+}
+
+.my-comment-title {
+  margin-bottom: 10px;
+  font-size: 16px;
+  font-weight: bolder;
+}
+
+.my-comment-title a {
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  font-size: 12px;
+  margin-left: 15px;
+  line-height: 12px;
+  font-weight: normal;
+}
+
+#my-comment-text {
+  background-color: #F6F6F6;
+  border: 1px solid #D9D9D9;
+  padding: 10px;
+  text-align: justify;
+}
+
+.back-to-book {
+  position: absolute;
+  top: -15px;
+  left: -5px;
+  font-size: 9px;
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+}
+
+/**
+ * Book added page
+ */
+.bcid-wrapper {
+  background: url('images/book-added-help.png') bottom center no-repeat;
+  padding-bottom: 320px;
+}
+
+.bcid-instructions p {
+  width: 500px;
+  margin: 20px auto;
+  text-align:justify;
+}
+
+.bcid-number-wrapper {
+  width: 480px;
+  height: 240px;
+  border: 2px solid #999999;
+  margin: 0 auto;
+}
+
+.bcid-image-plate {
+  float: left;
+  width: 240px;
+  height: 240px;
+}
+
+.bcid-scissors {
+  background: url('/sites/all/themes/im_bookcrossing/images/scissors_horz.png') no-repeat scroll 430px 0 transparent;
+  height: 19px;
+  margin: 0 auto;
+  width: 480px;
+}
+
+.bcid-number {
+  font-size: 15px;
+  text-align: center;
+  color: #333;
+  margin-top: 20px;
+}
+
+.bcid-wrapper .bcid {
+  float: right;
+  color: #333;
+  font-size: 35px;
+  text-align: center;
+  padding-right: 15px;
+  /*border: 1px solid #666666;*/
+  /*width: 255px;*/
+  /*margin: 40px auto;*/
+  font-weight: bolder;
+}
+
+.bcid-wrapper .bcid-descr {
+  /*color: #333;
+  font-size: 13px;
+  text-align: center;*/
+  float: left; 
+  width: 200px; 
+  text-align: center; 
+  padding: 7px 20px 20px; 
+  font-size: 12px;
+}
+
+.qr-code {
+  /* left: -115px;
+  position: relative;
+  top: -109px; */
+  
+  background-repeat: no-repeat;
+  background-position: 105% 100%;
+  width: 240px;
+  height: 240px;
+  float: left;
+  position: absolute;
+  z-index: 4;
+}
+
+.user-profile.view-mode-user_list {
+  padding: 5px;
+  border: 1px solid #F2F2F2;
+}
+
+.user-odd, .user-even {
+  float: left;
+  margin-bottom: 10px;
+  width: 450px;
+}
+
+.user-odd {
+  margin-right: 20px;
+}
+
+.user-profile.view-mode-user_list .group-left {
+  width: 200px;
+  margin-right: 20px;
+}
+
+.user-profile.view-mode-user_list .group-right {
+  width: auto;
+}
+
+.user-profile.view-mode-user_list h3.user-name {
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  color: blue;
+  font-size: 12px;
+  font-weight: bolder;
+  margin-bottom: 30px;
+}
+
+.user-profile.view-mode-user_list .user-field-registered {
+  font-weight: bolder;
+  margin-bottom: 34px;
+}
+
+.user-profile.view-mode-user_list .user-field {
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  color: #333;
+  font-size: 12px;
+  width: 210px;
+}
+
+.user-profile.view-mode-user_list .field-label {
+  font-weight: normal;
+  float: left;
+  width: 90px;
+}
+
+.user-list-controls {
+  margin-bottom: 20px;
+}
+
+.user-shelf td {
+  position: relative;
+}
+
+td .release-link {
+  background: url('images/release-book.png') no-repeat;
+  float: right;
+  left: 5px;
+  margin-top: -20px;
+  padding: 3px 8px;
+  position: relative;
+  right: 10px;
+  text-decoration: none;
+  top: 2px;
+}
+
+.field-name-field-bookcrossing-genre .field-items {
+  float: none;
+  margin-left: 100px;
+}
+
+#bookcrossing-catalog-select-country {
+  margin-top: 10px;
+  color: #868686;
+  font-size: 12px;
+  text-align: right;
+}
+
+#bookcrossing-catalog-select-country .form-item-country {
+  display: inline;
+  padding: 0 10px;
+}
+
+.catalog-group span {
+  font-weight: normal;
+  font-size: 18px;
+}
+
+.fb-comments {
+  margin: 25px 10px 0 15px;
+}
+
+
+/**
+ * Maintenance Page
+ */
+
+.maintenance-page #content {
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  color: #333;
+  font-size: 43px;
+}
+
+.maintenance-page #logo-wrapper {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.maintenance-page .fb-like {
+  position: absolute;
+  top: 40px;
+  left: 0px;
+  margin-left: 100px;
+}
+
+.maintenance-page #header {
+  position: relative;
+  height: 70px;
+}
+
+.maintenance-page #content {
+  margin-top: 50px;
+  padding-bottom: 500px;
+  background: url('images/maintenance-bg.png') bottom center no-repeat;
+  text-align: center;
+}
+
+.maintenance-page #links {
+  margin-top: 40px;
+  padding-bottom: 80px;
+  text-align: center;
+}
+
+.maintenance-page #links a {
+  margin: 0 40px;
+}
+
+.maintenance-page .twitter-wrapper {
+  margin: 40px 0 10px 20px;
+  padding-bottom: 70px;
+  text-align:center;
+}
+
+.maintenance-page .twitter-wrapper p {
+  font-size: 22px;
+  margin-bottom: 30px;
+}
+
+.bcid-pretext {
+  margin: 30px 0 10px 0;
+}
+
+/**
+ * Forums
+ */
+h3.forum-title {
+  margin-top: 20px;
+}
+
+p.forum-descr {
+
+}
+
+/**
+ * Blogs
+ */
+div.node-blog.node-teaser.article-margins {
+  border-top: 1px dotted #ccc;
+  padding-top: 15px;
+}
+div.article-margins div.field-name-title {
+  margin: 3px 15px;
+}
+div.article-margins h1{
+  font-size: 1.5em;
+}
+div.article-margins h2{
+  font-size: 1.2em;
+}
+div.article-margins div.field-name-post-date {
+  color: #777;
+  margin: 0 15px 12px;
+}
+div.article-margins div.field-name-body {
+  margin: 10px 15px;
+  text-align: justify;
+}
+div.article-margins p {
+  margin: 10px 0;
+}
+div.article-margins div.field-name-node-link {
+  margin: -10px 15px 20px;
+  float: right;
+}
+
+/**
+ * Places
+ */
+
+div.place-left-column {
+  width: 200px;
+}
+div.place-right-column {
+  float: left;
+  width: 700px;
+  margin: 20px 0px 40px 20px;
+}
