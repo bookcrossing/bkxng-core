@@ -79,6 +79,37 @@
     <?php endif; ?>
   <?php endif; ?>
   
+
+  <div class="navbar">
+    <div class="navbar-inner">
+      <div class="container">
+   
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </a>
+   
+        <!-- Be sure to leave the brand out there if you want it shown -->
+        <?php if ($logo || $site_title): ?>
+          <?php if ($title): ?>
+            <a class="brand" href="#"><?php print $site_html ?></a>
+          <?php endif; ?>
+        <?php endif; ?>
+            
+
+   
+        <!-- Everything you want hidden at 940px or less, place within here -->
+          <?php print theme('bookcrossing_main_menu', array('visible' => 3, 'links' => $main_menu, 'attributes' => array('id' => 'main-menu', 'class' => array('links', 'clearfix')), 'heading' => '')); ?>
+          <!-- .nav, .navbar-search, .navbar-form, etc -->
+        </div>
+   
+      </div>
+    </div>
+  </div>
+
+
   <div id="nav-and-release-book-wrapper">
     <?php print theme('bookcrossing_main_menu', array('visible' => 3, 'links' => $main_menu, 'attributes' => array('id' => 'main-menu', 'class' => array('links', 'clearfix')), 'heading' => '')); ?>
     

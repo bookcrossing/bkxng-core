@@ -34,10 +34,10 @@
   padding: 0 30px 10px 20px;
 }
 
-li {
+/*li {
   margin-left: 15px;
 }
-
+*/
 label {
   margin-top: 30px;
 }
@@ -154,13 +154,13 @@ body {
   clear:right;
 }
 
-#page-wrapper {
+/*#page-wrapper {
   width: 960px;
   margin: 0 auto;
   background-color: white;
   font-family: Tahoma, Verdana, Segoe, sans-serif;
   font-size: 12px;
-}
+}*/
 
 #banners-wrapper {
   width: 960px;
@@ -468,14 +468,14 @@ div.my-shelf a:hover {
 /**
  * Logo
  */
- a#logo {
+/* a#logo {
    position: relative;
    top: 10px;
    left: 20px;
    float: left;
    margin-right: 100px;
  }
- 
+*/ 
  /**
   * BCID form
   */
