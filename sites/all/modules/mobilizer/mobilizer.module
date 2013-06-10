@@ -1,0 +1,1719 @@
+<?php
+
+/**
+ * @file
+ * Primarily Drupal hooks and global API functions to manipulate mobilizer.
+ */
+
+/**
+ * Implements hook_init().
+ */
+function mobilizer_init() {
+  $argument1 = array('mobilizer');
+  $argument2 = array('featured-mobilizer', 'mobilizer');
+  $argument3 = array('start-mobilizer', 'select-layout', 'select-menu-configure', 'featured-pages', 'finish-page');
+  $argument4 = array('theme-setting-mobilizer', 'header');
+  if (in_array(arg(1), $argument1) || in_array(arg(0), $argument2) || in_array(arg(2), $argument3) || in_array(arg(3), $argument4)) {
+    drupal_add_css(drupal_get_path('module', 'mobilizer') . '/css/mobilizer-bs.css', array('type' => 'file'));
+    drupal_add_css(drupal_get_path('module', 'mobilizer') . '/css/mobilizer-reset.css', array('type' => 'file'));
+    drupal_add_css(drupal_get_path('module', 'mobilizer') . '/css/mobilizer-style.css', array('type' => 'file'));
+    drupal_add_js(drupal_get_path('module', 'mobilizer') . '/js/all-plugin.js', array('type' => 'file'));
+    drupal_add_js(drupal_get_path('module', 'mobilizer') . '/js/mobilizer-common.js', array('type' => 'file'));
+    drupal_add_js(drupal_get_path('module', 'mobilizer') . '/js/all-plugin.js', array('type' => 'file'));
+  }
+}
+/**
+ * Implements hook_help().
+ */
+function mobilizer_help($section = 'admin/help#mobilizer', $arg = NULL) {
+  $output = '';
+  switch ($section) {
+    case 'admin/help#mobilizer':
+      $output = t("Help");
+    break;
+  }
+  return $output;
+}
+
+/**
+ * Implements hook_css_alter().
+ */
+function mobilizer_css_alter(&$css) {
+  //global $theme;
+  $theme = variable_get('admin_theme', 0);
+  $ajax_call_element = NULL;
+  if (isset($_POST['_triggering_element_name']) || isset($_POST['_triggering_element_value']) || (arg(1) == "featured-page" && arg(2) == "ajax")) {
+    $ajax_call_element = 'set';
+  }
+  // for hide preview css
+  if (!isset($_GET['mobilizer'])) {
+    unset($css[drupal_get_path('theme', $theme) . '/css/mobilizer-page-header-style-preview.css']);
+  }
+
+  $argument1 = array('mobilizer');
+  $argument2 = array('featured-mobilizer', 'mobilizer');
+  $argument3 = array('start-mobilizer', 'select-layout', 'select-menu-configure', 'featured-pages', 'finish-page', 'header_image', 'hbimage', 'site_background');
+  $argument4 = array('theme-setting-mobilizer', 'header');
+  if (in_array(arg(1), $argument1) || in_array(arg(0), $argument2) || in_array(arg(2), $argument3) || in_array(arg(3), $argument4) || $ajax_call_element != NULL) {
+    unset($css[drupal_get_path('theme', $theme) . '/style.css']);
+    unset($css[drupal_get_path('theme', $theme) . '/reset.css']);
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function mobilizer_menu() {
+  // Menu items that are basically just menu blocks.
+  $items['admin/mobilizer'] = array(
+    'title' => 'Drupal Mobilizer',
+    'description' => 'Configurations related to web mobilizer.',
+    'position' => 'right',
+    'weight' => -8,
+    'page callback' => 'mobilizer_start_page',
+    'access arguments' => array('access administration pages'),
+    'file' => 'includes/mobilizer-start.inc'
+  );
+  $items['admin/mobilizer/start-mobilizer'] = array(
+    'title' => 'Start',
+    'description' => 'Theme creation.',
+    'page callback' => 'mobilizer_start_page',
+    'access arguments' => array('administer site configration'),
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/mobilizer-start.inc',
+  );
+  $items['admin/mobilizer/select-menu'] = array(
+    'title' => 'Finalize Menu',
+    'description' => 'List of menus as enebled in web theme.',
+    'page callback' => 'mobilizer_select_menu_admin_settings_page',
+    'access arguments' => array('administer site configration'),
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/mobilizer-select-menu.inc',
+  );
+  $items['admin/mobilizer/select-menu-configure'] = array(
+    'title' => 'Menu Configuration',
+    'page callback' => 'mobilizer_menu_overview_page',
+    'access arguments' => array('administer site configration'),
+    'file' => 'includes/mobilizer-select-menu.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/menu/item/%menu_link/edit'] = array(
+    'title' => 'Edit menu link',
+    'page callback' => 'mobilizer_menu_edit_item_page',
+    'page arguments' => array(4),
+    'access arguments' => array('administer menu'),
+    'file' => 'includes/mobilizer-select-menu.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/select-menu-configure/page/%/edit'] = array(
+    'title' => 'Customize Block List',
+    'description' => 'Block list of node',
+    'page callback' => 'mobilizer_menu_block_list',
+    'access arguments' => array('administer site configration'),
+    'file' => 'includes/mobilizer-menu-block-list.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/select-menu-configure/page/%/delete'] = array(
+    'page callback' => 'mobilizer_menu_block_list_delete_page',
+    'page arguments' => array(4),
+    'access arguments' => array('access content'),
+    'file' => 'includes/mobilizer-menu-block-list.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/select-menu-configure/page/%/edit/%/blockedit'] = array(
+    'title' => 'Mobilizer Block Edit',
+    'description' => 'Mobilizer block edit',
+    'page callback' => 'mobilizer_block_edit_page',
+    'access arguments' => array('administer site configration'),
+    'file' => 'includes/mobilizer-block-edit.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/featured-pages'] = array(
+    'page callback' => 'mobilizer_featured_page_listing_add',
+    'access arguments' => array('administer site configration'),
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/mobilizer-featured-page-admin.inc',
+  );
+  $items['admin/mobilizer/featured-pages/add-page'] = array(
+    'page callback' => '_mobilizer_featured_page_custom_page_add',
+    'access arguments' => array('administer site configration'),
+    'file' => 'includes/mobilizer-featured-page-admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/featured-mobilizer/rss'] = array(
+    'page callback' => 'mobilizer_featured_page_rss_page',
+    'title' => 'RSS feed',
+    'access arguments' => array('administer site configration'),
+    'file' => 'includes/mobilizer-featured-page-admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/featured-mobilizer/rss/%/edit'] = array(
+    'page callback' => 'mobilizer_featured_page_rss_page',
+    'page arguments' => array(4),
+    'title' => 'RSS feed Edit',
+    'access arguments' => array('administer site configration'),
+    'file' => 'includes/mobilizer-featured-page-admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/featured-mobilizer/twitter'] = array(
+    'page callback' => 'mobilizer_featured_page_twitter_page',
+    'title' => 'Twitter Feed',
+    'access arguments' => array('administer site configration'),
+    'file' => 'includes/mobilizer-featured-page-admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/featured-mobilizer/twitter/%/edit'] = array(
+    'page callback' => 'mobilizer_featured_page_twitter_page',
+    'page arguments' => array(4),
+    'title' => 'Twitter Feed Edit',
+    'access arguments' => array('administer site configration'),
+    'file' => 'includes/mobilizer-featured-page-admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/featured-mobilizer/basicpage'] = array(
+    'page callback' => 'mobilizer_featured_page_basic_page',
+    'access arguments' => array('administer site configration'),
+    'title' => 'Basic Page',
+    'file' => 'includes/mobilizer-featured-page-admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/featured-mobilizer/basicpage/%/edit'] = array(
+    'page callback' => 'mobilizer_featured_page_basic_page',
+    'page arguments' => array(4),
+    'title' => 'Basic Page Edit',
+    'access arguments' => array('administer site configration'),
+    'file' => 'includes/mobilizer-featured-page-admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/featured-mobilizer/aboutus'] = array(
+    'page callback' => 'mobilizer_featured_page_about_page',
+    'title' => 'About Us',
+    'access arguments' => array('administer site configration'),
+    'file' => 'includes/mobilizer-featured-page-admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/featured-mobilizer/aboutus/%/edit'] = array(
+    'page callback' => 'mobilizer_featured_page_about_page',
+    'page arguments' => array(4),
+    'title' => 'About Us Edit',
+    'access arguments' => array('administer site configration'),
+    'file' => 'includes/mobilizer-featured-page-admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/featured-mobilizer/youtube'] = array(
+    'page callback' => 'mobilizer_featured_page_youtube_page',
+    'access arguments' => array('administer site configration'),
+    'title' => 'Youtube Edit',
+    'file' => 'includes/mobilizer-featured-page-admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/mobilizer/youtube/%/edit'] = array(
+    'page callback' => 'mobilizer_featured_page_youtube_page',
+    'page arguments' => array(4),
+    'title' => 'Youtube Edit',
+    'access arguments' => array('administer site configration'),
+    'file' => 'includes/mobilizer-featured-page-admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/featured-mobilizer/contactus'] = array(
+    'page callback' => 'mobilizer_featured_page_contact_page',
+    'title' => 'Youtube Edit',
+    'access arguments' => array('administer site configration'),
+    'title' => 'Contact Us',
+    'file' => 'includes/mobilizer-featured-page-admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/featured-mobilizer/contactus/%/edit'] = array(
+    'page callback' => 'mobilizer_featured_page_contact_page',
+    'page arguments' => array(4),
+    'title' => 'Contact Us Edit',
+    'access arguments' => array('administer site configration'),
+    'file' => 'includes/mobilizer-featured-page-admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/featured-mobilizer/%/delete'] = array(
+    'page callback' => 'mobilizer_featured_page_node_delete_page',
+    'page arguments' => array(3),
+    'access arguments' => array('administer site configration'),
+    'file' => 'includes/mobilizer-featured-page-admin.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/select-layout'] = array(
+    'page callback' => 'mobilizer_select_theme_layout_page',
+    'title' => 'Layout Configuration',
+    'description' => 'List of menu layouts.',
+    'access arguments' => array('administer site configration'),
+    'file' => 'includes/mobilizer-layout-select.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/config/theme-setting-mobilizer'] = array(
+    'title' => 'Style Affects the Entire Site',
+    'page callback' => 'mobilizer_setting_color_platter_style',
+    'access arguments' => array('administer site configration'),
+    'file' => 'includes/mobilizer-theme-setting.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/config/header'] = array(
+    'title' => 'Style Header Effect',
+    'page callback' => 'mobilizer_header_configuration',
+    'access arguments' => array('administer site configration'),
+    'type' => MENU_CALLBACK,
+    'file' => 'includes/mobilizer-header-config.inc',
+  );
+  $items['admin/mobilizer/finish-page'] = array(
+    'page callback' => 'mobilizer_finish_page',
+    'page arguments' => array('mobilizer_finish_page_form'),
+    'title' => 'Finish Page',
+    'description' => 'Finish page after completion of whole process',
+    'access arguments' => array('administer site configration'),
+    'file' => 'includes/mobilizer-layout-select.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/featured-page/ajax/%/%'] = array(
+    'page callback' => 'mobilizer_featured_page_ajax_callback',
+    'page arguments' => array(3, 4),
+    'access arguments' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+  $items['admin/mobilizer/config/module-config'] = array(
+    'title' => 'Mobilizer Configuration',
+    'page callback' => 'mobilizer_admin_settings',
+    'access arguments' => array('administer site configration'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+/**
+ * Implements featured_page_ajax_callback().
+ */
+function mobilizer_featured_page_ajax_callback($type = 'ajax', $url_path) {
+  variable_set("mobilizer_page_url", base64_decode($url_path));
+  $ifram = mobilizer_content_for_ajax_render();
+  if ($type == 'ajax') {
+    $commands[] = ajax_command_replace('#iframe_div', $ifram);
+    $page = array('#type' => 'ajax', '#commands' => $commands);
+    ajax_deliver($page);
+  }
+}
+/**
+ * Implements content_for_ajax_render().
+ */
+function mobilizer_content_for_ajax_render() {
+  global $base_url;
+  $form['#attributes']['id'] = 'form_render_for_preview';
+  if (variable_get("mobilizer_page_url") != "" && variable_get("mobilizer_page_url") != "<front>") {
+    $url_path = $base_url . "/" . variable_get("mobilizer_page_url");
+  }
+    else {
+    $url_path = $base_url;
+  }
+  $main_url = $url_path . "/?mobilizer=" . md5($base_url . "_mobilizer");
+  $html = '<div id="iframe_div">
+  <iframe  width="307" height="554" src="' . $main_url . '">
+  <p>Your browser does not support iframes.</p></iframe></div>';
+  return $html;
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function mobilizer_block_info() {
+  $blocks = array();
+  $blocks['mobilizer_content'] = array(
+    'info' => t('Mobilizer Content Block'),
+    'title' => t('Mobilizer Content Block'),
+    'cache' => DRUPAL_NO_CACHE,
+  );
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function mobilizer_block_view($delta = '') {
+  $block = array();
+  switch ($delta) {
+    case "mobilizer_content":
+      $path = drupal_strtolower($_GET['q']);
+      $mlid = _mobilizer_check_mlid_exist_in_path_menu($path);
+      $data_obj = db_select('mobilizer_node', 'nm')->fields('nm')
+      ->condition('mlid', $mlid)->condition('ebabled', 1)->orderBy('weight')->execute()->fetchAll();
+      $mobilizer_block_content = '';
+      foreach ($data_obj as $block_html) {
+        if ($block_html->type == 'form_block') {
+          $block = module_invoke($block_html->block_module, 'block_view', $block_html->block_delta);
+          $tpl_content = render($block['content']);
+        }
+          elseif ($block_html->type == 'form_page') {
+          $menu_obj = menu_link_load($block_html->mlid);
+          $node_block_path = $menu_obj['link_path'];
+          $menu_object = menu_get_item(drupal_get_normal_path($node_block_path));
+          $page_content_array = menu_execute_active_handler($node_block_path, FALSE);
+          $node_content = drupal_render($page_content_array);
+          $tpl_content = _mobilizer_removeTagFromHtml($node_content, 'class="contextual-links-wrapper', '<div', '</div>');
+        }
+          else {
+          $tpl_content = $block_html->node_block_html;
+        }
+        $mobilizer_block_content .= theme('mobilizer_block_layout', array('content' => $tpl_content));
+      }
+      $block['title'] = t('<none>');
+      $block['subject'] = t('Mobilizer Content');
+      $block['content'] = $mobilizer_block_content;
+    break;
+  }
+  return $block;
+}
+
+/**
+ * Implements check_mlid_exist_in_path_menu().
+ */
+function _mobilizer_check_mlid_exist_in_path_menu($path) {
+  $mobilizer_menu = variable_get('mobilizer_menu', 'menu-website-mobilizer');
+  if (drupal_is_front_page()) {
+    $link_path = '<front>';
+  }
+  else {
+    $link_path = $path;
+  }
+  return db_query("SELECT mlid FROM {menu_links} WHERE link_path = :link AND menu_name = :menu_name", array(':link' => $link_path, ':menu_name' => $mobilizer_menu))->fetchField();
+}
+
+/**
+ * Implements hook_theme().
+ */
+function mobilizer_theme() {
+  return array(
+    'mobilizer_menu_overview_form' => array(
+      'file' => 'includes/mobilizer-select-menu.inc',
+      'render element' => 'form',
+    ),
+    'mobilizer_form_menu_block_list_form' => array(
+      'render element' => 'element'
+    ),
+    'mobilizer_preview_image_thumbnail' => array(
+      'render element' => 'element',
+    ),
+    'mobilizer_header_theme_layout_form' => array(
+      'template' => 'mobilizer-header-theme-layout-form',
+      'render element' => 'form',
+      'path' => drupal_get_path('module', 'mobilizer') . '/templates/',
+    ),
+    'mobilizer_left_nav' => array(
+      'template' => 'mobilizer-left-nav',
+      'path' => drupal_get_path('module', 'mobilizer') . '/templates/',
+      'variables' => array('data' => NULL),
+    ),
+    'mobilizer_top_nav' => array(
+      'template' => 'mobilizer-top-nav',
+      'path' => drupal_get_path('module', 'mobilizer') . '/templates/',
+      'variables' => array('data' => NULL),
+    ),
+    'mobilizer_final_layout' => array(
+      'template' => 'mobilizer-final-layout',
+      'path' => drupal_get_path('module', 'mobilizer') . '/templates/',
+      'variables' => array('left_nav' => NULL, 'top_nav' => NULL, 'form_output' => NULL),
+    ),
+    'mobilizer_block_layout' => array(
+      'template' => 'mobilizer-block-layout',
+      'path' => drupal_get_path('module', 'mobilizer') . '/templates/',
+      'variables' => array('content' => NULL),
+    ),
+  );
+}
+/**
+ * Implements get_menu_icon().
+ */
+function _mobilizer_get_menu_icon($key = NULL) {
+  $images = _mobilizer_get_menu_icons();
+  if (isset($images[$key]))
+  return $images[$key];
+}
+/**
+ * Implements get_default_menu_icon().
+ */
+function _mobilizer_get_default_menu_icon($menu_title) {
+  $subject = $menu_title;
+  $key = 1;
+  if (preg_match('/about/i', $subject)) {
+    $key = 3;
+  }
+  if (preg_match('/home/i', $subject)) {
+    $key = 1;
+  }
+  if (preg_match('/favourite/i', $subject)) {
+    $key = 26;
+  }
+  if (preg_match('/contact/i', $subject)) {
+    $key = 14;
+  }
+  if (preg_match('/setting/i', $subject)) {
+    $key = 4;
+  }
+  if (preg_match('/featured/i', $subject)) {
+    $key = 5;
+  }
+  return $key;
+}
+/**
+ * Implements get_menu_icons().
+ */
+function _mobilizer_get_menu_icons() {
+  global $base_url;
+  $image_base_path = $base_url . '/' . drupal_get_path('module', 'mobilizer') . '/menu_icons/';
+  return array(
+    1 => '<img src="' . $image_base_path . 'home.png" />',
+    2 => '<img src="' . $image_base_path . 'index1.png" />',
+    3 => '<img src="' . $image_base_path . 'index2.png" />',
+    4 => '<img src="' . $image_base_path . 'index3.png" />',
+    5 => '<img src="' . $image_base_path . 'index4.png" />',
+    7 => '<img src="' . $image_base_path . 'index5.png" />',
+    8 => '<img src="' . $image_base_path . 'index6.png" />',
+    9 => '<img src="' . $image_base_path . 'index7.png" />',
+    10 => '<img src="' . $image_base_path . 'index8.png" />',
+    11 => '<img src="' . $image_base_path . 'index9.png" />',
+    12 => '<img src="' . $image_base_path . 'index10.png" />',
+    13 => '<img src="' . $image_base_path . 'index11.png" />',
+    14 => '<img src="' . $image_base_path . 'index12.png" />',
+    15 => '<img src="' . $image_base_path . 'index13.png" />',
+    16 => '<img src="' . $image_base_path . 'index14.png" />',
+    17 => '<img src="' . $image_base_path . 'index15.png" />',
+    18 => '<img src="' . $image_base_path . 'index16.png" />',
+    19 => '<img src="' . $image_base_path . 'index17.png" />',
+    20 => '<img src="' . $image_base_path . 'index18.png" />',
+    21 => '<img src="' . $image_base_path . 'index19.png" />',
+    22 => '<img src="' . $image_base_path . 'index20.png" />',
+    23 => '<img src="' . $image_base_path . 'index21.png" />',
+    24 => '<img src="' . $image_base_path . 'index22.png" />',
+    25 => '<img src="' . $image_base_path . 'index23.png" />',
+    26 => '<img src="' . $image_base_path . 'index24.png" />',
+  );
+}
+/**
+ * Implements get_menu_parent_items().
+ */
+function _mobilizer_get_menu_parent_items($menu_name) {
+  $tree = array();
+  $tree = menu_tree_all_data($menu_name);
+  $menu_obj = array();
+  if ($tree) {
+    foreach ($tree as $menu) {
+      if ($menu['link']['plid'] == 0) {
+        $menu_obj[] = array(
+          'mlid' => $menu['link']['mlid'],
+          'menu_name' => $menu['link']['menu_name'],
+          'link_path' => $menu['link']['link_path'],
+          'link_title' => $menu['link']['link_title'],
+        );
+      }
+    }
+  }
+  return $menu_obj;
+}
+/**
+ * Implements get_page_content().
+ */
+function _mobilizer_get_page_content($page_path) {
+  $node_path = explode('/', drupal_get_normal_path($page_path));
+  $nid = $node_path[1];
+  $content = node_load($nid);
+  $page_content = drupal_render(node_view($content, 'full'));
+  return $page_content;
+}
+
+/**
+ * @function
+ * Get all blocks on path
+ */
+function _mobilizer_get_web_blocks_list($node_block_path) {
+  global $user, $theme_key;
+  $default_theme = variable_get('theme_default', NULL);
+  if ($default_theme) {
+    $theme_key = $default_theme;
+  }
+  $query = db_select('block', 'b');
+  $exclude_blocks = array('navigation', 'login', 'form');
+  $exclude_module_blocks = array('mobilizer', 'system');
+  $query->fields('b')
+  ->condition('b.theme', $theme_key)
+  ->condition('b.status', 1)
+  ->condition('b.delta', $exclude_blocks, 'NOT IN')
+  ->orderBy('b.region')
+  ->orderBy('b.weight')
+  ->orderBy('b.module')
+  ->addTag('block_load')
+  ->addTag('translatable');
+  if (count($exclude_module_blocks)) {
+    $query->condition('b.module', $exclude_module_blocks, 'NOT IN');
+  }
+  $result = $query->execute();
+  $blocks = $result->fetchAllAssoc('bid');
+  // Build an array of roles for each block.
+  $block_roles = array();
+  $result = db_query('SELECT module, delta, rid FROM {block_role}');
+  foreach ($result as $record) {
+    $block_roles[$record->module][$record->delta][] = $record->rid;
+  }
+  foreach ($blocks as $key => $block) {   //print_object($block);
+    if (!isset($block->theme) || !isset($block->status) || $block->theme != $theme_key || $block->status != 1) {
+    // This block was added by a contrib module, leave it in the list.
+      continue;
+    }
+    // If a block has no roles associated, it is displayed for every role.
+    // For blocks with roles associated, if none of the user's roles matches
+    // the settings from this block, remove it from the block list.
+    if (isset($block_roles[$block->module][$block->delta]) && !array_intersect($block_roles[$block->module][$block->delta], array_keys($user->roles))) {
+      // No match.
+      unset($blocks[$key]);
+      continue;
+    }
+    // Use the user's block visibility setting, if necessary.
+    if ($block->custom != BLOCK_CUSTOM_FIXED) {
+      if ($user->uid && isset($user->data['block'][$block->module][$block->delta])) {
+        $enabled = $user->data['block'][$block->module][$block->delta];
+      }
+        else {
+        $enabled = ($block->custom == BLOCK_CUSTOM_ENABLED);
+      }
+    }
+      else {
+      $enabled = TRUE;
+    }
+    // Limited visibility blocks must list at least one page.
+    if ($block->visibility == BLOCK_VISIBILITY_LISTED && empty($block->pages)) {
+      $enabled = FALSE;
+    }
+    if (!$enabled) {
+      unset($blocks[$key]);
+      continue;
+    }
+    // Match path if necessary.
+    if ($block->pages) {
+      // Convert path to lowercase. This allows comparison of the same path
+      // with different case. Ex: /Page, /page, /PAGE.
+      $pages = drupal_strtolower($block->pages);
+      if ($block->visibility < BLOCK_VISIBILITY_PHP) {
+        // Convert the Drupal path to lowercase
+        $path = drupal_strtolower(drupal_get_path_alias($node_block_path));
+        // Compare the lowercase internal and lowercase path alias (if any).
+        $page_match = drupal_match_path($path, $pages);
+        if ($path != $node_block_path) {
+          $page_match = $page_match || drupal_match_path($node_block_path, $pages);
+        }
+        // When $block->visibility has a value of 0 (BLOCK_VISIBILITY_NOTLISTED),
+        // the block is displayed on all pages except those listed in $block->pages.
+        // When set to 1 (BLOCK_VISIBILITY_LISTED), it is displayed only on those
+        // pages listed in $block->pages.
+        $page_match = !($block->visibility xor $page_match);
+      }
+        elseif (module_exists('php')) {
+        $page_match = php_eval($block->pages);
+      }
+        else {
+        $page_match = FALSE;
+      }
+    }
+      else {
+      $page_match = TRUE;
+    }
+    if (!$page_match) {
+      unset($blocks[$key]);
+    }
+  }
+  $blocks_object = array();
+  foreach ($blocks as $block) {
+    if ("{$block->module}_{$block->delta}" != 'mobilizer_content') {
+      $blocks_object[$block->region]["{$block->module}_{$block->delta}"] = $block;
+    }
+  }
+  $ready_render_obj = array();
+  foreach ($blocks_object as $resign => $blocks_in_resign) {
+    $blocks_in_resign = _block_render_blocks($blocks_in_resign);
+    foreach ($blocks_in_resign as $single_block) {
+      $ready_render_obj[] = _block_get_renderable_array(array($single_block));
+    }
+  }
+  return $ready_render_obj;
+}
+
+/**
+ * @function _menu_blocks_save
+ * save all blocks and page content in db which related to parent menu items
+ * param:$menu_name :menu name which is exist in system
+ */
+function _mobilizer_menu_blocks_save($menu_name) {
+  $path_obj = _mobilizer_get_menu_parent_items($menu_name);
+  // Localizable object. Run through the localization system
+  if (count($path_obj)) {
+    $ml_block_obj = array();
+    foreach ($path_obj as $path) {
+      if ($path['link_path'] != '' && $path['link_path'] != '<front>') {
+        $node_block_path = $path['link_path'];
+      }
+        else {
+        $node_block_path = variable_get('site_frontpage', 'node');
+      }
+      $menu_object = menu_get_item(drupal_get_normal_path($node_block_path));
+      $page_content_array = menu_execute_active_handler($node_block_path, FALSE);
+      if (!isset($page_content_array['default_message'])) {
+        // Ignore if system default content exist
+        $node_content = drupal_render($page_content_array);
+        //_get_page_content($node_block_path);
+        $node_content = _mobilizer_removeTagFromHtml($node_content, 'class="contextual-links-wrapper', '<div', '</div>');
+        if ($menu_object['title']) {
+          $node_content = '<div>' . $node_content . '</div>';
+        }
+        $ndoc = new DOMDocument();
+        $ndoc->loadHTML($node_content);
+        $nform_list = $ndoc->getElementsbytagname('form');
+        if (isset($nform_list->length) && $nform_list->length) {
+          $ntype = 'form_page';
+          $node_content = '';
+        }
+          else {
+          $ntype = 'default_page';
+        }
+        $content_obj = new stdClass();
+        $content_obj->mlid = $path['mlid'];
+        $content_obj->menu_tile = 'Content';
+        $content_obj->menu_path = $path['link_path'];
+        $content_obj->menu_name = $path['menu_name'];
+        $content_obj->bid = 0;
+        $content_obj->block_title = 'Content';
+        $content_obj->block_module = '';
+        $content_obj->block_subject = '';
+        $content_obj->block_delta = '';
+        $content_obj->type = $ntype;
+        $content_obj->block_html = $node_content;
+        $ml_block_obj[$path['mlid']][0] = $content_obj; // add page content
+      }
+      $blocks = _mobilizer_get_web_blocks_list($node_block_path);
+      foreach ($blocks as $block) {
+        $block_content = drupal_render($block);
+        $block_content = _mobilizer_removeTagFromHtml($block_content, 'class="contextual-links-wrapper', '<div', '</div>');
+        $doc = new DOMDocument();
+        $doc->loadHTML($block_content);
+        $form_list = $doc->getElementsbytagname('form');
+        if (isset($form_list->length) && $form_list->length) {
+          $type = 'form_block';
+          $block_content = '';
+        }
+          else {
+          $type = 'default_block';
+        }
+        $bid = $block[0]['#block']->bid;
+        $mlid = $path['mlid'];
+        $data_obj = new stdClass();
+        $data_obj->mlid = $path['mlid'];
+        $data_obj->menu_tile = $path['link_title'];
+        $data_obj->menu_path = $path['link_path'];
+        $data_obj->menu_name = $path['menu_name'];
+        $data_obj->bid = $block[0]['#block']->bid;
+        $data_obj->block_title = $block[0]['#block']->title;
+        $data_obj->block_module = $block[0]['#block']->module;
+        $data_obj->block_subject = $block[0]['#block']->subject;
+        $data_obj->block_delta = $block[0]['#block']->delta;
+        $data_obj->block_html = $block_content;
+        $data_obj->type = $type;
+        $ml_block_obj[$mlid][$bid] = $data_obj;
+      }
+    }
+  }
+  $output = '';
+  foreach ($ml_block_obj as $block_obj) {
+    foreach ($block_obj as $block) {
+      $bid = $block->bid;
+      if ($bid == 0) {
+        $status_id = db_insert('mobilizer_node')
+                    ->fields(array(
+                     'mlid' => $block->mlid,
+                     'bid' => $block->bid,
+                     'weight' => 0,
+                     'ebabled' => 1,
+                     'block_description' => 'Page Content',
+                     'block_title' => $block->block_title,
+                     'block_delta' => $block->block_delta,
+                     'block_module' => $block->block_module,
+                     'node_block_html' => $block->block_html,
+                     'type' => $block->type,
+                     'time' => REQUEST_TIME,
+                      ))->execute();
+      }
+        else {
+        $module_blocks_info = module_invoke($block->block_module, 'block_info');
+        if (isset($block->mlid) && $block->mlid) {
+          $check_block_exist = db_select('mobilizer_node', 'nm')->fields('nm')
+                        ->condition('mlid', $block->mlid)
+                        ->condition('bid', $block->bid)
+                        ->execute()->rowCount();
+          if (!$check_block_exist) {
+            $block_html = '';
+            $block_html = $block->block_html;
+            $block_info = $module_blocks_info[$block->block_delta]['info'];
+            $status_id = db_insert('mobilizer_node')
+                            ->fields(array(
+                             'mlid' => $block->mlid,
+                             'bid' => $block->bid,
+                             'weight' => 0,
+                             'ebabled' => 1,
+                             'block_description' => $block_info,
+                             'block_title' => $block->block_title,
+                             'block_delta' => $block->block_delta,
+                             'block_module' => $block->block_module,
+                             'node_block_html' => $block_html,
+                             'type' => $block->type,
+                             'time' => REQUEST_TIME,
+                              ))->execute();
+          }
+        }
+      }
+    }
+  }
+}
+/**
+ * Implements Hook_node_view().
+ */
+function mobilizer_node_view($node, $view_mode, $langcode) {
+  $query = db_select('mobilizer_featured_page', 'fp');
+  $query->fields('fp', array('page_type'));
+  $query->condition('nid', $node->nid);
+  $query_result = $query->execute();
+  $result = $query_result->fetchAssoc();
+  $node_type = $result['page_type'];
+  $nid = $node->nid;
+  $html = '';
+  switch ($node_type) {
+    case 'aboutus': $html = mobilizer_get_about_page($node_type, $nid);
+    break;
+    case 'basicpage': $html = mobilizer_get_basic_page($node_type, $nid);
+    break;
+    case 'rss': $html = mobilizer_get_rss_feed($node_type, $nid);
+    break;
+    case 'twitter': $html = mobilizer_get_twitter_feed($node_type, $nid);
+    break;
+    case 'youtube': $html = mobilizer_get_youtube_feed($node_type, $nid);
+    break;
+    case 'contactus': $html = mobilizer_get_contact_page($node_type, $nid);
+    break;
+  }
+  $node->content['my_additional_field'] = array(
+    '#markup' => $html,
+    '#weight' => -10,
+  );
+}
+/**
+ * Implements get_contact_page().
+ */
+function mobilizer_get_contact_page($node_type ='', $nid = NULL) {
+  $html = '';
+  $lat = '';
+  $long = '';
+  global $base_url;
+  $image_base_path = $base_url . '/' . drupal_get_path('module', 'mobilizer');
+  $serialized_string = variable_get($node_type . '_' . $nid);
+  $node_data = unserialize($serialized_string);
+  $email_to = $node_data['email_to'];
+  variable_set('mobilizer_email_to', $email_to);
+  $contact = $node_data['contact_no_country_code'] . $node_data['contact_no'];
+  $street = str_replace(' ', '+', $node_data['street_address']);
+  $city = str_replace(' ', '+', $node_data['city']);
+  $zip = str_replace(' ', '+', $node_data['zipcode']);
+  $country = str_replace(' ', '+', $node_data['country']);
+  $state = str_replace(' ', '+', $node_data['state']);
+  drupal_add_js('http://maps.google.com/maps/api/js?sensor=false', 'external');
+  drupal_add_js(drupal_get_path('module', 'mobilizer') . '/js/featured_map.js');
+  $geocode = file_get_contents('http://maps.google.com/maps/api/geocode/json?address=' . $street . ',' . $city . ',' . $state . ',' . $country . '&sensor=false');
+  $output = json_decode($geocode);
+  $lat = $output->results[0]->geometry->location->lat;
+  $long = $output->results[0]->geometry->location->lng;
+  $latlon = $lat . ',' . $long;
+  $html = '<div class = "map-div">
+        <p class = "contact-page-description">'
+     . $node_data['description']['value'] .
+     '</p>
+        <div class = "callus-class">
+          <a class = "callus-button" href="skype:+' . $contact . '?call" style = "background-image:url(' . $image_base_path . '/images/call_us.png);">' . $node_data['button_label'] .
+     '</a></div>&nbsp;&nbsp;&nbsp;&nbsp;' .
+     '<div class = "map-class">
+          <a href ="#" style = "background-image:url(' . $image_base_path . '/images/map.png);" class = "map-button" id ="map_link" name = ' . $latlon . '>' . $node_data['map_button_label'] .
+     '</a>
+         </div>
+        <div id="gmap" style ="width:95%;height: 300px;">
+        </div>
+        <span id="lat"></span>
+        <span id="lon"></span><br/>
+        <span id="zoom_level"></span></div><br/>
+        <a href ="#" id ="close_map">close map </a>
+      </div><br/>' . render(drupal_get_form('mobilizer_custom_contact_form'));
+  return $html;
+}
+/**
+ * Implements custom_contact_form().
+ */
+function mobilizer_custom_contact_form() {
+  $form['email_us'] = array(
+    '#prefix' => '<div class = "featured-custom-contact" ><div class ="emailus-class">',
+    '#markup' => t('Email Us:'),
+    '#suffix' => '</div>',
+  );
+  $form['name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Name:'),
+  );
+  $form['email'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Email:'),
+  );
+  $form['message'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Message:'),
+    '#rows' => 10,
+    '#cols' => 10,
+    '#resizable' => TRUE,
+    '#wysiwyg' => TRUE,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('send'),
+    '#suffix' => '</div>',
+    '#submit' => array('mobilizer_custom_form_submit'),
+  );
+  return $form;
+}
+/**
+ * Implements custom_form_submit().
+ */
+function mobilizer_custom_form_submit($form, &$form_state) {
+  $to = variable_get('mobilizer_email_to', $email_to);
+  $name = $form['name']['#value'];
+  $from = $name . ' <' . $form['email']['#value'] . '>';
+  
+  $subject  = 'Contact form submitted by ' . $name;
+  $message  = 'Name:' . $name . '<br />';
+  $message .= 'Mail from: ' . $form['email']['#value'] . '<br />';
+  $message .= 'Message:' . $_REQUEST['message'];
+  
+  $headers  = 'MIME-Version: 1.0' . "\r\n";
+  $headers .= 'Content-type: text/html; charset=iso-8859-1' . "\r\n";
+  $headers .= 'From: ' . $from . "\r\n";
+
+  mail($to, $subject, $message, $headers);
+}
+/**
+ * Implements get_basic_page().
+ */
+function mobilizer_get_basic_page($node_type ='', $nid = NULL) {
+  $serialized_string = variable_get($node_type . '_' . $nid);
+  $node_data = unserialize($serialized_string);
+  $html = '<p>' . $node_data['description'] . '</p>';
+  return $html;
+}
+/**
+ * Implements get_about_page().
+ */
+function mobilizer_get_about_page($node_type ='', $nid = NULL) {
+  $serialized_string = variable_get($node_type . '_' . $nid);
+  $node_data = unserialize($serialized_string);
+  $html = '<p>' . $node_data['description'] . '</p>';
+  return $html;
+}
+/**
+ * Implements get_rss_feed().
+ */
+function mobilizer_get_rss_feed($node_type ='', $nid = NULL) {
+  $serialized_string = variable_get($node_type . '_' . $nid);
+  $node_data = unserialize($serialized_string);
+  $os = PHP_OS;
+  switch ($os) {
+    case "Linux": define("SEPARATOR", "/");
+    break;
+    case "WINNT": define("SEPARATOR", "\\");
+    break;
+    default: define("SEPARATOR", "/");
+    break;
+  }
+  require_once DRUPAL_ROOT . '/' . 'sites/all/libraries/simplepie/autoloader.php';
+  require_once DRUPAL_ROOT . '/' . 'sites/all/libraries/simplepie/idn/idna_convert.class.php';;
+  $node = node_load($nid);
+  $url = $node_data['url'];
+  $include_content = $node_data['include_content'];
+  $display = 'block';
+  if ($include_content == 'yes') {
+    $display = 'none';
+  }
+  //$parser = new RssParser();
+  $feed = new SimplePie(); 
+  $feed->set_feed_url($url);
+  $feed->enable_cache(false);
+  $success = $feed->init();
+  $feed->handle_content_type();
+  $count = count($feed->get_items());
+  $number_of_items = $node_data['number_of_visible_items'];
+  if ($number_of_items != 'All items') {
+    $count = $number_of_items;
+  }
+  if ($success) {
+    $html = '<div class = "custom-rss-feed">
+        <ul>';
+    drupal_add_js(drupal_get_path('module', 'mobilizer') . '/js/theme_switch.js');
+    foreach ($feed->get_items() as $key => $items) {
+      if ($key < $count) {
+          $title = $items->get_title();
+          $description = $items->get_content();
+        $html .= '<li class = "rss-feed"><h3><a id = "feed-link-' . $key . '" href="#" style = "color:#ffffff;">' . $title . '</a></h3></li>';
+        $html .= '<div id = "feed-' . $key . '" style = "display :' . $display . ';">' . $description . '</div>';
+      }
+    }
+    $html .= '</ul>';
+    $html .= '</div>';
+  }
+  else
+  $html = 'Invalid URL Given';
+  return $html;
+} 
+ /**
+ * Implements get_twitter_feed().
+ */
+function mobilizer_get_twitter_feed($node_type ='', $nid = NULL) {
+  $serialized_string = variable_get($node_type . '_' . $nid);
+  $node_data = unserialize($serialized_string);
+  $twitter_username = $node_data['username'];
+  $number_of_items = $node_data['number_of_tweets'];
+  $include_header_footer = $node_data['display_header_footer'];
+  $count = 0;
+  $display_header_footer = 'block';
+  if ($include_header_footer == 'no') {
+    $display_header_footer = 'none';
+  }
+  $curl = curl_init();
+  curl_setopt($curl, CURLOPT_URL, "http://api.twitter.com/1/statuses/user_timeline/" . $twitter_username . ".json?count=" . $count);
+  curl_setopt($curl, CURLOPT_RETURNTRANSFER, TRUE);
+  $tweets = json_decode(curl_exec($curl));
+  $tweet_id = $tweets['0']->id;
+  if (!isset($tweets->errors)) {
+    $count = count($tweets);
+    if ($number_of_items != 'All items') {
+      $count = $number_of_items;
+    }
+    curl_close($curl);
+    $profile_pic = $tweets['0']->user->profile_image_url;
+    $html = '<div style="margin: auto; width:95%; border: 10px solid rgb(177, 212, 252); border-radius: 10px 10px 10px 10px;" id="twitter_lf">
+          <div class="twitterSearchTitle" style="display:' . $display_header_footer . ';' . 'background-color: rgb(177, 212, 252); margin: 0px; padding: 0px 0px 5px; text-align: center; font-weight: bold; font-size: large; position: relative;">
+            <img src ="' . $profile_pic . '" alt = "" style = "width:30px; height:30px;display:inline; float:left;"/>
+              <a href="http://twitter.com/' . $twitter_username . '" target = "_blank" style="text-decoration: none; color: rgb(59, 89, 152);">
+    ' . $twitter_username . ' <br />
+                <span style="font-size:10px;">
+                  <img src="http://cloud.github.com/downloads/malsup/twitter/tweet.gif" class="twitterSearchBird" style="width: 50px; height: 20px; position: absolute; left: -30px; top: -20px; border: medium none;">
+              </a>
+              <p style="text-decoration: none; color: rgb(59, 89, 152);">@' . $twitter_username . '</p>
+           </div>
+           <input type="hidden" id="current_page" />
+           <input type="hidden" id="show_per_page" />
+           <div id ="twitter_main">';
+    $i = 0;
+    $default_profile_pic = '';
+    for ($i = 0; $i < $count; $i++) {
+      $profile_pic = $tweets[$i]->user->profile_image_url;
+      $html .='<div id =twitter " >
+              <h3 style ="color:#1874CD;">
+                <div style ="display:inline; float:left;">' . $tweets[$i]->user->name . '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+              </h3>';
+      $html .= '<h3>
+                <div style ="color:#1874CD;">' . mobilizer_twitter_time($tweets[$i]->created_at) . '</div>
+              </h3>';
+      $html .='<div>' . $tweets[$i]->text . '</div>
+             <div style="padding:3px; margin:0 0 2px 0;">
+              <a style="color:#1874CD;" target = "_blank" href="https://twitter.com/intent/tweet?in_reply_to=' . $twitter_username . '">reply</a> |
+              <a style="color:#1874CD;" target = "_blank" href="https://twitter.com/intent/retweet?tweet_id=' . $tweet_id . '">retweet</a> |
+              <a style="color:#1874CD;" target = "_blank" href="https://twitter.com/intent/favorite?tweet_id=' . $tweet_id . '">favorite</a>
+            </div>
+          </div>';
+    }
+    $html .= '</div>
+        <div class="twitterFooter" style="display:' . $display_header_footer . ';' . 'background-color: rgb(177, 212, 252); margin: 0px; padding: 0px 0px 5px; text-align: center; font-weight: bold; font-size: large; position: relative;">
+          <a href="http://twitter.com/' . $twitter_username . '" target = "_blank" style="text-decoration: none; color: rgb(59, 89, 152);">
+    Join the conversation <br />
+            <span style="font-size:6px;">
+          </a>
+        </div>
+      </div>
+    <div id="page_navigation">';
+  }
+  else
+    $html = t('0 tweets found');
+  return $html;
+}
+
+
+/**
+ * function to get youtube feed
+ */
+function mobilizer_get_youtube_feed($node_type ='', $nid = NULL) {
+  $serialized_string = variable_get($node_type . '_' . $nid);
+  $node_data = unserialize($serialized_string);
+  $orderby = $node_data['order_by'];
+  $count = $node_data['number_of_visible_items'];
+  $feed_type = $node_data['feed_type'];
+  $username = $node_data['channel'];
+  $playlist_array = array();
+  $feed_url = "http://gdata.youtube.com/feeds/api/standardfeeds/$orderby";
+  switch ($feed_type) {
+    case 'playlist':
+      $feed_url = "https://gdata.youtube.com/feeds/api/users/$username/playlists";
+      $sxml = @simplexml_load_file($feed_url);
+      $playlist_array = explode('/', $sxml->entry->id);
+      $playlist_id = $playlist_array[count($playlist_array) - 1];
+      $feed_url = "https://gdata.youtube.com/feeds/api/playlists/" . $playlist_id . "/?v=2";
+      $sxml = @simplexml_load_file($feed_url, 'SimpleXMLElement', LIBXML_NOWARNING);
+    break;
+    case 'favorites':
+      $feed_url = "http://gdata.youtube.com/feeds/api/users/$username/favorites";
+      $sxml = @simplexml_load_file($feed_url, 'SimpleXMLElement', LIBXML_NOWARNING);
+    break;
+    case 'search':
+      $feed_url = "https://gdata.youtube.com/feeds/api/videos?q=$username" . "&orderby=" . $orderby;
+      $sxml = @simplexml_load_file($feed_url, 'SimpleXMLElement', LIBXML_NOWARNING);
+    break;
+  }
+  $html = '';
+  if ($sxml) {
+    $html = "<h1>$sxml->title</h1>";
+    $i = 0;
+    $countentry = count($sxml->entry);
+    if ($count == 'All items') {
+      $count = $countentry;
+    }
+    foreach ($sxml->entry as $entry) {
+      $video_id = '';
+      $video_src_array = explode('/', $entry->id);
+      $video_src_count = count($video_src_array);
+      $video_id = $video_src_array[$video_src_count - 1];
+      if ($i < $count) {
+        $media = $entry->children('http://search.yahoo.com/mrss/');
+        $attrs = $media->group->player->attributes();
+        $watch = $attrs['url'];
+        if (($feed_type != 'playlist') && ($feed_type != 'favorites'))
+        $attrs = $media->group->thumbnail[0]->attributes();
+        $thumbnail = $attrs['url'];
+        $yt = $media->children('http://gdata.youtube.com/schemas/2007');
+        if ($feed_type == 'playlist')
+        $video_id = (String) $yt->videoid;
+        $attrs = $yt->duration->attributes();
+        $length = $attrs['seconds'];
+        $yt = $entry->children('http://gdata.youtube.com/schemas/2007');
+        $attrs = $yt->statistics->attributes();
+        $gd = $entry->children('http://schemas.google.com/g/2005');
+        if ($gd->rating) {
+          $attrs = $gd->rating->attributes();
+          $rating = $attrs['average'];
+        }
+          else {
+          $rating = 0;
+        }
+        $html .='<div  style="border-top: solid black 1px;margin: 10px; padding: 2px; width: auto;padding-bottom: 20px;">
+                <span style ="font-weight: bolder;   font-size: x-large">
+                  <a href="' . $watch . '" >' . $media->group->title . '</a>
+                </span>
+                <p>' . $media->group->description . '</p>
+                <p>
+                 <span style ="margin-right: 20px;padding: 2px;border: solid silver 1px;  font-size: x-small; text-align:center;"
+                  <object width="40%">
+                    <param name="movie" value="http://www.youtube.com/v/' . $video_id . '?version=3">
+                    </param>
+                    <param name="allowFullScreen" value="true">
+                    </param>
+                    <param name="allowScriptAccess" value="always">
+                    </param>
+                    <embed src="http://www.youtube.com/v/' . $video_id . '?version=3" type="application/x-shockwave-flash" allowfullscreen="true" allowScriptAccess="always" width="90%" >
+                    </embed>
+                  </object>
+                 </span><br/>
+                 <span style="font-weight: bolder;">By:</span>' . $entry->author->name . '<br/>
+                 <span style="font-weight: bolder;">Duration:</span> ' . $length . '<br/>
+                 <span style="font-weight: bolder;">Rating:</span>' . $rating . '
+                </p>
+              </div>';
+        $i++;
+      }
+    }
+  }
+  else
+    $html = t('0 videos found');
+  return $html;
+}
+/**
+ * Implements twitter_time().
+ */
+function mobilizer_twitter_time($a) {
+  //get current timestampt
+  $b = strtotime("now");
+  //get timestamp when tweet created
+  $c = strtotime($a);
+  //get difference
+  $d = $b - $c;
+  //calculate different time values
+  $minute = 60;
+  $hour = $minute * 60;
+  $day = $hour * 24;
+  $week = $day * 7;
+  if (is_numeric($d) && $d > 0) {
+    //if less then 3 seconds
+    if ($d < 3)
+    return "right now";
+    //if less then minute
+    if ($d < $minute)
+    return floor($d) . " seconds ago";
+    //if less then 2 minutes
+    if ($d < $minute * 2)
+    return "about 1 minute ago";
+    //if less then hour
+    if ($d < $hour)
+    return floor($d / $minute) . " minutes ago";
+    //if less then 2 hours
+    if ($d < $hour * 2)
+    return "about 1 hour ago";
+    //if less then day
+    if ($d < $day)
+    return floor($d / $hour) . " hours ago";
+    //if more then day, but less then 2 days
+    if ($d > $day && $d < $day * 2)
+    return "yesterday";
+    //if less then year
+    if ($d < $day * 365)
+    return floor($d / $day) . " days ago";
+    //else return more than a year
+    return "over a year ago";
+  }
+}
+
+/**
+ * User agent detection using PHP
+ */
+function mobilizer_detect_standard() {
+  $mobile_browser = 0;
+  if (preg_match('/(up.browser|up.link|mmp|symbian|smartphone|midp|wap|phone|android)/i', strtolower($_SERVER['HTTP_USER_AGENT']))) {
+    $mobile_browser++;
+  }
+  if ((strpos(strtolower($_SERVER['HTTP_ACCEPT']), 'application/vnd.wap.xhtml+xml') > 0) or ((isset($_SERVER['HTTP_X_WAP_PROFILE']) or isset($_SERVER['HTTP_PROFILE'])))) {
+    $mobile_browser++;
+  }
+  $mobile_ua = strtolower(substr($_SERVER['HTTP_USER_AGENT'], 0, 4));
+  $mobile_agents = array(
+  'w3c ', 'acs-', 'alav', 'alca', 'amoi', 'audi', 'avan', 'benq', 'bird', 'blac',
+  'blaz', 'brew', 'cell', 'cldc', 'cmd-', 'dang', 'doco', 'eric', 'hipt', 'inno',
+  'ipaq', 'java', 'jigs', 'kddi', 'keji', 'leno', 'lg-c', 'lg-d', 'lg-g', 'lge-',
+  'maui', 'maxo', 'midp', 'mits', 'mmef', 'mobi', 'mot-', 'moto', 'mwbp', 'nec-',
+  'newt', 'noki', 'oper', 'palm', 'pana', 'pant', 'phil', 'play', 'port', 'prox',
+  'qwap', 'sage', 'sams', 'sany', 'sch-', 'sec-', 'send', 'seri', 'sgh-', 'shar',
+  'sie-', 'siem', 'smal', 'smar', 'sony', 'sph-', 'symb', 't-mo', 'teli', 'tim-',
+  'tosh', 'tsm-', 'upg1', 'upsi', 'vk-v', 'voda', 'wap-', 'wapa', 'wapi', 'wapp',
+  'wapr', 'webc', 'winw', 'winw', 'xda ', 'xda-');
+  if (in_array($mobile_ua, $mobile_agents)) {
+    $mobile_browser++;
+  }
+  if (isset($_SERVER['ALL_HTTP']) && strpos(strtolower($_SERVER['ALL_HTTP']), 'OperaMini') > 0) {
+    $mobile_browser++;
+  }
+  if (strpos(strtolower($_SERVER['HTTP_USER_AGENT']), 'windows') > 0) {
+    $mobile_browser = 0;
+  }
+  return $mobile_browser > 0;
+}
+
+/**
+ * User agent detection using mobile detect library PHP.
+ */
+function mobilizer_detect_advance() {
+  global $base_url;
+  $mobile_device = FALSE;
+  // include the mobile detect library
+  $file = mobilizer_library_check('Mobile_Detect.php');
+  if ($file != FALSE) {
+    require_once $file;
+    // initialize the class object
+    $detect = new Mobile_Detect();
+    // check for the user agent
+    if ($detect->isMobile() || $detect->isTablet()) {
+      $mobile_device = TRUE;
+    }
+    return $mobile_device;
+  }
+}
+
+/**
+ * Implements hook_custom_theme().
+ */
+function mobilizer_custom_theme() {
+  global $base_url;
+  // check the Method Selected for User Agent
+  $method = variable_get('mobilizer_mobile_detect_method', NULL);
+  $publish_status = variable_get('mobilizer_site_status', Null);
+  // Check if this is a mobile
+  if ($publish_status) {
+    if ($method == 'advance') {
+      if (!mobilizer_library_check('Mobile_Detect.php')) {
+        variable_set('mobilizer_mobile_detect_method', 'standard');
+        $mobile_device = mobilizer_detect_standard();
+      }
+        else {
+        $mobile_device = mobilizer_detect_advance();
+      }
+    }
+      else {
+      $mobile_device = mobilizer_detect_standard();
+    }
+  }
+    else{
+    $mobile_device = FALSE;
+  }
+  drupal_add_js(array('mobilizer_set_demo_device' => md5($base_url . "_mobilizer")), 'setting');
+  //check for iframe
+  drupal_add_js(drupal_get_path('module', 'mobilizer') . '/js/theme_switch.js');
+  //check if mobile site is published or not
+  $mobilizer_site = variable_get('mobilizer_site', 1);
+  if ($mobilizer_site) {
+    if ($mobile_device || (isset($_GET['mobilizer']) && md5($base_url . "_mobilizer") == $_GET['mobilizer'])) {
+      drupal_add_css(drupal_get_path('theme', 'mobilizer') . '/css/mobilizer-page-header-style-preview.css', array('weight' => 9999, 'group' => CSS_THEME,
+      'media' => 'screen'));
+      module_invoke('admin_menu', 'suppress');
+      drupal_add_js("jQuery(document).ready(function(){
+                        jQuery('#toolbar').css('visibility', 'hidden');
+                        jQuery('body').addClass('tbr_menu_hidden');
+                        jQuery('.contextual-links-wrapper').hide();
+                         });", "inline");
+      $mobile_theme_name = variable_get('mobilizer_theme_name', 'mobilizer');
+      return $mobile_theme_name;
+    }
+  }
+}
+
+/**
+ * iframe ajax callback
+ */
+function mobilizer_ajax_callback($form, $form_state) {
+  global $base_url;
+  mobilizer_ajax_preview_header_write($form_state);
+  $GLOBALS['conf']['cache'] = 0;
+  drupal_flush_all_caches();
+  cache_clear_all(NULL, 'cache_page', '*');
+  $main_url = $base_url . "/?mobilizer=" . md5($base_url . "_mobilizer");
+  $html = '<div id="iframe_div"><iframe  width="307" height="554" src="' . $main_url . '">
+  <p>Your browser does not support iframes.</p></iframe></div>';
+  return $html;
+}
+/**
+ * Implements css_file_generator().
+ */
+function mobilizer_css_file_generator($css_creation, $file_name="") {
+  $mobile_theme_css_path = DRUPAL_ROOT . '/' . drupal_get_path('theme', 'mobilizer') . '/css/mobilizer-page-header-style' . $file_name . '.css';
+  $f = fopen($mobile_theme_css_path, 'w');
+  foreach ($css_creation as $key => $tagname) {
+    $test_css = mobilizer_get_css_string($key, $tagname);
+    fwrite($f, $test_css);
+  }
+  //chmod($mobile_theme_css_path,0777);
+  fclose($f);
+  // truncate preview css file
+  $preview_mobile_theme_css_path = DRUPAL_ROOT . '/' . drupal_get_path('theme', 'mobilizer') . '/css/mobilizer-page-header-style-preview.css';
+  if (!$file_name && file_exists($preview_mobile_theme_css_path)) {
+    $pf = fopen($preview_mobile_theme_css_path, 'w') or die("can't open file");
+    $string_data = "";
+    fwrite($pf, $string_data);
+    fclose($pf);
+  }
+}
+/**
+ * Implements get_css_string().
+ */
+function mobilizer_get_css_string($key = '', $css_get_section = NULL) {
+  if (!$css_get_section)
+  return FALSE;
+  $css_string = $key . "{ ";
+  foreach ($css_get_section as $css_attr => $css_attr_val) {
+    $css_string .= $css_attr . " : " . $css_attr_val . ";";
+  }
+  $css_string .= "}\n";
+  return (string) $css_string;
+}
+
+/**
+ * find position of tag identifier. loops until all instance of text removed
+ * str - string to search
+ * id - text to search for
+ * start_tag - start delimiter to remove
+ * end_tag - end delimiter to remove
+ */
+function _mobilizer_removeTagFromHtml($str, $search_str, $start_tag, $end_tag) {
+  while (($pos_srch = strpos($str, $search_str)) !== FALSE) {
+    //get text before identifier
+    $beg = substr($str, 0, $pos_srch);
+    //get position of start tag
+    $pos_start_tag = strrpos($beg, $start_tag);
+    //echo 'start: '.$pos_start_tag.'<br>';
+    //extract text up to but not including start tag
+    $beg = substr($beg, 0, $pos_start_tag);
+    //echo "beg: ".$beg."<br>";
+    //get text from identifier and on
+    $end = substr($str, $pos_srch);
+    //get length of end tag
+    $end_tag_len = strlen($end_tag);
+    //find position of end tag
+    $pos_end_tag = strpos($end, $end_tag);
+    //extract after end tag and on
+    $end = substr($end, $pos_end_tag + $end_tag_len);
+    $str = $beg . $end;
+  }
+  //return processed string
+  return $str;
+}
+/**
+ * Implements themer().
+ */
+function _mobilizer_themer($output, $right_nav="") {
+  $argument1 = array('mobilizer');
+  $argument2 = array('featured-mobilizer', 'mobilizer');
+  $argument3 = array('start-mobilizer', 'select-layout', 'select-menu-configure', 'featured-pages', 'finish-page', 'header_image', 'hbimage', 'site_background');
+  $argument4 = array('theme-setting-mobilizer', 'header');
+  if (in_array(arg(1), $argument1) || in_array(arg(0), $argument2) || in_array(arg(2), $argument3) || in_array(arg(3), $argument4)) {
+    $left_nav = theme('mobilizer_left_nav');
+    $top_nav = theme('mobilizer_top_nav');
+    //$right_nav = theme('right-nav');
+    return $final_page = theme('mobilizer_final_layout', array('left_nav' => $left_nav, 'top_nav' => $top_nav, 'form_output' => $output, 'right_nav' => $right_nav));
+  }
+}
+/**
+ * Implements theme_mobilizer_preview_image_thumbnail.
+ */
+function theme_mobilizer_preview_image_thumbnail($variables) {
+  $element = $variables['element'];
+  if (isset($element['#file']->uri)) {
+    $output = '<div id="edit-logo-ajax-wrapper"><div class="form-item form-type-managed-file form-item-logo"><span class="file">';
+    $output .= '<img height="100" width="100" src="' . file_create_url($element['#file']->uri) . '" />';
+    $output .= '</span> <span class="remove_btn"><input type="submit" id="edit-' . $element['#name'] . '-remove-button" name="' . $element['#name'] . '_remove_button" value="Remove" class="form-submit ajax-processed"> </span>';
+    $output .= '<input type="hidden" name="' . $element['#name'] . '[fid]" value="' . $element['#file']->fid . '">';
+    $output .= '</div></div>';
+    return $output;
+  }
+}
+
+/**
+ * set default value for default colors.
+ */
+function mobilizer_color_palette_style_config() {
+  $default_color = array("color_palette1" => array("header_background" => "#ffffff",
+  "text_color" => "#333333", "navigation" => "#2fc8ee",
+  "link" => "#03657b", "site_background" => "#f4f5f5", "navigation_label" => "#333333")
+  , "color_palette2" => array("header_background" => "#104c69",
+  "text_color" => "#333333", "navigation" => "#2886b2",
+  "link" => "#11506e", "site_background" => "#e8f5fb", "navigation_label" => "#ffffff"),
+  "color_palette3" => array("header_background" => "#299abe",
+  "text_color" => "#333333", "navigation" => "#75bfd5",
+  "link" => "#97d6e7", "site_background" => "#104c69", "navigation_label" => "#333333"),
+  "color_palette4" => array("header_background" => "#299abe",
+  "text_color" => "#333333", "navigation" => "#75bfd5",
+  "link" => "#175667", "site_background" => "#ceeef7", "navigation_label" => "#333333"),
+  "color_palette5" => array("header_background" => "#0492b8",
+  "text_color" => "#1b1b1b", "navigation" => "#2fc8ee",
+  "link" => "#03657b", "site_background" => "#e65528", "navigation_label" => "#1b1b1b"));
+  $color_palette_arr = mobilizer_color_palette_style();
+  $count = 1;
+  foreach ($color_palette_arr as $key => $color_label) {
+    $color_label_name = str_replace(" ", "_", strtolower($color_label));
+    for ($count = 1; $count <= 5; $count++) {
+      $mobilizer_color_palette['color_palette' . $count][$color_label_name] = $default_color['color_palette' . $count][$color_label_name];
+    }
+  }
+  variable_set("mobilizer_color_palette", $mobilizer_color_palette);
+}
+
+/**
+ * @return multitype:string
+ */
+function mobilizer_color_palette_style() {
+  $color_palette_arr = array('Header background', 'Text color', 'Navigation', 'Link', 'Site background', 'Navigation label');
+  return $color_palette_arr;
+}
+
+/**
+ * Removes Default Breadcrumb and Title from module pages
+ */
+function mobilizer_page_alter(&$page) {
+  global $conf, $theme;
+  $argument1 = array('mobilizer');
+  $argument2 = array('featured-mobilizer', 'mobilizer');
+  $argument3 = array('start-mobilizer', 'select-layout', 'select-menu-configure', 'featured-pages', 'finish-page', 'header_image', 'hbimage', 'site_background');
+  $argument4 = array('theme-setting-mobilizer', 'header');
+  if (in_array(arg(1), $argument1) || in_array(arg(0), $argument2) || in_array(arg(2), $argument3) || in_array(arg(3), $argument4)) {
+    drupal_set_breadcrumb(array());
+  }
+  
+  // disable admin toolbar
+  if ($theme == 'mobilizer') {
+    unset($page['page_top']['toolbar']);
+  }
+
+}
+
+/**
+ * Get Menu Icons
+ */
+function mobilizer_get_menu_icons_menu_id($menu_id, $menu_title) {
+  $icon_id = db_select('mobilizer_menu_icons', 'wmmi')
+                ->fields('wmmi', array('icon_id'))
+                ->condition('mlid', $menu_id)
+                ->execute()->fetchAll();
+  if (empty($icon_id)) {
+    $menu_id = _mobilizer_get_default_menu_icon($menu_title);
+  }
+    else {
+    $menu_id = $icon_id[0]->icon_id;
+  }
+  $default_icon = _mobilizer_get_menu_icon($menu_id);
+  return $default_icon;
+}
+/**
+ * Implements iframe_with_html().
+ */
+function _mobilizer_iframe_with_html($path) {
+  global $base_url;
+  $main_url = $path . "/?mobilizer=" . md5($base_url . "_mobilizer");
+  $html = '<div id="iframe_div">
+  <iframe  width="307" height="554" src="' . $main_url . '">
+        <p>Your browser does not support iframes.</p></iframe></div>';
+  return $html;
+}
+/**
+ * Implements ajax_preview_header_write().
+ */
+function mobilizer_ajax_preview_header_write($form_state) {
+  $css_creation = variable_get("mobilizer_css_creation");
+  if (isset($form_state['input']['header_background_txt'])) {
+    $css_creation['#header']['background-color'] = $form_state['input']['header_background_txt'];
+  }
+  if (isset($form_state['input']['text_color_txt'])) {
+    $css_creation['.node-bdy p']['color'] = $form_state['input']['text_color_txt'];
+    $css_creation['p']['color'] = $form_state['input']['text_color_txt'];
+  }
+  if (isset($form_state['input']['navigation_txt'])) {
+    $css_creation['#main-menu ul.menu li']['background'] = $form_state['input']['navigation_txt'];
+  }
+  if (isset($form_state['input']['link_txt'])) {
+    $css_creation['a']['color'] = $form_state['input']['link_txt'];
+  }
+  if (isset($form_state['input']['site_background_txt'])) {
+    $css_creation['#page']['background-color'] = $form_state['input']['site_background_txt'];
+  }
+  if (isset($form_state['input']['navigation_label_txt'])) {
+    $css_creation['#main-menu ul.menu li a']['color'] = $form_state['input']['navigation_label_txt'];
+  }
+  if (isset($form_state['values']['site_background']) && $form_state['values']['site_background'] != '0' && $form_state['values']['site_background']['fid'] != '0') {
+    $site_bg_image = file_load($form_state['values']['site_background']['fid']);
+    if (isset($site_bg_image)) {
+      $bg_image = file_create_url($site_bg_image->uri);
+      $css_creation['#page']['background-image'] = "url('" . $bg_image . "')";
+      $css_creation['#page']['background-repeat'] = "no-repeat";
+    }
+  }
+ /*
+  * Text & Links and Headers
+  */
+  if (isset($form_state['input']['underline_links'])) {
+    $css_creation['a']['text-decoration'] = 'underline';
+  }
+    else {
+    $css_creation['a']['text-decoration'] = 'none';
+  }
+  if (isset($form_state['input']['font_type'])) {
+    $css_creation['.node-bdy p']['font-family'] = $form_state['input']['font_type'];
+    $css_creation['a']['font-family'] = $form_state['input']['font_type'];
+    $css_creation['p']['font-family'] = $form_state['input']['font_type'];
+  }
+  if (isset($form_state['input']['font_size'])) {
+    $css_creation['.node-bdy p']['font-size'] = $form_state['input']['font_size'] . 'px';
+    $css_creation['a']['font-size'] = $form_state['input']['font_size'] . 'px';
+    $css_creation['p']['font-size'] = $form_state['input']['font_size'] . 'px';
+  }
+  if (isset($form_state['input']['heading1'])) {
+    $css_creation['h1'] = array('color' => $form_state['input']['heading1']);
+  }
+  if (isset($form_state['input']['heading2'])) {
+    $css_creation['h2'] = array('color' => $form_state['input']['heading2']);
+  }
+  if (isset($form_state['input']['heading3'])) {
+    $css_creation['h3'] = array('color' => $form_state['input']['heading3']);
+  }
+  if (isset($form_state['input']['heading1_font_size'])) {
+    $css_creation['h1']['font-size'] = $form_state['input']['heading1_font_size'] . 'px';
+  }
+  if (isset($form_state['input']['heading2_font_size'])) {
+    $css_creation['h2']['font-size'] = $form_state['input']['heading2_font_size'] . 'px';
+  }
+  if (isset($form_state['input']['heading3_font_size'])) {
+    $css_creation['h3']['font-size'] = $form_state['input']['heading3_font_size'] . 'px';
+  }
+  if (isset($form_state['input']['layout'])) {
+    variable_set('mobilizer_nav_style', $form_state['input']['layout']);
+  }
+
+  // For Header preview
+
+  variable_set('mobilizer_header_preview', 1);
+  if (isset($form_state['values']['header_type'])) {
+    $header_type = $form_state['values']['header_type'];
+    variable_set('mobilizer_header_type_preview', $header_type);
+  }
+  if (isset($form_state['values']['title']['value'])) {
+    variable_set('mobilizer_text_header_preview', $form_state['values']['title']['value']);
+  }
+  if (isset($form_state['values']['header_image']['fid'])) {
+    $file_obj = file_load($form_state['values']['header_image']['fid']);
+    $imgpath = isset($file_obj->uri) ? $file_obj->uri : NULL;
+  }
+    else {
+    $imgpath = '';
+  }
+  if ($imgpath) {
+    $logo = file_create_url($imgpath);
+    variable_set('mobilizer_logo_path_preview', $logo);
+    variable_set('mobilizer_default_logo_preview', 0);
+  }
+    else {
+    $web_theme_path = variable_get('mobilizer_logo_path');
+    variable_set('mobilizer_logo_path_preview', $web_theme_path);
+  }
+
+  if (isset($form_state['values']['hbcolor'])) {
+    $css_creation['#header']['background-color'] = $form_state['values']['hbcolor'];
+  }
+  if (isset($form_state['values']['hbimage']['fid'])) {
+    $imgobj = file_load($form_state['values']['hbimage']['fid']);
+    if (isset($imgobj->uri) && $imgobj->uri) {
+      $bgimage = file_create_url($imgobj->uri);
+      $css_creation['#header']['background-image'] = "url('" . $bgimage . "')";
+      $css_creation['#header']['background-repeat'] = "repeat";
+    }
+  }
+  if (isset($form_state['values']['align'])) {
+    if ($form_state['values']['align'] == 'left') {
+      $css_creation['#logo']['padding'] = '5px 60% 0 5px';
+    }
+      elseif ($form_state['values']['align'] == 'right') {
+      $css_creation['#logo']['padding'] = '5px 10% 0 50%';
+    }
+      elseif ($form_state['values']['align'] == 'center') {
+      $css_creation['#logo']['padding'] = '5px 30% 0';
+    }
+      else {
+      $css_creation['#logo']['padding'] = '5px 30% 0';
+    }
+    $css_creation['#logo']['text-align'] = $form_state['values']['align'];
+  }
+  if (isset($form_state['values']['resize'])) {
+    $css_creation['#logo a img']['width'] = $form_state['values']['resize'];
+    $css_creation['#logo a img']['height'] = 'auto';
+  }
+  mobilizer_css_file_generator($css_creation, "-preview");
+}
+
+/**
+ * Function to set messages on form / page actions
+ */
+function mobilizer_set_messages($message = NULL, $type = 'success') {
+  if (isset($message)) {
+    switch ($type) {
+      case 'success':
+      $mobilizer_message['message'] = '<div class="mob_success">' . $message . '</div>';
+      break;
+      case 'error':
+      $mobilizer_message['message'] = '<div class="mob_error">' . $message . '</div>';
+      break;
+    }
+    variable_set('mobilizer_message', $mobilizer_message);
+  }
+}
+
+/**
+ * Function to get messages on form / page actions
+ */
+function mobilizer_get_messages() {
+  $mobilizer_message = NULL;
+  $mobilizer_message = variable_get('mobilizer_message', NULL);
+  variable_set('mobilizer_message', NULL);
+  return $mobilizer_message['message'];
+}
+
+/**
+ * Form for Mobilizer Configuration
+ */
+function mobilizer_admin_settings() {
+  $output = drupal_render(drupal_get_form('mobilizer_settings_form'));
+  return _mobilizer_themer($output);
+}
+/**
+ * Implements settings_form().
+ */
+function mobilizer_settings_form($form, &$form_state) {
+  // fetch selected method value
+  $method = variable_get('mobilizer_mobile_detect_method', NULL);
+  if (!mobilizer_library_check('Mobile_Detect.php')) {
+    variable_set('mobilizer_mobile_detect_method', 'standard');
+    $status = FALSE;
+  }
+    else {
+    $status = TRUE;
+  }
+  if (!isset($method)) {
+    mobilizer_set_messages('To change the configuration, You have Start the Mobilizer once...!', 'error');
+    drupal_goto('admin/mobilizer/start-mobilizer');
+  }
+  // create form
+  $form['default_region'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Mobilizer Mobile Detect Settings'),
+  );
+  $form['default_region']['mobilizer_method'] = array(
+    '#type' => 'radios',
+    '#title' => t('Method'),
+    '#options' => array('standard' => 'Standard', 'advance' => 'Advance'),
+    '#required' => TRUE,
+    '#default_value' => $method,
+    '#description' => t('<b>Standard</b> setting is default and uses straight PHP method for User agent detection whereas <b>Advance</b> uses the "Mobile Detect" library with supports Mobiles as well as Tablets.'),
+  );
+  if (!$status) {
+    mobilizer_set_messages('Mobile_Detect.php does not exists...! To enable the Advance method, Please download it from <a href="http://www.mobiledetect.net" target="_blank">www.mobiledetect.net</a> and copy the file from the extracted folder to "sites/all/libraries".', 'error');
+    $form['default_region']['mobilizer_method']['advance'] = array('#attributes' => array('disabled' => TRUE));
+  }
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save Configuration'),
+    '#attributes' => array('class' => array('btn btn-primary')),
+    '#prefix' => '<div class="submit_btn_bottom">',
+    '#suffix' => '</div>',
+  );
+  return $form;
+}
+/**
+ * Implements hook_settings_form_submit().
+ */
+function mobilizer_settings_form_submit($form, &$form_state) {
+  if (isset($form_state['input']['mobilizer_method'])) {
+    variable_set('mobilizer_mobile_detect_method', $form_state['input']['mobilizer_method']);
+    mobilizer_set_messages('Configuration Saved...!', 'success');
+    drupal_goto('admin/mobilizer/start-mobilizer');
+  }
+}
+/**
+ * Implements library_check().
+ */
+function mobilizer_library_check($filename='') {
+  if (!empty($filename)) {
+    //check existance of the Library
+    $lib_path = DRUPAL_ROOT . '/' . 'sites/all/libraries/' . $filename;
+    if (!file_exists($lib_path)) {
+      return FALSE;
+    }
+      else {
+      return $lib_path;
+    }
+  }
+}

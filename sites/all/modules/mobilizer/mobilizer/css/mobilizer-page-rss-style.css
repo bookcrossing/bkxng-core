@@ -1,0 +1,11 @@
+.rss-feed{
+	background: -moz-linear-gradient(top, #1e7097 0%, #489bc3 100%);
+	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#1e7097), color-stop(100%,#489bc3));
+	background: -webkit-linear-gradient(top, #1e7097 0%,#489bc3 100%);
+	background: -o-linear-gradient(top, #1e7097 0%,#489bc3 100%);
+	background: -ms-linear-gradient(top, #1e7097 0%,#489bc3 100%);
+	background: linear-gradient(to bottom, #1e7097 0%,#489bc3 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#1e7097', endColorstr='#489bc3',GradientType=0 );
+	padding : 5px;
+	margin-bottom :1px;
+}

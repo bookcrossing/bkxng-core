@@ -1,0 +1,226 @@
+<?php
+/**
+* @file
+* Install file declares the structures of the table used.
+* Also includes install and uninstall hooks to manage variable and other
+*   dependencies.
+*/
+/**
+* Implements hook_schema().
+*/
+function mobilizer_schema() {
+  $schema = array();
+  $schema ['mobilizer_menu_icons'] = array(
+      'description' => 'Stores menu icons informations',
+      'fields' => array(
+          'mlid' => array(
+              'type' => 'int',
+              'length' => 10,
+              'not null' => TRUE
+          ),
+          'icon_id' => array(
+              'type' => 'int',
+              'length' => 10,
+              'not null' => TRUE
+          )
+      ),
+      'primary key' => array(
+          'mlid'
+      )
+  );
+  $schema ['mobilizer_node'] = array(
+      'description' => 'All blocks content will be save in html.',
+      'fields' => array(
+          'mid' => array(
+              'description' => 'The primary identifier.',
+              'type' => 'serial',
+              'not null' => TRUE
+          ),
+          'mlid' => array(
+              'description' => 'Menu link id',
+              'type' => 'int',
+              'not null' => TRUE
+          ),
+          'bid' => array(
+              'description' => 'block id',
+              'type' => 'int',
+              'not null' => TRUE
+          ),
+          'weight' => array(
+              'description' => 'block weight',
+              'type' => 'int',
+              'not null' => TRUE
+          ),
+          'ebabled' => array(
+              'description' => 'block Hide/show',
+              'type' => 'int',
+              'not null' => TRUE
+          ),
+          'type' => array(
+              'description' => 'Page type',
+              'type' => 'varchar',
+              'length' => 100,
+              'not null' => TRUE,
+              'default' => ''
+          ),
+          'block_description' => array(
+              'description' => 'Block description',
+              'type' => 'varchar',
+              'length' => 200,
+              'not null' => TRUE,
+              'default' => ''
+          ),
+          'block_title' => array(
+              'description' => 'Block title',
+              'type' => 'varchar',
+              'length' => 200,
+              'not null' => TRUE,
+              'default' => ''
+          ),
+          'block_delta' => array(
+              'description' => 'Block title',
+              'type' => 'varchar',
+              'length' => 200,
+              'not null' => TRUE,
+              'default' => ''
+          ),
+          'block_module' => array(
+              'description' => 'Block title',
+              'type' => 'varchar',
+              'length' => 200,
+              'not null' => TRUE,
+              'default' => ''
+          ),
+          'node_block_html' => array(
+              'description' => 'Node related Blocks html content',
+              'type' => 'text',
+              'size' => 'big',
+              'not null' => FALSE
+          ),
+          'time' => array(
+              'description' => 'Unix Timestamp field',
+              'type' => 'int',
+              'not null' => FALSE
+          )
+      ),
+      'primary key' => array(
+          'mid'
+      )
+  );
+  $schema ['mobilizer_featured_page'] = array(
+      'description' => 'Stores page information',
+      'fields' => array(
+          'pid' => array(
+              'type' => 'serial',
+              'not null' => TRUE,
+              'description' => 'Primary Key: Unique page ID.'
+          ),
+          'nid' => array(
+              'type' => 'int',
+              'length' => 10,
+              'not null' => TRUE
+          ),
+          'page_type' => array(
+              'type' => 'varchar',
+              'length' => 255,
+              'not null' => TRUE
+          ),
+          'mid' => array(
+              'type' => 'varchar',
+              'length' => 255,
+              'not null' => TRUE
+          )
+      ),
+      'primary key' => array(
+          'pid'
+      )
+  );
+  
+  return $schema;
+}
+
+/**
+* Implements hook_install().
+*/
+function mobilizer_install() {
+// set the default mobile detection method
+  variable_set('mobilizer_mobile_detect_method', 'standard');
+  $simplepie_path_autoloder = DRUPAL_ROOT . '/' . 'sites/all/libraries/simplepie/autoloader.php';
+  $simplepie_path_idn = DRUPAL_ROOT . '/' . 'sites/all/libraries/simplepie/idn/idna_convert.class.php';
+  if (file_exists($simplepie_path_autoloder) && file_exists($simplepie_path_idn)) {
+	  // do nothing
+	  }
+	  else
+	  {
+	   drupal_set_message(t('Simplepie rss parser does not exists...! To enable rss parsering, Please download it from ') . l('www.simplepie.org/downloads','http://www.simplepie.org/downloads',array('attributes' => array('target'=>'_blank'))). t(' and copy extracted folder into "sites/all/libraries". and rename extracted folder to "simplepie" Please make sure that autoloader.php exist as "sites/all/libraries/simplepie/autoloader.php"'), 'status');	
+	  }
+}
+
+/**
+* Implements hook_uninstall().
+*/
+function mobilizer_uninstall() {
+  variable_del('upload_file_types');
+  variable_del('mobilizer_color_palette');
+  variable_del('mobilizer_email_to');
+  variable_del('mobilizer_header_type');
+  variable_del('mobilizer_header_preview');
+  variable_del('mobilizer_header_type_preview');
+  variable_del('mobilizer_header_config');
+variable_del('mobilizer_logo_path');
+variable_del('mobilizer_default_logo');
+variable_del('mobilizer_text_header');
+variable_del('mobilizer_css_creation');
+variable_del('mobilizer_style');
+variable_del('mobilizer_default_menu');
+variable_del('mobilizer_default_menu_name');
+
+variable_del('mobilizer_layout_process');
+variable_del('mobilizer_menu_process');
+variable_del('mobilizer_page_process');
+variable_del('mobilizer_style_process');
+variable_del('mobilizer_header_process');
+variable_del('mobilizer_publish_process');
+
+variable_del('mobilizer_mobile_logo_path_preview');
+variable_del("mobilizer_page_url");
+variable_del("mobilizer_page_url");
+variable_del("mobilezer_theme_name");
+variable_del("mobilizer_mobile_detect_method");
+variable_del("mobilizer-menu");
+
+variable_del("mobilizer_site_status");
+variable_del("mobilizer_page_process");
+variable_del("mobilizer_message");
+
+variable_del("mobilizer_nav_style");
+//remove mobilizer theme folder
+$mobile_theme_name = variable_get('mobilizer_theme_name', 'mobilizer');
+$theme_list = array($mobile_theme_name);
+theme_disable($theme_list); // disabe theme 
+$theme_path = drupal_get_path('theme', $mobile_theme_name);
+$theme_dir = DRUPAL_ROOT . '/sites/all/themes/' . $mobile_theme_name;
+if ($mobile_theme_name) {
+  file_unmanaged_delete_recursive($theme_dir);
+}
+// remove theme theme folder
+
+}
+
+/*
+list of variable names used in mobilizer-start.inc file
+mobilizer_theme_name
+mobilizer_menu
+mobilizer_nav_style
+mobilizer_css_creation
+mobilizer_header_type_preview
+mobilizer_header_type
+mobilizer_start_process
+mobilizer_style
+mobilizer_logo_path
+mobilizer_header_preview
+mobilizer_header_type
+mobilizer_default_menu
+mobilizer_selected_web_menu_item
+mobilizer_css_creation
+*/

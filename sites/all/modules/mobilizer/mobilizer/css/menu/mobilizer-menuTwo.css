@@ -1,0 +1,88 @@
+#main-menu3{
+	display:none;
+}
+#main-menu ul.menu li{
+	float:left;
+	border-width:1px;
+	border-style:solid;
+	border-radius: 3px; 
+	-moz-border-radius: 3px; 
+	-webkit-border-radius:3px;
+	-khtml-border-radius:3px;
+	behavior: url(assets/js/PIE.htc);
+	margin: 0 1% 2% 1%;
+        width: 30.6%;
+	text-align:center;
+	padding:13px 0;
+}
+
+
+
+#main-menu ul.menu li a{
+	display:block;
+	text-overflow:ellipsis;
+}
+
+#main-menu ul.menu li a span span{
+	display: block;
+    overflow: hidden;
+    padding: 0 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#main-menu ul li.leaf{
+	list-style:none;
+}
+
+#main-menu ul.menu .ico{
+	display:block;
+	margin-bottom:14px;
+}
+
+#main-menu ul.menu .ico img{
+	padding-top:4px;
+}
+
+#main-menu ul.menu .arrow{
+	display:none;
+}
+#main-menu ul.menu li.menuTwo-last{
+	margin-right:0;
+}
+
+.menu-three-drop{
+	display:none;
+}
+
+#main-menu ul.menu li.more-link{padding-bottom:15px;}
+
+ul.menu ul.menu{margin-right:-1px;}
+   
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

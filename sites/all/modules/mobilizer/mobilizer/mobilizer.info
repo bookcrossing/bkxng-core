@@ -1,0 +1,37 @@
+name = Mobilizer
+description = Website Mobilizer
+core = 7.x
+engine = phptemplate
+
+regions[mobilizer_top] = Mobilizer Top
+regions[content] = Content
+regions[mobilizer_content] = Mobilizer content
+
+stylesheets[all][] = css/mobilizer-master.css
+stylesheets[all][] = css/mobilizer-base.css
+stylesheets[all][] = css/mobilizer-misc.css
+stylesheets[all][] = css/mobilizer-color.css
+; stylesheets[all][] = css/menu/mobilizer-menuOne.css
+; stylesheets[all][] = css/menu/mobilizer-menuTwo.css
+; stylesheets[all][] = css/menu/mobilizer-menuThree.css
+stylesheets[all][] = css/mobilizer-base-mobile.css
+stylesheets[all][] = css/mobilizer-color-mobile.css
+stylesheets[all][] = css/mobilizer-page-header-style.css
+stylesheets[all][] = css/mobilizer-page-rss-style.css
+scripts[] = js/mobilizer-custom.js
+; scripts[] = js/modernizr.custom.79639.js
+
+features[] = logo
+; features[] = name
+features[] = favicon
+features[] = main_menu
+features[] = secondary_menu
+
+core = "7.x"
+
+; Information added by drupal.org packaging script on 2013-06-07
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "mobilizer"
+datestamp = "1370611120"
+

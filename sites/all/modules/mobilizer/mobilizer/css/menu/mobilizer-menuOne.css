@@ -1,0 +1,53 @@
+
+#main-menu ul.menu li{
+	margin:0;
+	height:34px;
+	line-height:34px;
+	border-width:1px;
+	border-style:solid;
+}
+
+#main-menu ul.menu li a{
+	display:block;
+	position:relative;
+}
+
+#main-menu ul li.leaf{
+	list-style:none;
+}
+
+#main-menu ul.menu .ico{
+	width:45px;
+	margin-left:10px;
+	height:34px;
+	float:left;
+	text-align:left;
+}
+
+#main-menu ul.menu .ico img{
+	padding-top:4px;
+}
+
+#main-menu ul.menu .arrow{
+	float:right;
+	height: 31px;
+    padding-top: 4px;
+	position:absolute;
+	right:-15px;
+	top:0;
+}
+#main-menu ul.menu li.more-link .arrow {
+    padding-top: 2px;
+    right: 14px;
+}
+.menu-three-drop{
+	display:none;
+}
+
+#main-menu ul.menu li a span span{
+	display: block;
+    overflow: hidden;
+    padding: 0 30px 0 10px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
