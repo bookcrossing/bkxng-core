@@ -165,7 +165,8 @@ function bookcrossing_catalog_letters($letters) {
 
 //  $rus_letters_sum = 0;
 //  $eng_letters_sum = 0;
-  $total = 0;
+//  $total = 0;
+  $max = 0;
   foreach ($letters as $letter => $elements) {
 //    if (isset($rus_charset[$letter])) {
 //      $rus_letters_sum += $elements;
@@ -173,15 +174,16 @@ function bookcrossing_catalog_letters($letters) {
 //    elseif (isset($eng_charset[$letter])) {
 //      $eng_letters_sum += $elements;
 //    }
-    $total += $elements;
+//    $total += $elements;
+    if ($elements > $max) $max = $elements;
   }
 
   $output = '<div class="letters-wrapper">';
   $output .= '<div class="letters-container">';
   foreach ($rus_charset as $letter) {
     $attributes = array();
-    if (isset($letters[$letter]) && $total) {
-      $percentage = bookcrossing_catalog_letter_percentage($letters[$letter], $total);
+    if (isset($letters[$letter]) && $max) {
+      $percentage = bookcrossing_catalog_letter_percentage($letters[$letter], $max);
       $attributes['style'] = array('font-size: ' . $font_sizes[$percentage] . 'px');
     }
 
@@ -198,8 +200,8 @@ function bookcrossing_catalog_letters($letters) {
   $output .= '<div class="letters-container">';
   foreach ($eng_charset as $letter) {
     $attributes = array();
-    if (isset($letters[$letter]) && $total) {
-      $percentage = bookcrossing_catalog_letter_percentage($letters[$letter], $total);
+    if (isset($letters[$letter]) && $max) {
+      $percentage = bookcrossing_catalog_letter_percentage($letters[$letter], $max);
       $attributes['style'] = array('font-size: ' . $font_sizes[$percentage] . 'px');
     }
 
@@ -231,7 +233,7 @@ function bookcrossing_catalog_letters($letters) {
   }
 
   if ($letters_sum) {
-    $percentage = bookcrossing_catalog_letter_percentage($letters_sum, $total);
+    $percentage = bookcrossing_catalog_letter_percentage($letters_sum, $max);
   }
 
   $output .= $names_with_numbers ? l('123', $_GET['q'], array('query' => $query, 'attributes' => array('style' => 'font-size: ' . $font_sizes[$percentage] . 'px'))) : '<span>123</span>';

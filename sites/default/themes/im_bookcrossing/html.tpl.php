@@ -47,6 +47,9 @@
 <head profile="<?php print $grddl_profile; ?>" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# book: http://ogp.me/ns/book#">
   <?php print $head; ?>
   <title><?php print $head_title; ?></title>
+
+  <link rel="author" href="/humans.txt" />
+  
   <?php print $styles; ?>
   <?php print $scripts; ?>
 </head>

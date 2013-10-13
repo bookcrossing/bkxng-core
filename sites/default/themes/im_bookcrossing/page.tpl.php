@@ -78,16 +78,16 @@
       </h1>
     <?php endif; ?>
   <?php endif; ?>
-  
+
   <div id="nav-and-release-book-wrapper">
     <?php print theme('bookcrossing_main_menu', array('visible' => 3, 'links' => $main_menu, 'attributes' => array('id' => 'main-menu', 'class' => array('links', 'clearfix')), 'heading' => '')); ?>
-    
+
     <?php if ($logged_in) : ?>
       <div id="release-button">
         <a href="<?php print $base_path; ?>release-book"><?php print t('Release book'); ?></a>
       </div><!-- /#release-button -->
     <?php endif; ?>
-      
+
     <div id="login-wrapper">
       <?php if ($logged_in) : ?>
         <div class="my-name"><?php print /*l($user->name, 'user', array('attributes' => array('class' => array('my-profile')))) .*/  '<span>' . $user->name . '</span>' . l(t('(log out)'), 'user/logout', array('attributes' => array('class' => array('logout-link')))); ?></div>
@@ -97,14 +97,14 @@
       <?php endif; ?>
     </div><!-- /#login -->
   </div><!-- /#navigation-and-release-book -->
-  
+
   <div id="header-wrapper">
     <?php if ($logo): ?>
       <a href="<?php print $front_page; ?>" title="<?php print t('Home'); ?>" rel="home" id="logo">
         <img src="<?php print $logo; ?>" alt="<?php print t('Home'); ?>" />
       </a>
     <?php endif; ?>
-    
+
     <?php print render($page['header_sidebar_first']); ?>
     <?php print render($page['header_sidebar_second']); ?>
     <div style="clear:left;"></div>
@@ -114,13 +114,15 @@
       <div class="fb-like" data-href="http://www.facebook.com/bookcrossing.by" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false" data-font="tahoma"></div>
     </div>
     <div id="github-wrapper">
-      <iframe src="/github-btn.html?user=bookcrossing&repo=core&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="130" height="20"></iframe>
+
+      <iframe src="/github-btn.html?user=bookcrossing&repo=core&type=fork&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="130" height="20"></iframe>
+
     </div>
   </div><!-- /#header-wrapper -->
 
-  
+
   <?php print render($page['under_content']); ?>
-  
+
   <div id="content-wrapper">
     <?php print $messages; ?>
     <?php print render($page['sidebar_first']); ?>
@@ -128,13 +130,13 @@
     <?php print render($page['sidebar_second']); ?>
     <div style="clear:left;"></div>
   </div>
-  
+
   <?php print render($page['after_content']); ?>
-  
+
   <div id="footer-wrapper">
     <?php print render($page['footer_menu']); ?>
     <?php print render($page['footer_text']); ?>
-    
+
     <div class="ira-young"><?php print '<div class="design-by">' . t('Design by') . '</div>' . $ira_yohng; ?></div>
   </div><!-- /#footer-wrapper -->
 </div><!-- /#page-wrapper -->
