@@ -114,7 +114,7 @@
             <?php if ($logged_in) : ?>
               <li><a href="<?php print $base_path; ?>release-book"><span class="btn btn-success btn-large"><?php print t('Release book'); ?></span></a></li>
             <?php else: ?>
-              <li><a href="<?php print $base_path; ?>user/login"><?php print t('Release book'); ?></a></li>
+              <li><a href="<?php print $base_path; ?>user/login"><span class="btn btn-success btn-large"><?php print t('Release book'); ?></span></a></li>
             <?php endif; ?>
             <li class="divider-vertical"></li>
             <li class="dropdown">
