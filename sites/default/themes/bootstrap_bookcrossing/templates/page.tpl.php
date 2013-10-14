@@ -66,6 +66,90 @@
  * @see template_process()
  */
 ?>
+<section class="container preheader">
+
+  <!--this is the login for the user-->
+  <?php if ($logged_in) : ?>
+    <nav class="user clearfix"><i class="icon-user"></i> <?php print l($user->name, 'user/' . $user->uid); ?> <?php print l(t('(log out)'), 'user/logout', array('attributes' => array('class' => array('logout-link')))); ?></nav>
+  <?php else : ?>
+    <nav class="user clearfix"><i class="icon-user"></i> <a href="user/login"><?php print t('Log in'); ?></a></nav>
+  <?php endif; ?>
+  <!--close user nav-->
+
+  <ul class="social">
+    <li><a class="socicon small facebook" href="#" data-placement="bottom" title="" data-original-title="Follow us on Facebook"></a></li>
+    <li><a class="socicon small twitterbird" href="#" data-placement="bottom" title="" data-original-title="Follow us on Twitter"></a></li>
+  </ul>
+
+</section>
+
+<!-- begin .header-->
+<header class="header clearfix">
+
+  <div class="navbar">
+    <div class="navbar-inner">
+      <div class="container">
+        <a class="btn btn-navbar" data-toggle="collapse" data-target=".navbar-responsive-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </a>
+        <?php if ($logo || $site_name): ?>
+          <a class="brand" href="<?php print $front_page; ?>" title="<?php print t('Home'); ?>" rel="home" id="logo">
+            <?php if ($logo): ?>
+              <img src="<?php print $logo; ?>" alt="<?php print t('Home'); ?>" />
+            <?php else: ?>
+              <?php print $site_name; ?>
+            <?php endif; ?>
+          </a>
+        <?php endif; ?>
+
+        <div class="nav-collapse collapse navbar-responsive-collapse">
+
+          <!-- begin #main_menu -->
+          <?php print theme('bookcrossing_main_menu', array('visible' => 3, 'links' => $main_menu, 'attributes' => array('id' => 'main-menu', 'class' => array('links', 'clearfix')), 'heading' => '')); ?>
+          <!-- close / #main_menu -->
+
+          <ul class="nav pull-right">
+            <?php if ($logged_in) : ?>
+              <li><a href="<?php print $base_path; ?>release-book"><span class="btn btn-success btn-large"><?php print t('Release book'); ?></span></a></li>
+            <?php else: ?>
+              <li><a href="<?php print $base_path; ?>user/login"><?php print t('Release book'); ?></a></li>
+            <?php endif; ?>
+            <li class="divider-vertical"></li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+                <li><a href="#">Action</a></li>
+                <li><a href="#">Another action</a></li>
+                <li><a href="#">Something else here</a></li>
+                <li class="divider"></li>
+                <li><a href="#">Separated link</a></li>
+              </ul>
+            </li>
+          </ul>
+
+        </div>
+        <!-- /.nav-collapse -->
+      </div>
+    </div>
+    <!-- /navbar-inner -->
+  </div>
+  <!-- /navbar -->
+
+</header>
+<!-- close /.header -->
+
+<!-- begin #page - the container for everything but header -->
+<div id="page">
+
+
+
+</div>
+<!-- close #page-->
+
+
+
 <div id="page-wrapper">
   <?php if ($site_name): ?>
     <?php if ($title): ?>
@@ -79,25 +163,6 @@
     <?php endif; ?>
   <?php endif; ?>
 
-
-  <div id="nav-and-release-book-wrapper">
-    <?php print theme('bookcrossing_main_menu', array('visible' => 3, 'links' => $main_menu, 'attributes' => array('id' => 'main-menu', 'class' => array('links', 'clearfix')), 'heading' => '')); ?>
-
-    <?php if ($logged_in) : ?>
-      <div id="release-button">
-        <a href="<?php print $base_path; ?>release-book"><?php print t('Release book'); ?></a>
-      </div><!-- /#release-button -->
-    <?php endif; ?>
-
-    <div id="login-wrapper">
-      <?php if ($logged_in) : ?>
-        <div class="my-name"><?php print /*l($user->name, 'user', array('attributes' => array('class' => array('my-profile')))) .*/  '<span>' . $user->name . '</span>' . l(t('(log out)'), 'user/logout', array('attributes' => array('class' => array('logout-link')))); ?></div>
-        <div class="my-shelf"><?php print l(t('My shelf'), 'user/' . $user->uid); ?></div>
-      <?php else : ?>
-        <?php print fboauth_action_display('connect'); ?>
-      <?php endif; ?>
-    </div><!-- /#login -->
-  </div><!-- /#navigation-and-release-book -->
 
   <div id="header-wrapper">
     <?php if ($logo): ?>
