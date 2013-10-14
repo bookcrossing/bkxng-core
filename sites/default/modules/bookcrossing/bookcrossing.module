@@ -198,13 +198,13 @@ function bookcrossing_block_configure($delta = '') {
     case 'faq-link':
       $form['faq-link'] = array(
         '#type' => 'textfield',
-        '#title' => t('Page where faq is located.'),
+        '#title' => t('Page where FAQ is located'),
         '#default_value' => variable_get('bookcrossing_faq_link', ''),
       );
 
       $form['help-link'] = array(
         '#type' => 'textfield',
-        '#title' => t('Page where help is located.'),
+        '#title' => t('Page where help is located'),
         '#default_value' => variable_get('bookcrossing_help_link', ''),
       );
       break;
@@ -212,13 +212,13 @@ function bookcrossing_block_configure($delta = '') {
     case 'facebook-and-twitter-link':
       $form['facebook-link'] = array(
         '#type' => 'textfield',
-        '#title' => t('Bookcrossing page on facebook.'),
+        '#title' => t('BookCrossing page on Facebook'),
         '#default_value' => variable_get('bookcrossing_facebook_link', ''),
       );
 
       $form['twitter-link'] = array(
         '#type' => 'textfield',
-        '#title' => t('Bookcrossing page on twitter.'),
+        '#title' => t('BookCrossing page on Twitter'),
         '#default_value' => variable_get('bookcrossing_twitter_link', ''),
       );
       break;
@@ -257,7 +257,7 @@ function bookcrossing_search_form($form, $form_state) {
   $form = array();
   
   $form['title'] = array(
-    '#markup' => '<div class="search-title">' . t('Didnt find a book?') . '</div>',
+    '#markup' => '<div class="search-title">' . t('Have not found a book?') . '</div>',
   );
   
   $form['search'] = array(
@@ -272,7 +272,7 @@ function bookcrossing_search_form($form, $form_state) {
   );
   
   $form['description'] = array(
-    '#markup' => '<div class="search-description">' . t('Enter the books author, BCID or title.') . '</div>',
+    '#markup' => '<p class="help-block">' . t('Enter book title or author name or ISBN') . '</p>',
   );
   
   return $form;
@@ -283,7 +283,7 @@ function bookcrossing_search_form($form, $form_state) {
  */
 function bookcrossing_search_form_submit($form, $form_state) {
   if (empty($form_state['values']['search'])) {
-    drupal_set_message(t('Input books title, ISBN or author to find books.'), 'error');
+    drupal_set_message(t('Enter book title or author name or ISBN to look for books'), 'error');
   }
   else {
     drupal_goto(url('books', array('absolute' => TRUE, 'query' => array('find' => $form_state['values']['search']))));
@@ -302,7 +302,7 @@ function bookcrossing_books_form($form, $form_state) {
 
   $form['bcid-first-part'] = array(
     '#type' => 'textfield',
-    '#size' => 3,
+    '#size' => 10,
     '#required' => TRUE,
     '#attributes' => array(
       'maxlength' => 4,
@@ -332,7 +332,7 @@ function bookcrossing_books_form($form, $form_state) {
   );
 
   $form['description'] = array(
-    '#markup' => '<div class="bcid-description">' . t('Enter the number of the found book (Bookcrossing ID)') . '</div>',
+    '#markup' => '<p class="help-block">' . t('Enter BCID of the book you have found') . '</p>',
   );
 
   return $form;
@@ -355,7 +355,7 @@ function bookcrossing_found_book($form, $form_state) {
    * There is no that book in db.
    */
   if (!$book) {
-    drupal_set_message(t('There is no book with that BCID.'));
+    drupal_set_message(t('There is no record in our catalog for book with BCID you have entered'));
     $error = TRUE;
   }
 
@@ -363,7 +363,7 @@ function bookcrossing_found_book($form, $form_state) {
    * Someone already found this book.
    */
   if (isset($book['status']) && $book['status']) {
-    drupal_set_message(t('Someone is already reading this book.'));
+    drupal_set_message(t('Seems someone has found this book and have not released it yet. If you can not proceed with book registration, please contact site administration.'));
     $error = TRUE;
   }
 
@@ -1860,7 +1860,7 @@ function bookcrossing_release_book_form($form, $form_state) {
   );
 
   $form['existed-book']['description'] = array(
-    '#markup' => '<div class="bcid-description">' . t('Enter the number of the read book (Bookcrossing ID)') . '</div>',
+    '#markup' => '<p class="help-block">' . t('Enter the number of the read book (Bookcrossing ID)') . '</p>',
   );
 
 

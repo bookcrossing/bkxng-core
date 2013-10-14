@@ -77,8 +77,12 @@
   <!--close user nav-->
 
   <ul class="social">
-    <li><a class="socicon small facebook" href="#" data-placement="bottom" title="" data-original-title="Follow us on Facebook"></a></li>
-    <li><a class="socicon small twitterbird" href="#" data-placement="bottom" title="" data-original-title="Follow us on Twitter"></a></li>
+    <li id="fb-wrapper">
+      <div class="fb-like" data-href="http://www.facebook.com/bookcrossing.by" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false" data-font="tahoma"></div>
+    </li>
+    <li id="github-wrapper">
+      <iframe src="/github-btn.html?user=bookcrossing&repo=core&type=fork&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="130" height="20"></iframe>
+    </li>
   </ul>
 
 </section>
@@ -86,7 +90,7 @@
 <!-- begin .header-->
 <header class="header clearfix">
 
-  <div class="navbar">
+  <div class="navbar navbar-inverse">
     <div class="navbar-inner">
       <div class="container">
         <a class="btn btn-navbar" data-toggle="collapse" data-target=".navbar-responsive-collapse">
@@ -118,13 +122,12 @@
             <?php endif; ?>
             <li class="divider-vertical"></li>
             <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Dropdown <b class="caret"></b></a>
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown"><?php print t('Help'); ?> <b class="caret"></b></a>
               <ul class="dropdown-menu">
-                <li><a href="#">Action</a></li>
-                <li><a href="#">Another action</a></li>
-                <li><a href="#">Something else here</a></li>
+                <li><?php print l(t('Site help'), variable_get('bookcrossing_help_link', '')); ?></li>
+                <li><?php print l(t('Frequently asked questions'), variable_get('bookcrossing_faq_link', '')); ?></li>
                 <li class="divider"></li>
-                <li><a href="#">Separated link</a></li>
+                <li><?php print l(t('Feedback'), 'http://meta.bookcrossing.by/'); ?></li>
               </ul>
             </li>
           </ul>
@@ -136,6 +139,16 @@
     <!-- /navbar-inner -->
   </div>
   <!-- /navbar -->
+
+<!--
+  /**
+   * @todo Implement Found book and Have not found book toolbars as blocks and hide them on following pages: Log in,
+   */
+-->
+  <div class="container clearfix">
+    <?php print render($page['header_sidebar_first']); ?>
+    <?php print render($page['header_sidebar_second']); ?>
+  </div>
 
 </header>
 <!-- close /.header -->
@@ -164,24 +177,7 @@
   <?php endif; ?>
 
 
-  <div id="header-wrapper">
-    <?php if ($logo): ?>
-      <a href="<?php print $front_page; ?>" title="<?php print t('Home'); ?>" rel="home" id="logo">
-        <img src="<?php print $logo; ?>" alt="<?php print t('Home'); ?>" />
-      </a>
-    <?php endif; ?>
 
-    <?php print render($page['header_sidebar_first']); ?>
-    <?php print render($page['header_sidebar_second']); ?>
-    <div style="clear:left;"></div>
-    <div id="help-link"><?php print l(t('Help'), variable_get('bookcrossing_help_link', '')); ?></div>
-
-    <div id="fb-wrapper">
-      <div class="fb-like" data-href="http://www.facebook.com/bookcrossing.by" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false" data-font="tahoma"></div>
-    </div>
-    <div id="github-wrapper">
-      <iframe src="/github-btn.html?user=bookcrossing&repo=core&type=fork&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="130" height="20"></iframe>
-    </div>
   </div><!-- /#header-wrapper -->
 
 

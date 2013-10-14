@@ -485,14 +485,14 @@ div.my-shelf a:hover {
 /*  margin-bottom: 5px;*/
 } 
  
-.bcid-description {
-  clear: left;
-  font-size: 10px;
-  font-weight: normal;
-  margin-bottom: 0px;
-  margin-top: 5px;
-  color: #333;
-}
+/*.bcid-description {*/
+  /*clear: left;*/
+  /*font-size: 10px;*/
+  /*font-weight: normal;*/
+  /*margin-bottom: 0px;*/
+  /*margin-top: 5px;*/
+  /*color: #333;*/
+/*}*/
 
 .form-item-existed-book-bcid-first-part, .form-item-existed-book-bcid-second-part,
 .form-item-bcid-first-part, .form-item-bcid-second-part {
@@ -772,13 +772,13 @@ div.my-shelf a:hover {
   padding-left: 5px;
 }
 
-.search-description {
-  clear: left;
-  font-size: 10px;
-  font-weight: normal;
-  margin-bottom: 0px;
-  color: #333;
-}
+/*.search-description {*/
+  /*clear: left;*/
+  /*font-size: 10px;*/
+  /*font-weight: normal;*/
+  /*margin-bottom: 0px;*/
+  /*color: #333;*/
+/*}*/
 
 .search-title {
   font-size: 16px;
@@ -1229,7 +1229,7 @@ ul.status-info li {
 
 .oz-link {
   margin: 0 0 0 100px;
-  background: url('/sites/default/files/images/misc/oz-icon.png') no-repeat 5px #dfe;
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAArFJREFUeNpsU81rE0EU/83uJjFNqksKWkQkSRFEEVfwbntoBRUaQUQqaD17KIJ/gD16SnoWbPVYUYIfB/XQePOWeBAqpU3QtmqtbT6aTdLNzvPN7tJGdGEy2Znf13szK/CfpzmfHoaABSHOQsKEi0+8XCCJUvzmcrUXK3pf7OdpC2FzVh84Y2n9xyFiRzwEtWuQta+QvxersvHtTuzGSv4fAftFelL0pWb1w+chQpEKNFR4t8BbkwxKKgy5gLvxGe6vYp5Fru4JtF6xsxgsiv7TBSZOq1WhYYr/Z/7KSP5wq+ugxuJ07PryA9F+lzZlM7RAGJrhGvMMmBVhZITBIjrtk6UIFFQSAbK/c9LaOYMcZFzbfBKfeDPXeDpaZGeLHIIWZqQRGDNPkD9zU73HbXahR8WUwQux+MTHXP3RaJYBludMApJfhPRrpB6y6gNcl0togcKMbz5LW86aWUUoUfZq131nEQzPmuOTcmaymqm2AerYMI5y0r5ryyV3u56h5o7vEAA9cFcNJjs8d3hbja1NyLoN2VLHG1TJxhdkfROaa0McTAC60dv5Cv/OoNsu0U7VonZ7XJWqLpjWB2jt10NJljE9N44lt1fZYR2yuQlqVXP9t96nZG31kGz8WCCnnWXBYU5neuIaCoYWIUdPUElWxTBp3vkD3V1u2u497GKulj1R5LIs9DSRdjkkS2hR+qBFxsproUF6rB3ifduvlQF58/5SjmvPcjILqgeOT6SW3+jQMapoMcp596zzNhVzfmrznS/ikuReighSfJmS0LEgRODa9ZumTobJCCdpJDq+UlCBEblYbhoJuhs5RQVjEIWBh0sVt4bbcosPY1tdXSZzOi3O2JNUCQVk7N814MCVFdXtkdbL9JgnOoSMSiOdoN4YR44iryfkdPRyee+T/iPAAOmHWquxHVyLAAAAAElFTkSuQmCC) no-repeat 5px #dfe;
   color: #3B59A9 !important;
   border: 1px dashed #bdc;
   padding: 8px 5px 7px 27px !important;
@@ -1478,7 +1478,7 @@ ul.status-info li {
 }
 
 .bcid-scissors {
-  background: url('/sites/all/themes/im_bookcrossing/images/scissors_horz.png') no-repeat scroll 430px 0 transparent;
+    background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAC0AAAATCAYAAAAEaoRHAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAARNSURBVHjaxJZfiNVFFMfnz5mZ39xLgtZTRhj9sdCojMA0I/sjgfuQtVgq9JYPJRWSaxAJRSCY/UPKoOglTQVFatMIfGjNUIqeykTLSjEqCBeLe+d35pyZ6aF7Zfe2pK5rfmGezsycz8yZc+bIUorYvn27GI+cc3cw87sppem9NqUUA8CA1npDCIG991OI6OmU0opSyuTuPADYCwCP1XV95Ez++vv7/9lbnIcQcZ9zbpZzbpVS6tRIW84ZYoyvxhiHnHPXlVLmpZSW9wBvNsbMPxvgURcizlPtdruNiOudc9cYYzZKKeNIe0ppTozxIDPPr6rqJmPMO1LKU8aYHcaYJ0MI+Vx9njd0VyGEP4jocefcbQCwS0rZvc0vvPdzcs4LEXFIa/1ps9mcRkT9IYST4/E1YdBdSSmjMWaNtbZPa/2rEOKvUspBpRTmnKcj4ta6rt/23l8xXh8TBu29vxQAXqjr+lBd11/nnO+21s7VWu8mot+ZeYYQQpRSgJkfruv6k0aj4S4atHPuWUQ8wsxrSimilCKIaGWMcUhrvQkAbgSAN5VS3F1TSpmZUlr+v0M755ZqrY8g4tqc85SRNq31VwCwVEo5XNf1z8y8wnt/lbV2Z3dOjPENY8yL3nt3waGrqpqrtR6MMW5OKV3bU5/RGLPKWns7Iu5rtVqnba1W64QxZmnnrYtSiiSi5xHxgHNu2QWB9t5PA4APEHEopdRXShmZgAkAdjjnZhDR+hBCGmuPVqtVSympc8CgtR4upcyMMW4CgMGqqm6eEGjv/SRjzEt1XR9k5iWlFN1zu0ettcuYuT+EcPRM+6WUhJRSVFV1f0ppirX2TqXUh8zch4h7AeB1731zXNCNRsM651Yi4ndE9FwppdFT3rIx5i3n3CxE3Ha2EetGSEo53PlZ96eUHnDOLVFK/cLMTyHiN9baR5rNpjor6GazCc65PkQ8gIiv5Jyn9s4BgC+rqppJRE+EEP48l2emtRalFMHM83vagq0ppRuMMatLKZOIaAsibvLeT/5PaO/99Yj4eYxxMKV0yxifx2/OudXGmLkhhEPjKllK7RBCCCIaGOuTIaJ1VVXdqrX+iJmXENHuqqrgX9DGmMsAYFtd198y8+yRSTYi0XZWVTUbEdeFEHi8pRIAntFa/5BznkpEn3nvrxyjLThmrV1krd3GzLOZee0o6KqqFjPzYWZe3JtknXD+ZK1dwMwPhhCOTUCfkgHgHqXUYWa+GhH3OOcWjNGMZQAYkFIKZr789KE74frYWnsypTSvlDI95yxKKUJKKQDgR2PMy+12e3giexREPO69v5eI3mfmu2KMgwCwS2u9USm1Xyklcs6CiPo6jGkUdLvdbgsh9nTGqCwnIkFE4kIohHCi2Wzep5R6lJkHmHkRMy+SUopul5hzFlrrtrV2wyjoi6lWq8VCiPe891tSSgtzzg+llC7JOXcjfRwAXgshfN9d8/cA4IteWesTHFIAAAAASUVORK5CYII=) no-repeat scroll 430px 0 transparent;
   height: 19px;
   margin: 0 auto;
   width: 480px;
