@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file
+ * @file page.tpl.php
  * Default theme implementation to display a single Drupal page.
  *
  * Available variables:
@@ -66,140 +66,173 @@
  * @see template_process()
  */
 ?>
-<section class="container preheader">
+<div id="page-wrap">
 
-  <!--this is the login for the user-->
-  <?php if ($logged_in) : ?>
-    <nav class="user clearfix"><i class="icon-user"></i> <?php print l($user->name, 'user/' . $user->uid); ?> <?php print l(t('(log out)'), 'user/logout', array('attributes' => array('class' => array('logout-link')))); ?></nav>
-  <?php else : ?>
-    <nav class="user clearfix"><i class="icon-user"></i> <a href="user/login"><?php print t('Log in'); ?></a></nav>
-  <?php endif; ?>
-  <!--close user nav-->
+    <section class="container preheader">
 
-  <ul class="social">
-    <li id="fb-wrapper">
-      <div class="fb-like" data-href="http://www.facebook.com/bookcrossing.by" data-send="false" data-layout="button_count" data-width="450" data-show-faces="false" data-font="tahoma"></div>
-    </li>
-    <li id="github-wrapper">
-      <iframe src="/github-btn.html?user=bookcrossing&repo=core&type=fork&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="130" height="20"></iframe>
-    </li>
-  </ul>
-
-</section>
-
-<!-- begin .header-->
-<header class="header clearfix">
-
-  <div class="navbar navbar-inverse">
-    <div class="navbar-inner">
-      <div class="container">
-        <a class="btn btn-navbar" data-toggle="collapse" data-target=".navbar-responsive-collapse">
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </a>
-        <?php if ($logo || $site_name): ?>
-          <a class="brand" href="<?php print $front_page; ?>" title="<?php print t('Home'); ?>" rel="home" id="logo">
-            <?php if ($logo): ?>
-              <img src="<?php print $logo; ?>" alt="<?php print t('Home'); ?>" />
-            <?php else: ?>
-              <?php print $site_name; ?>
-            <?php endif; ?>
-          </a>
+        <!--this is the login for the user-->
+        <?php if ($logged_in) : ?>
+            <nav class="user clearfix"><i
+                    class="icon-user"></i> <?php print l($user->name, 'user/' . $user->uid); ?> <?php print l(t('(log out)'), 'user/logout', array('attributes' => array('class' => array('logout-link')))); ?>
+            </nav>
+        <?php else : ?>
+            <nav class="user clearfix"><i class="icon-user"></i> <a href="user/login"><?php print t('Log in'); ?></a>
+            </nav>
         <?php endif; ?>
+        <!--close user nav-->
 
-        <div class="nav-collapse collapse navbar-responsive-collapse">
-
-          <!-- begin #main_menu -->
-          <?php print theme('bookcrossing_main_menu', array('visible' => 3, 'links' => $main_menu, 'attributes' => array('id' => 'main-menu', 'class' => array('links', 'clearfix')), 'heading' => '')); ?>
-          <!-- close / #main_menu -->
-
-          <ul class="nav pull-right">
-            <?php if ($logged_in) : ?>
-              <li><a href="<?php print $base_path; ?>release-book"><span class="btn btn-success btn-large"><?php print t('Release book'); ?></span></a></li>
-            <?php else: ?>
-              <li><a href="<?php print $base_path; ?>user/login"><span class="btn btn-success btn-large"><?php print t('Release book'); ?></span></a></li>
-            <?php endif; ?>
-            <li class="divider-vertical"></li>
-            <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown"><?php print t('Help'); ?> <b class="caret"></b></a>
-              <ul class="dropdown-menu">
-                <li><?php print l(t('Site help'), variable_get('bookcrossing_help_link', '')); ?></li>
-                <li><?php print l(t('Frequently asked questions'), variable_get('bookcrossing_faq_link', '')); ?></li>
-                <li class="divider"></li>
-                <li><?php print l(t('Feedback'), 'http://meta.bookcrossing.by/'); ?></li>
-              </ul>
+        <ul class="social">
+            <li id="fb-wrapper">
+                <div class="fb-like" data-href="http://www.facebook.com/bookcrossing.by" data-send="false"
+                     data-layout="button_count" data-width="450" data-show-faces="false" data-font="tahoma"></div>
             </li>
-          </ul>
+            <li id="github-wrapper">
+                <iframe src="/github-btn.html?user=bookcrossing&repo=core&type=fork&count=true" allowtransparency="true"
+                        frameborder="0" scrolling="0" width="130" height="20"></iframe>
+            </li>
+        </ul>
 
+    </section>
+
+    <!-- begin .header-->
+    <header class="header clearfix">
+
+        <div class="navbar navbar-inverse">
+            <div class="navbar-inner">
+                <div class="container">
+                    <a class="btn btn-navbar" data-toggle="collapse" data-target=".navbar-responsive-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </a>
+                    <?php if ($logo || $site_name): ?>
+                        <a class="brand" href="<?php print $front_page; ?>" title="<?php print t('Home'); ?>" rel="home"
+                           id="logo">
+                            <?php if ($logo): ?>
+                                <img src="<?php print $logo; ?>" alt="<?php print t('Home'); ?>"/>
+                            <?php else: ?>
+                                <?php print $site_name; ?>
+                            <?php endif; ?>
+                        </a>
+                    <?php endif; ?>
+
+                    <div class="nav-collapse collapse navbar-responsive-collapse">
+
+                        <!-- begin #main_menu -->
+                        <?php print theme('bookcrossing_main_menu', array('visible' => 3, 'links' => $main_menu, 'attributes' => array('id' => 'main-menu', 'class' => array('links', 'clearfix')), 'heading' => '')); ?>
+                        <!-- close #main_menu -->
+
+                        <ul class="nav pull-right">
+                            <?php if ($logged_in) : ?>
+                                <li><a href="<?php print $base_path; ?>release-book"><span
+                                            class="btn btn-success btn-large"><?php print t('Release book'); ?></span></a>
+                                </li>
+                            <?php else: ?>
+                                <li><a href="<?php print $base_path; ?>user/login"><span
+                                            class="btn btn-success btn-large"><?php print t('Release book'); ?></span></a>
+                                </li>
+                            <?php endif; ?>
+                            <li class="divider-vertical"></li>
+                            <li class="dropdown">
+                                <a href="#" class="dropdown-toggle" data-toggle="dropdown"><?php print t('Help'); ?> <b
+                                        class="caret"></b></a>
+                                <ul class="dropdown-menu">
+                                    <li><?php print l(t('Site help'), variable_get('bookcrossing_help_link', '')); ?></li>
+                                    <li><?php print l(t('Frequently asked questions'), variable_get('bookcrossing_faq_link', '')); ?></li>
+                                    <li class="divider"></li>
+                                    <li><?php print l(t('Feedback'), 'http://meta.bookcrossing.by/'); ?></li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    </div>
+                    <!-- close .nav-collapse -->
+                </div>
+            </div>
+            <!-- close .navbar-inner -->
         </div>
-        <!-- /.nav-collapse -->
-      </div>
+        <!-- close .navbar -->
+
+        <div class="container clearfix">
+            <div class="row">
+                <div class="span4">
+                    <?php print render($page['header_sidebar_first']); ?>
+                </div>
+                <div class="span8">
+                    <?php print render($page['header_sidebar_second']); ?>
+                </div>
+            </div>
+        </div>
+
+    </header>
+    <!-- close .header -->
+
+    <!-- begin page - the container for everything but header -->
+    <div class="container clearfix">
+        <?php print $messages; ?>
     </div>
-    <!-- /navbar-inner -->
-  </div>
-  <!-- /navbar -->
 
-<!--
-  /**
-   * @todo Implement Found book and Have not found book toolbars as blocks and hide them on following pages: Log in,
-   */
--->
-  <div class="container clearfix">
-    <?php print render($page['header_sidebar_first']); ?>
-    <?php print render($page['header_sidebar_second']); ?>
-  </div>
+    <div class="container clearfix">
+        <div class="row">
+            <div class="span12">
+                <?php print render($page['before_content']); ?>
+            </div>
+        </div>
 
-</header>
-<!-- close /.header -->
+        <div class="row">
+            <?php $content_span = 12;
+            if ($page['sidebar_first']) $content_span -= 2;
+            if ($page['sidebar_second']) $content_span -= 2;
+            ?>
+            <?php if ($page['sidebar_first']): ?>
+                <div class="span2">
+                    <?php print render($page['sidebar_first']); ?>
+                </div>
+            <?php endif; ?>
 
-<!-- begin #page - the container for everything but header -->
-<div id="page">
+            <div class="span<?php print $content_span; ?>">
+                <?php print render($page['content']); ?>
+            </div>
+            <?php if ($page['sidebar_second']): ?>
+                <div class="span2">
+                    <?php print render($page['sidebar_second']); ?>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <div class="row">
+            <div class="span12">
+                <?php print render($page['after_content']); ?>
+            </div>
+        </div>
+
+    </div>
+    <!-- close page-->
+
+</div><!-- close #page-wrap-->
+
+<footer id="footer-wrap">
+    <div class="container clearfix">
+        <div class="row">
+            <div class="span8 offset2">
+                <div class="row">
+                    <?php print render($page['footer_menu']); ?>
+                </div>
+                <div class="row">
+                    <div class="muted credit">
+                        <?php print render($page['footer_text']); ?>
+                    </div>
+                </div>
+            </div>
+            <div class="span2">
+                <div
+                    class="ira-young"><?php print '<div class="design-by">' . t('Design by') . '</div>' . $ira_yohng; ?></div>
+            </div>
+        </div>
+    </div>
+</footer>
 
 
-
-</div>
-<!-- close #page-->
-
-
-
-<div id="page-wrapper">
-  <?php if ($site_name): ?>
-    <?php if ($title): ?>
-      <div id="site-name" class="element-invisible"><strong>
-        <a href="<?php print $front_page; ?>" title="<?php print t('Home'); ?>" rel="home"><span><?php print $site_name; ?></span></a>
-      </strong></div>
-    <?php else: /* Use h1 when the content title is empty */ ?>
-      <h1 id="site-name" class="element-invisible">
-        <a href="<?php print $front_page; ?>" title="<?php print t('Home'); ?>" rel="home"><span><?php print $site_name; ?></span></a>
-      </h1>
-    <?php endif; ?>
-  <?php endif; ?>
-
-
-
-  </div><!-- /#header-wrapper -->
-
-
-  <?php print render($page['under_content']); ?>
-
-  <div id="content-wrapper">
-    <?php print $messages; ?>
-    <?php print render($page['sidebar_first']); ?>
-    <?php print render($page['content']); ?>
-    <?php print render($page['sidebar_second']); ?>
-    <div style="clear:left;"></div>
-  </div>
-
-  <?php print render($page['after_content']); ?>
-
-  <div id="footer-wrapper">
-    <?php print render($page['footer_menu']); ?>
-    <?php print render($page['footer_text']); ?>
-
-    <div class="ira-young"><?php print '<div class="design-by">' . t('Design by') . '</div>' . $ira_yohng; ?></div>
-  </div><!-- /#footer-wrapper -->
-</div><!-- /#page-wrapper -->
 <div id="back-top" style="display:none;">
   <script type="text/javascript">
 		/*<![CDATA[*/
@@ -227,9 +260,24 @@
 		</script>
   <a href="#"><?php print t('back to top'); ?></a>
 </div><!-- /#back-top -->
-<div id="banners-wrapper">
-    <?php print render($page['banners_footer']); ?>
-</div>
-<div id="debug-wrapper">
-    <?php print render($page['debug_n_scripts']); ?>
-</div>
+
+
+<?php if ($page['banners_footer']): ?>
+    <section id="banners-wrapper" class="container clearfix">
+        <div class="row">
+            <?php print render($page['banners_footer']); ?>
+        </div>
+    </section>
+<?php endif; ?>
+
+<?php if ($page['debug']): ?>
+    <section id="debug" class="hidden-desktop hidden-tablet hidden-phone">
+        <?php print render($page['debug']); ?>
+    </section>
+<?php endif; ?>
+
+<?php if ($page['scripts']): ?>
+    <section id="scripts" class="hidden-desktop hidden-tablet hidden-phone">
+        <?php print render($page['scripts']); ?>
+    </section>
+<?php endif; ?>

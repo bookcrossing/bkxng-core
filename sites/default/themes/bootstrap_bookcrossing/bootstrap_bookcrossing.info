@@ -4,11 +4,11 @@ core = 7.x
 base theme = bootstrap
 
 ; Regions
-regions[navigation]     = 'Navigation'
-regions[header]         = 'Top Bar'
-regions[highlighted]    = 'Highlighted'
-regions[help]           = 'Help'
-regions[footer]         = 'Footer'
+regions[navigation] = 'Navigation'
+regions[header] = 'Top Bar'
+regions[highlighted] = 'Highlighted'
+regions[help] = 'Help'
+regions[footer] = 'Footer'
 
 regions[header_sidebar_first] = 'Left Sidebar in Header'
 regions[header_sidebar_second] = 'Right Sidebar in Header'
@@ -21,7 +21,8 @@ regions[footer_text] = 'Text in Footer'
 regions[footer_menu] = 'Menu in Footer'
 regions[banners_footer] = 'Banners in Footer'
 
-regions[debug_n_scripts] = 'Debug and Scripts'
+regions[debug] = 'Debug'
+regions[scripts] = 'Scripts'
 
 
 ; Stylesheets

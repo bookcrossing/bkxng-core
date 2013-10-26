@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file
+ * @file maintenance-page.tpl.php
  * Default theme implementation to display a single Drupal page while offline.
  *
  * All the available variables are mirrored in html.tpl.php and page.tpl.php.

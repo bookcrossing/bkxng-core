@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @file
+ * @file block.tpl.php
  * Default theme implementation to display a block.
  *
  * Available variables:
