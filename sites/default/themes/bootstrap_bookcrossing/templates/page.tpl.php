@@ -76,7 +76,7 @@
                     class="icon-user"></i> <?php print l($user->name, 'user/' . $user->uid); ?> <?php print l(t('(log out)'), 'user/logout', array('attributes' => array('class' => array('logout-link')))); ?>
             </nav>
         <?php else : ?>
-            <nav class="user clearfix"><i class="icon-user"></i> <a href="user/login"><?php print t('Log in'); ?></a>
+            <nav class="user clearfix"><i class="icon-user"></i> <a href="<?php print fboauth_action_display('connect'); ?>"><?php print t('Log in'); ?></a>
             </nav>
         <?php endif; ?>
         <!--close user nav-->
@@ -131,7 +131,7 @@
                                             class="btn btn-success btn-large"><?php print t('Release book'); ?></span></a>
                                 </li>
                             <?php else: ?>
-                                <li><a href="<?php print $base_path; ?>user/login"><span
+                                <li><a href="<?php print fboauth_action_display('connect'); ?>"><span
                                             class="btn btn-success btn-large"><?php print t('Release book'); ?></span></a>
                                 </li>
                             <?php endif; ?>

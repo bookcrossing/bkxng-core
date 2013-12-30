@@ -21,12 +21,13 @@ function bootstrap_bookcrossing_fboauth_action__connect($variables) {
   $link = $variables['properties'];
   $link['query']['scope'] .= ',publish_actions';
   $url = url($link['href'], array('query' => $link['query']));
-  $link['attributes']['class'] = isset($link['attributes']['class']) ? $link['attributes']['class'] : 'facebook-action-connect';
-  $attributes = isset($link['attributes']) ? drupal_attributes($link['attributes']) : '';
+  //$link['attributes']['class'] = isset($link['attributes']['class']) ? $link['attributes']['class'] : 'facebook-action-connect';
+  //$attributes = isset($link['attributes']) ? drupal_attributes($link['attributes']) : '';
   //$title = isset($link['title']) ? check_plain($link['title']) : '';
-  $prefix = t('Welcome! You can');
-  $suffix = t('using yout Facebook account.');
-  return $prefix . ' <a ' . $attributes . ' href="' . $url . '">' . t('log in') . '</a> ' . $suffix;
+  //$prefix = t('Welcome! You can');
+  //$suffix = t('using yout Facebook account.');
+  //return $prefix . ' <a ' . $attributes . ' href="' . $url . '">' . t('log in') . '</a> ' . $suffix;
+  return $url;
 }
 
 /**
