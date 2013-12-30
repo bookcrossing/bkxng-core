@@ -109,7 +109,10 @@
                         <a class="brand" href="<?php print $front_page; ?>" title="<?php print t('Home'); ?>" rel="home"
                            id="logo">
                             <?php if ($logo): ?>
-                                <img src="<?php print $logo; ?>" alt="<?php print t('Home'); ?>"/>
+                                <!-- <img src="<?php print $logo; ?>" alt="<?php print t('Home'); ?>"/> -->
+                                <div class="logo">
+                                    <div class="logo-title"><?php print t('BookCrossing'); ?></div><div class="logo-contry"><?php print t('Belarus'); ?></div>
+                                </div>
                             <?php else: ?>
                                 <?php print $site_name; ?>
                             <?php endif; ?>
@@ -214,19 +217,17 @@
 <footer id="footer-wrap">
     <div class="container clearfix">
         <div class="row">
-            <div class="span8 offset2">
+            <div class="span10 offset2">
                 <div class="row">
                     <?php print render($page['footer_menu']); ?>
                 </div>
+            </div>
+            <div class="span12">
                 <div class="row">
                     <div class="muted credit">
                         <?php print render($page['footer_text']); ?>
                     </div>
                 </div>
-            </div>
-            <div class="span2">
-                <div
-                    class="ira-young"><?php print '<div class="design-by">' . t('Design by') . '</div>' . $ira_yohng; ?></div>
             </div>
         </div>
     </div>
