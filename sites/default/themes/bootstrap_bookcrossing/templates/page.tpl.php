@@ -106,12 +106,10 @@
                         <span class="icon-bar"></span>
                     </a>
                     <?php if ($logo || $site_name): ?>
-                        <a class="brand" href="<?php print $front_page; ?>" title="<?php print t('Home'); ?>" rel="home"
-                           id="logo">
+                        <a class="brand" href="<?php print $front_page; ?>" title="<?php print t('BookCrossing'); ?>" rel="home" id="logo">
                             <?php if ($logo): ?>
-                                <!-- <img src="<?php print $logo; ?>" alt="<?php print t('Home'); ?>"/> -->
                                 <div class="logo">
-                                    <div class="logo-title"><?php print t('BookCrossing'); ?></div><div class="logo-contry"><?php print t('Belarus'); ?></div>
+                                    <div class="logo-title"><?php print t('BookCrossing'); ?></div><span class="logo-contry"><?php print t('Belarus'); ?></span>
                                 </div>
                             <?php else: ?>
                                 <?php print $site_name; ?>
