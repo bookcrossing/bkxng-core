@@ -1,0 +1,65 @@
+name = Bootstrap Bookcrossing
+description = A Bootstrap Sub-theme for Bookcrossing.
+core = 7.x
+base theme = bootstrap
+
+; Regions
+regions[navigation] = 'Navigation'
+regions[header] = 'Top Bar'
+regions[highlighted] = 'Highlighted'
+regions[help] = 'Help'
+regions[footer] = 'Footer'
+
+regions[header_sidebar_first] = 'Left Sidebar in Header'
+regions[header_sidebar_second] = 'Right Sidebar in Header'
+regions[sidebar_first] = 'Left Sidebar'
+regions[sidebar_second] = 'Right Sidebar'
+regions[content] = 'Content'
+regions[before_content] = 'Region Before Content'
+regions[after_content] = 'Region After Content'
+regions[footer_text] = 'Text in Footer'
+regions[footer_menu] = 'Menu in Footer'
+regions[banners_footer] = 'Banners in Footer'
+
+regions[debug] = 'Debug'
+regions[scripts] = 'Scripts'
+
+
+; Stylesheets
+stylesheets[all][] = css/style.css
+
+;**********************************
+; METHOD 1: Bootstrap Source Files
+;**********************************
+; 
+; ; Scripts
+; scripts[] = 'bootstrap/js/bootstrap-affix.js'
+; scripts[] = 'bootstrap/js/bootstrap-alert.js'
+; scripts[] = 'bootstrap/js/bootstrap-button.js'
+; scripts[] = 'bootstrap/js/bootstrap-carousel.js'
+; scripts[] = 'bootstrap/js/bootstrap-collapse.js'
+; scripts[] = 'bootstrap/js/bootstrap-dropdown.js'
+; scripts[] = 'bootstrap/js/bootstrap-modal.js'
+; scripts[] = 'bootstrap/js/bootstrap-tooltip.js'
+; scripts[] = 'bootstrap/js/bootstrap-popover.js'
+; scripts[] = 'bootstrap/js/bootstrap-scrollspy.js'
+; scripts[] = 'bootstrap/js/bootstrap-transition.js'
+; scripts[] = 'bootstrap/js/bootstrap-typeahead.js'
+; 
+; ; Settings inherited by base theme, uncomment to override.
+; ;settings[toggle_name] = 0
+; ;settings[toggle_search] = 1
+; ; Disable the CDN as we are using our own source files.
+; settings[cdn_bootstrap] = 0
+
+
+;*************************
+; METHOD 2: Bootstrap CDN
+;*************************
+; 
+; ; Settings inherited by base theme, uncomment to override.
+settings[toggle_name] = 0
+settings[toggle_search] = 1
+settings[cdn_bootstrap] = 1
+settings[cdn_bootstrap_version] = 2.3.1
+settings[visible_menu_items] = 3
