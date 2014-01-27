@@ -15,4 +15,4 @@ sites/*/private
 files/*
 backup/*
 dumper.php
-.bak
+*.bak
