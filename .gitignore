@@ -1,9 +1,6 @@
 #Ignore IDE files
 .idea/*
 
-#Ignore DBV files
-dbv/data/meta/revision
-
 # Ignore configuration files that may contain sensitive information.
 sites/*/settings*.php
 
