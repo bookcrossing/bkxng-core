@@ -410,7 +410,7 @@ function bookcrossing_admin_show_books() {
   $header = array('bcid' => 'BCID', 'title' => t('Book title'), 'status' => t('Book status'), 'where' => t('Where?'), 'change' => t('Edit book'));
   foreach ($books as $book) {
     $where = $book['status'] ? l($book['user']->name, 'user/' . $book['user']->uid) : taxonomy_term_load($book['place_id_left'])->name;
-    $status = $book['status'] ? t('Found') : t('Free book');
+    $status = $book['status'] ? t('Found') : t('Travelling');
     $rows[$book['bid']] = array(
       'bcid' => $book['bcid'],
       'title' => l($book['node']->title, 'book/' . $book['bid']),

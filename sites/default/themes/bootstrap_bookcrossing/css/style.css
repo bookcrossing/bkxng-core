@@ -6,13 +6,15 @@ body {
     padding-top: 0!important;
 }
 
-.category-1 { background-color: #ec645a; }
-.category-2 { background-color: #f2a355; }
-.category-3 { background-color: #e6cd50; }
-.category-4 { background-color: #76cc1e; }
-.category-5 { background-color: #0096bb; }
-.category-6 { background-color: #6954d1; }
-.category-7 { background-color: #c252cc; }
+.category-1 { color: #ec645a; }
+.category-2 { color: #f2a355; }
+.category-3 { color: #e6cd50; }
+.category-4 { color: #76cc1e; }
+.category-5 { color: #0096bb; }
+.category-6 { color: #6954d1; }
+.category-7 { color: #c252cc; }
+#the-pitch > p > a { text-decoration: none; }
+#the-pitch > p > a:hover { opacity: 0.5; }
 
 #page-wrap {
     min-height: 100%;
@@ -258,8 +260,8 @@ table {
   margin-bottom: 20px;
 }
 
-.block-bookcrossing .help-block {
-    margin-top: 16px;
+.fieldset-wrapper .help-block, .block-bookcrossing .help-block {
+    margin-top: 17px;
 }
 
 .block-bookcrossing input {
@@ -1370,10 +1372,6 @@ h2.node-title {
   font-size: 11px;
 }
 
-.view-mode-history ul.status-info {
-  margin-top: 10px;
-}
-
 .view-mode-history ul.status-info li {
   font-family: Tahoma, Verdana, Segoe, sans-serif;
   color: #333;
@@ -1383,6 +1381,7 @@ h2.node-title {
 
 ul.status-info {
   list-style: none;
+  margin-left: 0;
 }
 
 ul.status-info li {
@@ -1415,7 +1414,7 @@ ul.status-info li {
 }
 
 .view-mode-default .field-name-field-bookcrossing-description {
-  margin: 40px 50px 20px 15px;
+  margin: 10px 0px 20px 0px;
   text-align: justify;
   min-height: 60px;
 }
@@ -1488,10 +1487,10 @@ ul.status-info li {
   color: #333;
 }
 
-.view-mode-found_book ul.status-info {
+/*.view-mode-found_book ul.status-info {
   margin-top: 20px;
 }
-
+*/
 .view-mode-found_book .field-label {
   width: 80px;
 }

@@ -1,2784 +1,5568 @@
 <?php
 
+
+
 /**
+
  * @file
+
  * Bookcrossing features.
+
  */
+
 /**
+
  * @todo fb integration
+
  * @todo string with author and year
+
  * @todo search
+
  */
+
 define('BOOKCROSSING_RESRVED_BCIDS', 5);
+
 define('BOOKCROSSING_BOOK_STATUS_FREE', 0);
+
 define('BOOKCROSSING_BOOK_STATUS_READ', 1);
+
 define('BOOKCROSSING_BOOK_STATUS_RESERVED', 2);
+
 define('BOOKCROSSING_PLACES_VID', 3);
 
+
+
 /**
+
  * Implements hook_init().
+
  */
+
 function bookcrossing_init() {
+
   // again :(
+
   module_load_include('inc', 'node', 'node.pages');
 
+
+
   // loading library for working with ajax
+
   drupal_add_library('system', 'drupal.ajax');
+
 }
 
+
+
 /**
+
  * Implements hook_permission().
+
  */
+
 function bookcrossing_permission() {
+
   return array(
+
     'release book' => array(
+
       'title' => t('Release book'),
+
     ),
+
     'register found book' => array(
+
       'title' => t('Ability to register found book'),
+
     ),
+
     'change review' => array(
+
       'title' => t('Change review'),
+
     ),
+
     'administer books' => array(
+
       'title' => t('Administer books'),
+
     ),
+
     'add to bookmarks' => array(
+
       'title' => t('Add to bookmarks'),
+
     ),
+
     'view users list' => array(
+
       'title' => t('View users list'),
+
     ),
+
   );
+
 }
 
+
+
 /**
+
  * Implements hook_block_info().
+
  */
+
 function bookcrossing_block_info() {
+
   $blocks = array();
 
+
+
   /*
+
    * Block with the form for entering bcid of the found book.
+
    */
+
   $blocks['book-found'] = array(
+
     'info' => t('Form for entering bcid of the found book'),
+
     'cache' => DRUPAL_NO_CACHE,
+
   );
 
+
+
   /*
+
    * Block with facebook and twitter links.
+
    */
+
   $blocks['facebook-and-twitter-link'] = array(
+
     'info' => t('Facebook and twitter links'),
+
     'cache' => DRUPAL_CACHE_GLOBAL,
+
   );
 
+
+
   /*
+
    * Block with FAQ link.
+
    */
+
   $blocks['faq-link'] = array(
+
     'info' => t('FAQ link'),
+
     'cache' => DRUPAL_CACHE_GLOBAL,
+
   );
 
+
+
   /*
+
    * Block with ajax links to reserve bcids.
+
    */
+
   $blocks['reserve-bcid'] = array(
+
     'info' => t('Reserve BCID'),
+
     'cache' => DRUPAL_NO_CACHE,
+
   );
+
   
+
   $blocks['search'] = array(
+
     'info' => t('Book search form'),
+
     'cache' => DRUPAL_NO_CACHE,
+
   );
+
+
 
   return $blocks;
+
 }
 
+
+
 /**
+
  * Implements hook_block_view().
+
  */
+
 function bookcrossing_block_view($delta = '') {
+
   $block = array();
 
+
+
   switch ($delta) {
+
     case 'book-found':
+
       $block['subject'] = '';
+
       $block['content'] = drupal_get_form('bookcrossing_books_form');
+
       break;
+
+
 
     case 'facebook-and-twitter-link':
+
       $block['subject'] = '';
 
+
+
       /**
+
        * @todo maybe add ability to select images for facebook and twitter links?
+
        */
+
       $fb_image = theme('image', array('path' => path_to_theme() . '/images/fb.png', 'alt' => t('Bookcrossing on facebook')));
+
       $tw_image = theme('image', array('path' => path_to_theme() . '/images/tw.png', 'alt' => t('Bookcrossing on twitter')));
 
+
+
       $block['content'] = l($fb_image, variable_get('bookcrossing_facebook_link', ''), array('html' => TRUE, 'attributes' => array('target'=>'_blank')));
+
       $block['content'] .= l($tw_image, variable_get('bookcrossing_twitter_link', ''), array('html' => TRUE, 'attributes' => array('target'=>'_blank')));
+
       break;
+
+
 
     case 'faq-link':
+
       $block['subject'] = '';
 
+
+
       /**
+
        * @todo maybe add ability to select image for faq link?
+
        */
+
       $image = theme('image', array('path' => path_to_theme() . '/images/faq.png', 'alt' => t('FAQ'), 'height' => 320, 'width' => 180));
+
       $block['content'] = l($image, variable_get('bookcrossing_faq_link', ''), array('html' => TRUE));
+
       break;
 
+
+
     case 'reserve-bcid':
+
       $block['subject'] = t('Reserved BCID');
+
       global $user;
 
+
+
       /*
+
        * select bcids we've aready reserved
+
        */
+
       $reserved = db_select('bookcrossing_books', 'b')
+
           ->fields('b', array('bcid'))
+
           ->condition('status', BOOKCROSSING_BOOK_STATUS_RESERVED, '=')
+
           ->condition('owner', $user->uid, '=')
+
           ->execute()
+
           ->fetchCol();
 
+
+
       $num = count($reserved);
+
       $output = '<div class="reserved-bcids-container">';
 
+
+
       /*
+
        * show ours reserved bcids
+
        */
+
       for ($i = 0; $i < $num; $i++) {
+
         $output .= '<div class="bcid-container" id="' . $reserved[$i] . '">' . l('<b>BCID:</b>' . $reserved[$i], 'add-reserved-book/' . $reserved[$i], array('html' => TRUE)) . '</div>';
+
       }
 
+
+
       /*
+
        * dont show link for reserving bcid if we've aleady reserved the number of bcids defined by BOOKCROSSING_RESRVED_BCIDS constant.
+
        */
+
       if ($num < BOOKCROSSING_RESRVED_BCIDS) {
+
         $output .= '<div id="reserve-bcid">' . l(t('+Reserve BCID'), 'reserve-bcid', array('attributes' => array('class' => array('use-ajax')))) . '</div>';
+
       }
 
+
+
       /*
+
        * show description of reserving bcids if there are no reserved bcids. 
+
        */
+
       if ($num == 0) {
+
         $output .= '<div id="reserve-bcid-description">' . t('You can reserve multiple BCID.') . '</div>';
+
       }
+
+
 
       $output .= '</div><div style="clear: both;"></div>';
 
+
+
       $block['content'] = $output;
+
       break;
+
+
 
     case 'search':
+
       $block['subject'] = '';
+
       $block['content'] = drupal_get_form('bookcrossing_search_form');
+
       break;
+
       
+
     default:
+
       break;
+
   }
+
+
 
   return $block;
+
 }
 
+
+
 /**
+
  * Implements hook_block_configure().
+
  */
+
 function bookcrossing_block_configure($delta = '') {
+
   $form = array();
 
+
+
   switch ($delta) {
+
     case 'faq-link':
+
       $form['faq-link'] = array(
+
         '#type' => 'textfield',
+
         '#title' => t('Page where FAQ is located'),
+
         '#default_value' => variable_get('bookcrossing_faq_link', ''),
+
       );
+
+
 
       $form['help-link'] = array(
+
         '#type' => 'textfield',
+
         '#title' => t('Page where help is located'),
+
         '#default_value' => variable_get('bookcrossing_help_link', ''),
+
       );
+
       break;
 
+
+
     case 'facebook-and-twitter-link':
+
       $form['facebook-link'] = array(
+
         '#type' => 'textfield',
+
         '#title' => t('BookCrossing page on Facebook'),
+
         '#default_value' => variable_get('bookcrossing_facebook_link', ''),
+
       );
+
+
 
       $form['twitter-link'] = array(
+
         '#type' => 'textfield',
+
         '#title' => t('BookCrossing page on Twitter'),
+
         '#default_value' => variable_get('bookcrossing_twitter_link', ''),
+
       );
+
       break;
+
+
 
     default:
+
       break;
+
   }
 
+
+
   return $form;
+
 }
 
+
+
 /**
+
  * Implements hook_block_save().
+
  */
+
 function bookcrossing_block_save($delta = '', $edit = array()) {
+
   switch ($delta) {
+
     case 'facebook-and-twitter-link':
+
       variable_set('bookcrossing_facebook_link', $edit['facebook-link']);
+
       variable_set('bookcrossing_twitter_link', $edit['twitter-link']);
+
       break;
+
+
 
     case 'faq-link':
+
       variable_set('bookcrossing_faq_link', $edit['faq-link']);
+
       variable_set('bookcrossing_help_link', $edit['help-link']);
+
       break;
+
+
 
     default:
+
       break;
+
   }
+
 }
 
+
+
 /**
+
  * Form for search books.
+
  */
+
 function bookcrossing_search_form($form, $form_state) {
+
   $form = array();
+
   
+
   $form['title'] = array(
+
     '#markup' => '<div class="search-title">' . t('Have not found a book?') . '</div>',
+
   );
+
   
+
   $form['search'] = array(
+
     '#type' => 'textfield',
+
     '#size' => 40,
+
   );
+
   
+
   $form['submit'] = array(
+
     '#type' => 'image_button',
+
     '#src' => drupal_get_path('theme', 'im_bookcrossing') . '/images/search.png',
+
     '#value' => t('Search'),
+
   );
+
   
+
   $form['description'] = array(
+
     '#markup' => '<p class="help-block">' . t('Enter book title or author name or ISBN') . '</p>',
+
   );
+
   
+
   return $form;
+
 }
 
+
+
 /**
+
  * Submit for search form.
+
  */
+
 function bookcrossing_search_form_submit($form, $form_state) {
+
   if (empty($form_state['values']['search'])) {
+
     drupal_set_message(t('Enter book title or author name or ISBN to look for books'), 'error');
+
   }
+
   else {
+
     drupal_goto(url('books', array('absolute' => TRUE, 'query' => array('find' => $form_state['values']['search']))));
+
   }
+
 }
 
+
+
 /**
+
  * Form for entering bcid of the found book.
+
  */
+
 function bookcrossing_books_form($form, $form_state) {
+
   $form = array();
 
+
+
   $form['title'] = array(
+
     '#markup' => '<div class="bcid-title">' . t('Found a book?') . '</div>',
+
   );
+
+
 
   $form['bcid-first-part'] = array(
+
     '#type' => 'textfield',
+
     '#size' => 10,
+
     '#required' => TRUE,
+
     '#attributes' => array(
+
       'maxlength' => 4,
+
     ),
+
   );
+
+
 
   $form['bcid-second-part'] = array(
+
     '#type' => 'textfield',
+
     '#prefix' => '<div class="bcid-separator">-</div>',
+
     '#required' => TRUE,
+
     '#size' => 10,
+
     '#attributes' => array(
+
       'maxlength' => 4,
+
     ),
+
   );
+
+
 
   $form['submit'] = array(
+
     '#type' => 'image_button',
+
     '#src' => drupal_get_path('theme', 'im_bookcrossing') . '/images/arrow-go.png',
+
     '#submit' => array(
+
       'bookcrossing_found_book',
+
     ),
+
     '#value' => t('Found a book'),
+
     '#attributes' => array(
+
       'class' => array('bcid-submit'),
+
     ),
+
   );
+
+
 
   $form['description'] = array(
+
     '#markup' => '<p class="help-block">' . t('Enter BCID of the book you have found') . '</p>',
+
   );
 
+
+
   return $form;
+
 }
 
+
+
 /**
+
  * Form submit: show info about book with entered bcid.
+
  */
+
 function bookcrossing_found_book($form, $form_state) {
+
   $error = FALSE;
 
+
+
   $bcid = $form_state['values']['bcid-first-part'] . '-' . $form_state['values']['bcid-second-part'];
+
 //  if (empty($form_state['values']['bcid-first-part']) || empty($form_state['values']['bcid-second-part'])) {
+
 //    $error = TRUE;
+
 //  }
+
+
 
   $book = bookcrossing_load_by_bcid($bcid);
 
-  /**
-   * There is no that book in db.
-   */
-  if (!$book) {
-    drupal_set_message(t('There is no record in our catalog for book with BCID you have entered'));
-    $error = TRUE;
-  }
+
 
   /**
-   * Someone already found this book.
+
+   * There is no that book in db.
+
    */
-  if (isset($book['status']) && $book['status']) {
-    drupal_set_message(t('Seems someone has found this book and have not released it yet. If you can not proceed with book registration, please contact site administration.'));
+
+  if (!$book) {
+
+    drupal_set_message(t('There is no record in our catalog for book with BCID you have entered'));
+
     $error = TRUE;
+
   }
+
+
+
+  /**
+
+   * Someone already found this book.
+
+   */
+
+  if (isset($book['status']) && $book['status']) {
+
+    drupal_set_message(t('Seems someone has found this book and have not released it yet. If you can not proceed with book registration, please contact site administration.'));
+
+    $error = TRUE;
+
+  }
+
+
 
   if (!$error) {
+
     drupal_goto('found-book/' . $bcid);
+
   }
+
 }
 
+
+
 /**
+
  * Implements hook_menu_alter().
+
  */
+
 function bookcrossing_menu_alter(&$paths) {
+
   //$paths['user']['page callback'] = 'bookcrossing_users_shelf';
+
   $paths['user/%user']['page callback'] = 'bookcrossing_users_shelf';
+
 }
 
+
+
 /**
+
  * Menu callback: users shelf.
+
  * 
+
  * @param object $account
+
  *   user object
+
  * 
+
  * @return string
+
  *   html string of users shelf
+
  */
+
 function bookcrossing_users_shelf($account = '') {
+
   global $user;
 
+
+
   if (!$account) {
+
     global $user;
+
     $account = $user;
+
   }
 
+
+
   /**
+
    * Favourites / Bookmarks
+
    */
+
   $favourites = db_select('bookcrossing_favourites', 'f')
+
       ->fields('f', array('bid'))
+
       ->condition('f.uid', $user->uid, '=')
+
       ->execute()
+
       ->fetchCol();
+
+
 
   $favourites_books = bookcrossing_load_multiple($favourites);
 
+
+
   /*
+
    * Loading books user currently reading.
+
    */
+
   $current_bids = db_select('bookcrossing_books', 'b')
+
       ->fields('b', array('bid'))
+
       ->condition('owner', $user->uid, '=')
+
       ->condition('status', BOOKCROSSING_BOOK_STATUS_RESERVED, '<>')
+
       ->execute()
+
       ->fetchCol();
+
+
 
   $current_books = bookcrossing_load_multiple($current_bids);
 
+
+
   /*
+
    * Loading books user read.
+
    */
+
   $read_bids = db_select('bookcrossing_history', 'h')
+
       ->fields('h', array('bid'))
+
       ->distinct()
+
       ->condition('uid', $user->uid, '=')
+
       ->execute()
+
       ->fetchCol();
+
+
 
   $read_books = bookcrossing_load_multiple($read_bids);
 
+
+
   $output = '';
+
   
+
   if ($favourites_books) {
+
     $output .= '<h3 class="favourites-books-title">' . t('Bookmarks') . '</h3>';
+
     $output .= bookcrossing_books_table($favourites_books, 'book_shelf');
+
   }
+
+
 
   if ($current_books) {
+
     $output .= '<h3 class="found-books-title">' . t('Found books') . '</h3>';
+
     $output .= bookcrossing_books_table($current_books, 'book_shelf_with_bcid', 3, TRUE);
+
   }
+
+
 
   if ($read_books) {
+
     $output .= '<h3 class="released-books-title">' . t('Released books') . '</h3>';
+
     $output .= bookcrossing_books_table($read_books, 'book_shelf');
+
   }
 
+
+
   return $output;
+
 }
 
+
+
 /**
+
  * Helper function: books table.
+
  * 
+
  * @param array $books
+
  *   array with books which should be displayed in table
+
  * 
+
  * @param int $num_in_row
+
  *   number of books in one table row
+
  * 
+
  * @return string
+
  *   html for table with books
+
  */
+
 function bookcrossing_books_table($books, $mode, $num_in_row = 3, $release_link = FALSE) {
+
   $i = 0;
+
   $count = 0;
+
   foreach ($books as $book) {
+
     if ($count == $num_in_row) {
+
       $i++;
+
       $count = 0;
+
     }
 
+
+
     $view = node_view($book['node'], $mode);
+
     $view['bcid'] = array(
+
       '#markup' => '<div class="books-bcid">BCID: ' . $book['bcid'] . '</div>',
+
     );
+
+
 
     $view['author_and_year'] = array(
+
       '#markup' => bookcrossing_author_and_year($book),
+
     );
 
+
+
     $view = bookcrossing_prepare_book_view($view, $book, FALSE);
+
     $link = $release_link ? l('&nbsp;', 'release-book/' . $book['bid'], array('html' => TRUE, 'attributes' => array('class' => array('release-link'), 'title' => t('Release book')))) : '';
 
+
+
     $rows[$i][] = render($view) . $link;
+
     $count++;
+
   }
+
+
 
   return theme('table', array('header' => array(), 'rows' => $rows, 'sticky' => FALSE, 'attributes' => array('class' => array('user-shelf'))));
+
 }
 
+
+
 /**
+
  * Formatting string with book authors and year
+
  */
+
 function bookcrossing_author_and_year($book) {
+
   $authors = array();
+
   $publish_year = "";
+
   
+
   foreach ($book['node']->field_bookcrossing_author[LANGUAGE_NONE] as $tid) {
+
     $term = taxonomy_term_load($tid['tid']);
+
     $authors[] = $term->name;
+
   }
+
   $output = "<span class=\"book-authors\">" . implode(', ', $authors);
+
   
+
   if (isset($book['node']->field_bookcrossing_year[LANGUAGE_NONE])) {
+
     $publish_year = $book['node']->field_bookcrossing_year[LANGUAGE_NONE][0]['value'];
+
     $output .= ",</span> <span class=\"book-publish-year\">" . $publish_year . "</span>";
+
   } else {
+
     $output .= "</span>";
+
   }
+
+
 
   return $output;
+
 }
 
+
+
 /**
+
  * Implements hook_taxonomy_term_save().
+
  */
+
 function bookcrossing_taxonomy_term_insert($term) {
+
   if (isset($term->merged_terms) && $term->vid == BOOKCROSSING_PLACES_VID) {
+
     db_update('bookcrossing_books')
+
         ->fields(array('current_place' => $term->tid))
+
         ->condition('current_place', $term->merged_terms, 'IN')
+
         ->execute();
 
+
+
     db_update('bookcrossing_history')
+
         ->fields(array('place_id' => $term->tid))
+
         ->condition('place_id', $term->merged_terms, 'IN')
+
         ->execute();
+
+
 
     db_update('bookcrossing_history')
+
         ->fields(array('place_id_left' => $term->tid))
+
         ->condition('place_id_left', $term->merged_terms, 'IN')
+
         ->execute();
+
   }
+
 }
 
+
+
 /**
+
  * Implements hook_form_FORM_ID_alter()
+
  */
+
 function bookcrossing_form_node_admin_content_alter(&$form, $form_state) {
+
   $form['merge-book'] = array(
+
     '#type' => 'submit',
+
     '#submit' => array(
+
       'bookcrossing_goto_merge',
+
     ),
+
     '#value' => t('Merge book descriptions'),
+
     '#weight' => -10,
+
   );
+
 }
 
+
+
 /**
+
  * 
+
  */
+
 function bookcrossing_goto_merge($form, $form_state) {
+
   drupal_goto('admin/bookcrossing/merge-books');
+
 }
+
+
 
 function bookcrossing_places_autocomplete_results($parent, $string) {
+
   $suggestions = array();  
+
   
+
   if (!empty($string)) {
+
     $query = db_select('taxonomy_term_data', 't');
+
     $query->innerJoin('taxonomy_term_hierarchy', 'h', 't.tid = h.tid');
+
     $suggestions = $query->fields('t', array('name'))
+
       ->condition('t.vid', BOOKCROSSING_PLACES_VID, '=')
+
       ->condition('h.parent', $parent, '=')
+
       ->condition('t.name', $string . '%', 'LIKE')
+
       ->execute()
+
       ->fetchCol();
+
   }
+
   
+
   drupal_json_output(drupal_map_assoc($suggestions));
+
 }
 
+
+
 /**
+
  * Implements hook_menu().
+
  */
+
 function bookcrossing_menu() {
+
   $paths = array();
 
+
+
   $paths['users'] = array(
+
     'title' => 'Users list',
+
     'page callback' => 'bookcrossing_users_list',
+
     'access arguments' => array('view users list'),
+
     'file' => 'bookcrossing.userslist.inc',
+
   );
+
+
 
   $paths['ajax/bookcrossing-places-autocompletion/%'] = array(
+
     'title' => 'Places autocompletion',
+
     'page callback' => 'bookcrossing_places_autocomplete_results',
+
     'page arguments' => array(2),
+
     'access callback' => TRUE,
+
     'type' => MENU_CALLBACK,
+
   );
+
+
 
   $paths['admin/bookcrossing'] = array(
+
     'title' => 'Bookcrossing',
+
     'position' => 'right',
+
     'weight' => -7,
+
     'page callback' => 'system_admin_menu_block_page',
+
     'access arguments' => array('access administration pages'),
+
     'file' => 'system.admin.inc',
+
     'file path' => drupal_get_path('module', 'system'),
+
   );
 
+
+
   /**
+
    * Form for editing books
+
    */
+
   $paths['admin/bookcrossing/books'] = array(
+
     'title' => t('Books'),
+
     'page callback' => 'drupal_get_form',
+
     'page arguments' => array('bookcrossing_admin_show_books'),
+
     'access arguments' => array('administer books'),
+
     'file' => 'bookcrossing.admin.inc',
+
   );
+
+
 
   $paths['admin/bookcrossing/comments'] = array(
+
     'title' => t('Comments for books'),
+
     'page callback' => 'drupal_get_form',
+
     'page arguments' => array('bookcrossing_admin_show_comments'),
+
     'access arguments' => array('administer books'),
+
     'file' => 'bookcrossing.admin.inc',
+
   );
+
  
+
   /**
+
    * Form for merging book descriptions
+
    */
+
   $paths['admin/bookcrossing/merge-books'] = array(
+
     'title' => t('Merge books descriptions'),
+
     'page callback' => 'drupal_get_form',
+
     'page arguments' => array('bookcrossing_merge_books'),
+
     'access arguments' => array('administer books'),
+
     'file' => 'bookcrossing.admin.inc',
+
   );  
+
   
+
   /*
+
    * Page with form, where user can select to create new book or release one of the books he is reading.
+
    */
+
   $paths['release-book'] = array(
+
     'title' => t('Release book'),
+
     'page callback' => 'bookcrossing_release_book_page',
+
     'access arguments' => array('access content'),
+
     'file' => 'bookcrossing.pages.inc',
+
   );
 
+
+
   /**
+
    * Reserve new bcid.
+
    */
+
   $paths['reserve-bcid'] = array(
+
     'title' => t('Reserve BCID'),
+
     'page callback' => 'bookcrossing_reserve_bcid',
+
     'access arguments' => array('register found book'),
+
     'file' => 'bookcrossing.pages.inc',
+
   );
+
+
 
   /*
+
    * Delete reserved bcid.
+
    */
+
   $paths['delete-reserved/%'] = array(
+
     'title' => t('Delete reserved BCID'),
+
     'page callback' => 'bookcrossing_delete_reserved_bcid',
+
     'page arguments' => array(1),
+
     'access arguments' => array('register found book'),
+
     'file' => 'bookcrossing.pages.inc',
+
   );
 
+
+
   /**
+
    * Books catalog
+
    */
+
   $paths['books/%/%'] = array(
+
     'title' => t('Catalog of books'),
+
     'page callback' => 'bookcrossing_catalog_page',
+
     'page arguments' => array(1, 2),
+
     'access arguments' => array('access content'),
+
     'file' => 'bookcrossing.catalog.inc',
+
   );
+
+
 
   $paths['books'] = array(
+
     'title' => t('Catalog of books'),
+
     'page callback' => 'bookcrossing_catalog_page',
+
     'access arguments' => array('access content'),
+
     'file' => 'bookcrossing.catalog.inc',
+
   );
+
+
 
   $paths['books/covers'] = array(
+
     'title' => t('Catalog of books'),
+
     'page callback' => 'bookcrossing_catalog_page',
+
     'page arguments' => array('title', 'covers'),
+
     'access arguments' => array('access content'),
+
     'file' => 'bookcrossing.catalog.inc',
+
   );
+
+
 
   $paths['books/%'] = array(
+
     'title' => t('Catalog of books'),
+
     'page callback' => 'bookcrossing_catalog_page',
+
     'page arguments' => array(1),
+
     'access arguments' => array('access content'),
+
     'file' => 'bookcrossing.catalog.inc',
+
   );
+
+
 
   $paths['add-to-bookmarks/%bookcrossing'] = array(
+
     'title' => t('Add to bookmarks'),
+
     'page callback' => 'bookcrossing_to_favourites',
+
     'page arguments' => array(1),
+
     'access arguments' => array('add to bookmarks'),
+
   );
+
+
 
   /**
+
    * Page with 3 random books with large covers.
+
    */
+
   $paths['books-front'] = array(
+
     'title' => t('Front page'),
+
     'page callback' => 'bookcrossing_front_page',
+
     'access arguments' => array('access content'),
+
     'file' => 'bookcrossing.pages.inc',
+
   );
 
+
+
   /*
+
    * User released book.
+
    */
+
   $paths['release-book/%bookcrossing'] = array(
+
     'title' => 'Release book',
+
     'page callback' => 'bookcrossing_release_book',
+
     'page arguments' => array(1),
+
     'access arguments' => array('access content'),
+
     'file' => 'bookcrossing.pages.inc',
+
   );
 
+
+
   /*
+
    * User can change their comment to book.
+
    */
+
   $paths['change-comment/%'] = array(
+
     'title' => '',
+
     'page callback' => 'bookcrossing_change_comment',
+
     'page arguments' => array(1),
+
     'access arguments' => array('change review'),
+
     'file' => 'bookcrossing.pages.inc',
+
   );
 
+
+
   /*
+
    * History of the book.
+
    */
+
   $paths['view-history/%bookcrossing_history'] = array(
+
     'title' => t('Book history'),
+
 //    'title callback' => 'bookcrossing_history_title',
+
     'page callback' => 'bookcrossing_view_history',
+
     'page arguments' => array(1),
+
     'access arguments' => array('access content'),
+
     'file' => 'bookcrossing.pages.inc',
+
   );
 
+
+
   /*
+
    * Form for adding a new book.
+
    */
+
   $paths['release-book/add-new'] = array(
+
     'title' => 'Add new book',
+
     'page callback' => 'bookcrossing_add_new_book_form', //'node_add',
+
     //'page arguments' => array('bookcrossing'),
+
     'access callback' => 'node_access',
+
     'access arguments' => array('create', 'bookcrossing'),
+
     'file' => 'bookcrossing.pages.inc',
+
   );
 
+
+
   /*
+
    * Page with full information about the book.
+
    */
+
   $paths['book/%bookcrossing'] = array(
+
     'title' => t('Book'),
+
 //    'title callback' => 'bookcrossing_title',
+
     'page callback' => 'bookcrossing_view_book',
+
     'page arguments' => array(1),
+
     'access arguments' => array('access content'),
+
     'file' => 'bookcrossing.pages.inc',
+
   );
 
+
+
   /*
+
    * User can enter a bcid and become a reader of the book
+
    */
+
   $paths['found-book/%'] = array(
+
     'title' => t('Found the book.'),
+
     'page callback' => 'bookcrossing_found_book_page',
+
     'page arguments' => array(1),
+
     'access arguments' => array('register found book'),
+
     'file' => 'bookcrossing.pages.inc',
+
   );
 
+
+
   /*
+
    * Form for adding reserved book.
+
    */
+
   $paths['add-reserved-book/%'] = array(
+
     'title' => t('Add reserved book'),
+
     'page callback' => 'bookcrossing_add_reserved_book_form',
+
     'page arguments' => array(1),
+
     'access callback' => 'node_access',
+
     'access arguments' => array('create', 'bookcrossing'),
+
     'file' => 'bookcrossing.pages.inc',
+
   );
 
+
+
   /*
+
    * Shows bcid and information about where it should be written on the book.
+
    */
+
   $paths['book-added/%'] = array(
+
     'title' => t('The book has been added'),
+
     'page callback' => 'bookcrossing_book_added',
+
     'page arguments' => array(1),
+
     'access callback' => 'node_access',
+
     'access arguments' => array('create', 'bookcrossing'),
+
     'file' => 'bookcrossing.pages.inc',
+
   );
+
+
 
   $paths['admin/bookcrossing/books/%bookcrossing/edit'] = array(
+
     'title' => 'Change book info',
+
     'page callback' => 'drupal_get_form',
+
     'page arguments' => array('bookcrossing_edit_book', 3),
+
     'access arguments' => array('administer books'),
+
     'file' => 'bookcrossing.admin.inc',
+
     //'type' => MENU_LOCAL_TASK,
+
     //'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+
   );
+
+
 
   /*$paths['book/%bookcrossing/view'] = array(
+
     'title' => 'View',
+
     'type' => MENU_DEFAULT_LOCAL_TASK,
+
     'weight' => -10,
+
   );*/
 
+
+
   return $paths;
+
 }
 
+
+
 /**
+
  * Form for changing users comment to the book.
+
  */
+
 function bookcrossing_change_comment_form($form, &$form_state, $info) {
+
   $form = array();
 
+
+
   /*
+
    * Adding info about book the existence of user comment.
+
    */
+
   $exists = db_select('bookcrossing_comment', 'c')
+
       ->fields('c', array('comment'))
+
       ->condition('uid', $info['uid'], '=')
+
       ->condition('bid', $info['bid'], '=')
+
       ->execute()
+
       ->fetchField();
 
+
+
   $form_state['info'] = $info;
+
   $form_state['exists'] = $exists ? TRUE : FALSE;
 
+
+
   $form['comment'] = array(
+
     '#type' => 'textarea',
+
     '#default_value' => $exists,
+
   );
+
+
 
   $form['submit'] = array(
+
     '#type' => 'submit',
+
     '#value' => t('Save'),
+
     '#ajax' => array(
+
       'callback' => 'bookcrossing_save_comment_ajax',
+
     ),
+
     '#submit' => array(),
+
   );
+
+
 
   return $form;
+
 }
 
+
+
 /**
+
  * Ajax callback: save updated comment.
+
  * 
+
  * If user already have comment then it will be updated, if not then the new one will be created.
+
  * Each user can have 1 comment for every book.
+
  */
+
 function bookcrossing_save_comment_ajax($form, $form_state) {
+
   $commands = array();
 
+
+
   /*
+
    * Check the users comment text.
+
    */
+
   $comment = strip_tags(filter_xss($form_state['values']['comment']));
 
+
+
   if ($form_state['exists']) {
+
     db_update('bookcrossing_comment')
+
         ->fields(array('comment' => $comment))
+
         ->condition('bid', $form_state['info']['bid'], '=')
+
         ->condition('uid', $form_state['info']['uid'], '=')
+
         ->execute();
+
   }
+
   else {
+
     db_insert('bookcrossing_comment')
+
         ->fields(array('bid' => $form_state['info']['bid'], 'uid' => $form_state['info']['uid'], 'comment' => $comment))
+
         ->execute();
+
   }
+
+
 
   /*
+
    * Add updated comment to the page. 
+
    */
+
   $commands[] = ajax_command_html('#my-comment-text', $comment);
+
   $commands[] = ajax_command_html('.history-comment.m-c', $comment);
+
   return array('#type' => 'ajax', '#commands' => $commands);
+
 }
 
+
+
 /**
+
  * Implements hook_node_view().
+
  */
+
 function bookcrossing_meta_og($book) {
+
   $app_id = array(
+
     '#tag' => 'meta',
+
     '#attributes' => array(
+
       'property' => 'fb:app_id',
+
       'content' => variable_get('fboauth_id', ''),
+
     ),
+
   );
+
   drupal_add_html_head($app_id, 'fb_app_id');
 
+
+
   $type = array(
+
     '#tag' => 'meta',
+
     '#attributes' => array(
+
       'property' => 'og:type',
+
       'content' => 'book',
+
     ),
+
   );
+
   drupal_add_html_head($type, 'og_type');
 
+
+
   $url = array(
+
     '#tag' => 'meta',
+
     '#attributes' => array(
+
       'property' => 'og:url',
+
       'content' => url('book/' . $book['bid'], array('absolute' => TRUE)),
+
     ),
+
   );
+
   drupal_add_html_head($url, 'og_url');
 
+
+
   $title = array(
+
     '#tag' => 'meta',
+
     '#attributes' => array(
+
       'property' => 'og:title',
+
       'content' => $book['node']->title,
+
     ),
+
   );
+
   drupal_add_html_head($title, 'og_title');
 
+
+
   $description = array(
+
     '#tag' => 'meta',
+
     '#attributes' => array(
+
       'property' => 'og:description',
+
       'content' => $book['node']->field_bookcrossing_description[LANGUAGE_NONE][0]['safe_value'],
+
     ),
+
   );
+
+
 
   drupal_add_html_head($description, 'og_description');
 
+
+
   $image = array(
+
     '#tag' => 'meta',
+
     '#attributes' => array(
+
       'property' => 'og:image',
+
       'content' => isset($book['node']->field_bookcrossing_image[LANGUAGE_NONE]) ? file_create_url($book['node']->field_bookcrossing_image[LANGUAGE_NONE][0]['uri']) : file_create_url('public://no-image/' . $book['color'] . '.jpg'),
+
     ),
+
   );
+
   drupal_add_html_head($image, 'og_image');
 
+
+
   $authors = '';
+
   if (isset($book['node']->field_bookcrossing_author[LANGUAGE_NONE])) {
+
     foreach ($book['node']->field_bookcrossing_author[LANGUAGE_NONE] as $tid) {
+
       $a = taxonomy_term_load($tid['tid']);
+
       if ($a) {
+
         $authors[] = $a->name;
+
       }
+
     }
+
     $authors = implode(',', $authors);
+
   }
+
+
 
   /*$author = array(
+
     '#tag' => 'meta',
+
     '#attributes' => array(
+
       'property' => 'book:author',
+
       'content' => $authors,
+
     ),
+
   );
+
   drupal_add_html_head($author, 'book_author');*/
 
+
+
   $date = array(
+
     '#tag' => 'meta',
+
     '#attributes' => array(
+
       'property' => 'book:release_date',
+
       'content' => isset($book['time_left']) ? $book['time_left'] : '',
+
     ),
+
   );
+
   drupal_add_html_head($date, 'book_date');
 
+
+
   $isbn = array(
+
     '#tag' => 'meta',
+
     '#attributes' => array(
+
       'property' => 'book:isbn',
+
       'content' => isset($book['node']->field_bookcrossing_isbn[LANGUAGE_NONE][0]['safe_value']) ? $book['node']->field_bookcrossing_isbn[LANGUAGE_NONE][0]['safe_value'] : '',
+
     ),
+
   );
+
   drupal_add_html_head($isbn, 'book_isbn');
 
+
+
   $genres = '';
+
   if (isset($book['node']->field_bookcrossing_genre[LANGUAGE_NONE])) {
+
     foreach ($book['node']->field_bookcrossing_genre[LANGUAGE_NONE] as $tid) {
+
       $g = taxonomy_term_load($tid['tid']);
+
       if ($g) {
+
         $genres[] = $g->name;
+
       }
+
     }
+
     //$genres = implode(',', $genres);
+
   }
+
+
 
   $i = 0;
+
   foreach ($genres as $g) {
+
     $genre = array(
+
       '#tag' => 'meta',
+
       '#attributes' => array(
+
         'property' => 'book:tag',
+
         'content' => $g,
+
       ),
+
     );
+
     drupal_add_html_head($genre, 'book_genre_' . $i);
+
     $i++;
+
   }
+
 }
 
+
+
 /**
+
  * Returns item list with the status of the book.
+
  * 
+
  * @param array $book
+
  *   array containing book data.
+
  * 
+
  * @return string
+
  *   html output of the current status
+
  */
+
 function bookcrossing_book_status($book = array()) {
-  $status_string = $book['status'] ? t('Found') : t('Free book');
+
+  $status_string = $book['status'] ? t('Found') : t('Travelling');
+
   $items = array(
+
     '<div class="status-label">' . t('Book status') . ':</div>' . $status_string,
+
   );
 
+
+
   if ($book['status']) {
+
     if ($fbid = bookcrossing_load_fbid($book['user']->uid)) {
+
       $user_link = l($book['user']->name, 'http://www.facebook.com/profile.php?id=' . $fbid . '&sk=app_bookcrossing_by', array('html' => TRUE, 'attributes' => array('target' => '_blank')));
+
     }
+
     else {
+
       $user_link = l($book['user']->name, 'user/' . $book['user']->uid);
+
     }
+
   
+
     $items[] = '<div class="status-label">' . t('Reader') . ':</div>' . $user_link;
+
   }
+
   else {
+
     $parents = taxonomy_get_parents_all($book['place']->tid);
+
     $i = 1;
+
     foreach ($parents as $parent) {
+
       switch ($i) {
+
         case 1:
+
           $query = array('place' => $parent->name);
+
           break;
 
+
+
         case 2:
+
           $query = array('sort' => $parent->name);
+
           break;
+
+
 
         case 3:
 
+
+
           $query = array('country' => $parent->name);
+
           break;
+
+
 
         default:
+
           $query = array();
+
           break;
+
       }
 
+
+
       $place_output[] = l($parent->name, 'books/place', array('query' => $query));
+
       $i++;
+
     }
 
+
+
     $place_output = array_reverse($place_output);
+
     //$place_output[] = $book['place']->name;
+
     
+
     $items[] = '<div class="status-label">' . t('Place') . ':</div>' . implode(', ', $place_output);//$book['place']->name;
+
   }
+
+
 
   return theme('item_list', array('items' => $items, 'type' => 'ul', 'attributes' => array('class' => 'status-info')));
+
 }
 
+
+
 /**
+
  * Loads history of the book.
+
  * 
+
  * @return array
+
  *   array with the places and current status
+
  *   
+
  *   array(
+
  *     'places' => array(
+
  *        array('place 1'),
+
  *        array('place 2'),
+
  *        ...
+
  *      ),
+
  *     'user' => 'current reader',
+
  *     'place' => 'current place',
+
  *     'comment' => 'comment of the logged user',
+
  *     'status' => 'current status of the book',
+
  *     'node' => 'book class',
+
  *   )
+
  */
+
 function bookcrossing_history_load($bid = '', $pager = TRUE) {
+
   if (!$bid) {
+
     return '';
+
   }
+
+
 
   $limit = variable_get('bookcrossing_history_pager_limit', 5);
 
+
+
   $query = db_select('bookcrossing_books', 'b');
+
   $query->innerJoin('bookcrossing_history', 'p', 'b.bid = p.bid');
+
   $query->fields('p', array('uid', 'place_id', 'place_id_left', 'time_left', 'found'));
+
   $query->fields('b', array('bid', 'bcid', 'nid', 'status', 'color'));
+
   $query->condition('b.bid', $bid, '=');
 
+
+
   // adding pager
+
   if ($pager) {
+
     $query = $query->extend('PagerDefault');
+
     if ($limit !== FALSE) {
+
       $query = $query->limit($limit);
+
     }
+
   }
+
   else {
+
     if ($limit !== FALSE) {
+
       $query->range(0, $limit);
+
     }
+
   }
+
+
 
   $query->orderBy('found', 'DESC');
+
   $states = $query->execute();
 
+
+
   $places = array();
+
   $temp = array();
 
+
+
   /*
+
    * Creating array of places where book was.
+
    */
+
   while ($place = $states->fetch(PDO::FETCH_ASSOC)) {
+
     $temp[] = $place;
 
+
+
     $places['places'][] = array(
+
       'user' => user_load($place['uid']),
+
       'place' => taxonomy_term_load($place['place_id']),
+
       'place_left' => taxonomy_term_load($place['place_id_left']),
+
       'time_left' => $place['time_left'],
+
       'found' => $place['found'],
+
     );
+
     
+
     $places['color'] = $place['color'];
+
   }
 
+
+
   /*
+
    * Loading user comments for this book.
+
    */
+
   $comments = db_select('bookcrossing_comment', 'c')
+
       ->fields('c', array('uid', 'comment'))
+
       ->condition('bid', $bid, '=')
+
       ->execute()
+
       ->fetchAllKeyed();
+
+
 
   $places['comments'] = $comments;
 
+
+
   /*
+
    * Current state of the book located in the first row.
+
    */
+
   $current = reset($temp);
+
   if ($current['status']) {
+
     // Delete current place because someone is reading this book. 
+
     unset($places['places'][0]);
+
   }
+
+
 
   /**
+
    * Add information about current state of the book.
+
    */
+
   if ($current) {
+
     $places['status'] = $current['status'];
+
     $places['place'] = $current['status'] ? taxonomy_term_load($current['place_id']) : taxonomy_term_load($current['place_id_left']);
+
     $places['bid'] = $bid;
+
     
+
     $owner = db_select('bookcrossing_books', 'b')->fields('b', array('owner'))->condition('bid', $bid, '=')->execute()->fetchField();
 
+
+
     $places['user'] = user_load($owner);
+
     $places['node'] = node_load($current['nid']);
+
     //$places['color'] = $states['color'];
+
   }
 
+
+
   return $places;
+
 }
 
+
+
 /**
+
  * Adding default image if book doesnt have it and chage links for author, title and genre.
+
  * 
+
  * @param array $view
+
  *   array in the format for render()
+
  * 
+
  * @param array $book
+
  *   array with book information
+
  * 
+
  * @show_info
+
  *   show info about author and year in the image
+
  * 
+
  * @return array
+
  *   changed array for render()
+
  */
+
 function bookcrossing_prepare_book_view($view, $book, $show_info = TRUE) {
+
   // change link for image and provide default if there is no image
+
   if (!isset($view['field_bookcrossing_image'][0])) {
+
     $style = $book['color'] ? ' style="background-color: ' . $book['color'] . ';"' : ''; 
+
     $markup = '<div class="book-no-image"><div' . $style . ' class="book-no-image-container"><a href="' . url('book/' . $book['bid'], array('absolute' => TRUE)) . '">';
 
+
+
     if ($show_info) {
+
       $markup .= '<div class="book-no-image-title">' . $book['node']->title . '</div>';
+
       if (isset($book['node']->field_bookcrossing_year[LANGUAGE_NONE])) {
+
         $markup .= '<div class="book-no-image-year">' . $book['node']->field_bookcrossing_year[LANGUAGE_NONE][0]['value'] . '</div>';
+
       }
+
     }
+
+
 
     $markup .= '</a></div></div>';
 
+
+
     $view['field_bookcrossing_image'] = array(
+
       '#markup' => $markup,
+
     );
+
   }
+
   else {
+
     if (isset($view['field_bookcrossing_image'][0]['#path']['path'])) {
+
       $view['field_bookcrossing_image'][0]['#path']['path'] = url('book/' . $book['bid'], array('absolute' => TRUE));
+
     }
+
   }
+
+
 
   // change link for author
+
   if (isset($view['field_bookcrossing_author'])) {
+
     foreach (element_children($view['field_bookcrossing_author']) as $child) {
+
       if (isset($view['field_bookcrossing_author'][$child]['#href'])) {
+
         $view['field_bookcrossing_author'][$child]['#href'] = url('books/author', array('query' => array('sort' => $view['field_bookcrossing_author'][$child]['#title']), 'absolute' => TRUE));
+
       }
+
     }
+
   }
+
+
 
   // change link for genre
+
   if (isset($view['field_bookcrossing_genre'])) {
+
     foreach (element_children($view['field_bookcrossing_genre']) as $child) {
+
       if (isset($view['field_bookcrossing_genre'][$child]['#href'])) {
+
         $view['field_bookcrossing_genre'][$child]['#href'] = url('books/genre', array('query' => array('sort' => $view['field_bookcrossing_genre'][$child]['#title']), 'absolute' => TRUE));
+
       }
+
     }
+
   }
+
+
 
   // change link for title
+
   if (isset($view['title'])) {
+
     if (strstr($view['title'][0]['#markup'], '</a>')) {
+
       $view['title'][0]['#markup'] = '<h2 class="node-title">' . l($book['node']->title, 'book/' . $book['bid']) . '</h2>';
+
     }
+
   }
 
+
+
   return $view;
+
 }
 
+
+
 /**
+
  * Form for adding comment for a book.
+
  * 
+
  * @param array $book
+
  *   book information
+
  */
+
 function bookcrossing_book_comment($form, $form_state, $book = array()) {
+
   global $user;
+
   $form = array();
+
   $form_state['book'] = $book;
 
+
+
   // form for selecting books place
+
   bookcrossing_select_place($form, $form_state);
+
+
 
   $form['place']['#title'] = $book['status'] ? t('Where do u want to left the book?') : t('Where did u find the book?');
 
+
+
   // check if user already add comment to a book
+
   $exists = db_select('bookcrossing_comment', 'c')
+
       ->fields('c', array('comment'))
+
       ->condition('uid', $user->uid, '=')
+
       ->condition('bid', $book['bid'], '=')
+
       ->execute()
+
       ->fetchField();
 
+
+
   if ($book['status'] && !$exists) {
+
     $form['comment'] = array(
+
       '#type' => 'textarea',
+
       '#title' => t('A few words about the book.'),
+
     );
+
   }
+
+
 
   if ($exists) {
+
     $form['comment'] = array(
+
       '#type' => 'hidden',
+
       '#value' => $exists,
+
     );
+
   }
 
+
+
   $form['submit'] = array(
+
     '#type' => 'submit',
+
     '#value' => t('Save'),
+
   );
 
+
+
   if ($book['status']) {
+
     $app_id = variable_get('fboauth_id', '');
+
     $init = "window.fbAsyncInit = function() {
+
       FB.init({
+
         appId      : $app_id,
+
         status     : true,
+
         cookie     : true,
+
         xfbml      : true
+
       });
+
     };
 
+
+
     // Load the SDK Asynchronously
+
     (function(d){
+
       var js, id = 'facebook-jssdk'; if (d.getElementById(id)) {return;}
+
       js = d.createElement('script'); js.id = id; js.async = true;
+
       js.src = '//connect.facebook.net/ru_RU/all.js';
+
       d.getElementsByTagName('head')[0].appendChild(js);
+
     }(document));";
+
  
+
     $script = '<script>' . $init . '</script>'; 
+
     $form['#prefix'] = $script;
 
+
+
     $text = t('Sorry, but error happened while publishing action.');
+
     $path = url('book/' . $book['bid'], array('absolute' => TRUE));
+
     $release = "function release(){
+
        country = '';
+
        city = '';
+
        place = '';
+
        message = '';
 
+
+
        if (jQuery('input[name=comment]').length != 0 && jQuery('input[name=comment]').val() != '') {
+
          message = jQuery('input[name=comment]').val();
+
        }
+
        else if (jQuery('textarea[name=comment]').length != 0 && jQuery('textarea[name=comment]').val() != '') {
+
          message = jQuery('textarea[name=comment]').val();
+
        }
+
+
 
        message = message.replace(/(<([^>]+)>)/ig,'');
 
+
+
        if (jQuery('#edit-my-places-list').val() == 'no-place' && jQuery('#edit-new-place').val() == '') {
+
          return true;
+
        }
+
        else {
+
          if (jQuery('#edit-create-or-select-my-place').is(':checked') && jQuery('#edit-my-places-list').val() != 'no-place') {       
+
            place = jQuery('#edit-my-places-list option:selected').text();
+
            info = jQuery('#my-places-list-description div').html();
+
            info = info.substring(1, info.length - 1);
+
            info = info.split(',');
 
+
+
            city = info[1].replace(/^\s+|\s+$/g,'');
+
            country = info[0].replace(/^\s+|\s+$/g,'');
+
          }
+
          else if (jQuery('#edit-create-or-select-create-new').is(':checked') && jQuery('#edit-new-place').val() != '') {
+
            country = jQuery('#edit-country option:selected').text();
+
            city = jQuery('#edit-city option:selected').text();
+
            place = jQuery('input[name=\"new-place\"]').val();
+
          }
+
        }
 
+
+
        if (country != '' && city != '' && location != '' && message != '') {
+
          FB.api(
+
          'https://graph.facebook.com/me/bookcrossing_by:release?book={$path}&country=' + country + '&city=' + city + '&location=' + place + '&message=' + message,
+
          'post',
+
            function(response) {
+
              if (!response || response.error) {
+
                 //alert('Sorry, but error happened while publishing action.');
+
                 return true;
+
              } else {
+
                 return true;
+
              }
+
           });
+
        }
+
         
+
        return true;
+
     }";
+
+
 
     //drupal_add_js($release, 'inline');
 
+
+
     $form['#prefix'] .= '<script>' . $release . '</script>';
+
     $form['submit']['#attributes']['onclick'] = "return release()";
+
   }
+
+
 
   return $form;
+
 }
 
+
+
 /**
+
  * Submit for adding comment for a book form.
+
  */
+
 function bookcrossing_book_comment_submit($form, $form_state) {
+
   global $user;
 
+
+
   if ($form_state['values']['create-or-select'] == 'my-place') {
+
     $place_id = $form_state['values']['my-places-list'];
+
   }
+
   elseif ($form_state['values']['create-or-select'] == 'create-new') {
+
     /**
+
      * Saving new place
+
      */
+
     // check user input
+
     $new_place = filter_xss($form_state['values']['new-place'], array());
+
   
+
     $query = db_select('taxonomy_term_data', 't');
+
     $query->innerJoin('taxonomy_term_hierarchy', 'h', 't.tid = h.tid');
+
     $isset = $query->fields('t', array('tid'))
+
       ->condition('t.name', $new_place, '=')
+
       ->condition('t.vid', BOOKCROSSING_PLACES_VID, '=')
+
       ->condition('h.parent', $form_state['values']['city'], '=')
+
       ->execute()
+
       ->fetchField();
 
+
+
     if (!$isset) {
+
       $term = new stdClass();
+
       $term->vid = 3;
+
       $term->name = $new_place;
+
       $term->parent = $form_state['values']['city'];
+
+
 
       taxonomy_term_save($term);
 
+
+
       $place_id = $term->tid;
+
     }
+
     else {
+
       $place_id = $isset;
+
     }
+
+
 
     global $user;
+
     $my_place = db_select('bookcrossing_places', 'p')
+
       ->fields('p', array('uid'))
+
       ->condition('tid', $place_id, '=')
+
       ->condition('uid', $user->uid, '=')
+
       ->execute()
+
       ->fetchField();
 
+
+
     if (!$my_place) {
+
       db_insert('bookcrossing_places')
+
         ->fields(array('uid' => $user->uid, 'tid' => $place_id))
+
         ->execute();
+
     }
+
   }
+
+
 
   if ($form_state['book']['status'] == BOOKCROSSING_BOOK_STATUS_READ) {
+
     // add info where book left
+
     db_update('bookcrossing_history')
+
         ->fields(array(
+
           'time_left' => REQUEST_TIME,
+
           'place_id_left' => $place_id,
+
             )
+
         )
+
         ->condition('bid', $form_state['book']['bid'], '=')
+
         ->condition('time_left', 0, '=')
+
         ->execute();
+
+
 
     // add comment to a book
+
     if (isset($form_state['values']['comment'])) {
+
       $comment = strip_tags(filter_xss($form_state['values']['comment']));
+
       db_insert('bookcrossing_comment')
+
           ->fields(array('bid' => $form_state['book']['bid'], 'uid' => $user->uid, 'comment' => $comment))
+
           ->execute();
+
     }
 
+
+
     // update information about the book
+
     db_update('bookcrossing_books')
+
         ->fields(array('owner' => -1, 'status' => BOOKCROSSING_BOOK_STATUS_FREE, 'current_place' => $place_id))
+
         ->condition('bid', $form_state['book']['bid'])
+
         ->execute();
+
   }
+
   elseif ($form_state['book']['status'] == BOOKCROSSING_BOOK_STATUS_FREE) {
+
     // new entry for book history
+
     db_insert('bookcrossing_history')
+
         ->fields(array(
+
           'bid' => $form_state['book']['bid'],
+
           'uid' => $user->uid,
+
           'place_id' => $place_id,
+
           'found' => REQUEST_TIME,
+
             )
+
         )
+
         ->execute();
+
+
 
     // update book information
+
     db_update('bookcrossing_books')
+
         ->fields(array('owner' => $user->uid, 'status' => BOOKCROSSING_BOOK_STATUS_READ, 'current_place' => 0))
+
         ->condition('bid', $form_state['book']['bid'])
+
         ->execute();
+
   }
+
+
 
   drupal_goto('book/' . $form_state['book']['bid']);
+
 }
 
+
+
 /**
+
  * Helper function: return terms list in format expected by form item.
+
  * 
+
  * @param array $terms
+
  *   array of therms
+
  * 
+
  * @return array
+
  *   array for form #options property
+
  */
+
 function bookcrossing_terms_to_options($terms = array()) {
+
   if (empty($terms)) {
+
     return array();
+
   }
+
+
 
   foreach ($terms as $term) {
+
     $options[$term->tid] = $term->name;
+
   }
+
+
 
   return $options;
+
 }
 
+
+
 /**
+
  * Form part for selecting place.
+
  */
+
 function bookcrossing_select_place(&$form, $form_state) {
+
   $form['#validate'][] = 'bookcrossing_validate_place';
 
+
+
   $form['place'] = array(
+
     '#type' => 'fieldset',
+
     '#title' => t('Place where u want to leave the book.'),
+
   );
 
+
+
   $countries = taxonomy_get_tree(3, 0, 1);
+
   $countries = bookcrossing_terms_to_options($countries);
 
+
+
   $selected_country = isset($form_state['values']['country']) ? $form_state['values']['country'] : '';
+
   if ($selected_country) {
+
     $terms = taxonomy_get_tree(3, $selected_country, 1);
+
   }
+
   else {
+
     reset($countries);
+
     $terms = taxonomy_get_tree(3, key($countries), 1);
+
   }
+
+
 
   $cities = bookcrossing_terms_to_options($terms);
 
+
+
   global $user;
+
   $place_options = array();
+
   $user_places = bookcrossing_user_places($user->uid);
+
   $places = taxonomy_term_load_multiple($user_places);
+
   $place_options['no-place'] = t('Select a place');
 
+
+
   foreach ($places as $p) {
+
     $place_options[$p->tid] = $p->name;
+
   }
+
+
 
   $output = array();
+
   $terms = taxonomy_get_parents_all(key($place_options));
+
   foreach ($terms as $term) {
+
     $output[] = $term->name;
+
   }
 
+
+
   unset($output[0]);
+
   $output = array_reverse($output);
+
   $place_description = !empty($output) ? '(' . implode(', ', $output) . ')' : '';
+
   
+
   $form['place']['my-places-list'] = array(
+
     '#prefix' => '<div class="my-places-list-wrapper">',
+
     '#suffix' => '<div id="my-places-list-description">' . $place_description . '</div></div>',
+
     '#type' => 'select',
+
     '#options' => $place_options,
+
     '#default_value' => isset($form_state['values']['my-places-list']) ? $form_state['values']['my-places-list'] : key($place_options),
+
     '#ajax' => array(
+
       'callback' => 'bookcrossing_place_description',
+
     ),
+
     '#states' => array(
+
       'visible' => array(
+
         ':input[name="create-or-select"]' => array('value' => 'my-place'),
+
       ),
+
     ),
+
   );
+
+
 
   $form['place']['or'] = array(
+
    '#markup' => '<div class="place-or">' . t('or') . '</div>',
+
   );
+
+
 
   $form['place']['create-or-select'] = array(
+
     '#type' => 'radios',
+
     '#options' => array(
+
       'my-place' => t('Select your place'),
+
       'create-new' => t('Create new place'),
+
     ),
+
     '#default_value' => 'my-place',
+
   );
+
+
 
   $form['place']['country'] = array(
+
     '#type' => 'select',
+
     '#title' => t('Country'),
+
     '#options' => $countries,
+
     '#ajax' => array(
+
       'wrapper' => 'cities-wrapper',
+
       'callback' => 'bookcrossing_get_cities',
+
     ),
+
     '#states' => array(
+
       'visible' => array(
+
         ':input[name="create-or-select"]' => array('value' => 'create-new'),
+
       ),
+
     ),
+
   );
+
+
 
   $selected_city = isset($form_state['values']['city']) ? $form_state['values']['city'] : key($cities);
+
   $form['place']['city'] = array(
+
     '#type' => 'select',
+
     '#title' => t('City'),
+
     '#options' => $cities,
+
     '#prefix' => '<div id="cities-wrapper">',
+
     '#suffix' => '</div>',
+
     '#default_value' => $selected_city,
+
     '#states' => array(
+
       'visible' => array(
+
         ':input[name="create-or-select"]' => array('value' => 'create-new'),
+
       ),
+
     ),
+
     '#ajax' => array(
+
       'callback' => 'bookcrossing_change_autocomplete_path',
+
       'wrapper' => 'new-place-input',
+
     ),
+
   );
+
+
 
   $form['place']['new-place'] = array(
+
     '#type' => 'textfield',
+
     '#prefix' => '<div id="new-place-input">',
+
     '#suffix' => '</div>',
+
     '#autocomplete_path' => 'ajax/bookcrossing-places-autocompletion/' . $selected_city,
+
     '#title' => t('New place'),
+
     '#description' => '',//t('Enter the place where u want to leave the book.'),
+
     '#states' => array(
+
       'visible' => array(
+
         ':input[name="create-or-select"]' => array('value' => 'create-new'),
+
       ),
+
     ),
+
   );
+
 }
+
+
 
 function bookcrossing_validate_place($form, $form_state) {
+
   $place = filter_xss($form_state['values']['new-place'], array());
 
+
+
   if ($form_state['values']['my-places-list'] == 'no-place' && empty($place)) {
+
     form_set_error('place', t('Please select place from a list or create new'));
+
     return FALSE;
+
   }
+
+
 
   return TRUE;
+
 }
+
+
 
 function bookcrossing_change_autocomplete_path($form, $form_state) {
+
   return $form['place']['new-place'];
+
 }
 
+
+
 /**
+
  * Loads place description
+
  */
+
 function bookcrossing_place_description($form, $form_state) {
+
   $commands = array();
 
+
+
   $output = array();
+
   $terms = taxonomy_get_parents_all($form_state['values']['my-places-list']);
+
   foreach ($terms as $term) {
+
     $output[] = $term->name;
+
   }
+
+
 
   unset($output[0]);
+
   $output = array_reverse($output);
+
   $description = !empty($output) ? '(' . implode(', ', $output) . ')' : '';
 
+
+
   $commands[] = ajax_command_html('#my-places-list-description', $description);
+
   return array('#type' => 'ajax', '#commands' => $commands);
+
 }
 
+
+
 /**
+
  * Load user places
+
  */
+
 function bookcrossing_user_places($uid = '') {
+
   $query = db_select('bookcrossing_places', 'p');
+
   $query->innerJoin('taxonomy_term_data', 't', 'p.tid = t.tid');
+
   $query->fields('p', array('tid'));
+
   $query->condition('p.uid', $uid, '=');
+
   $tids = $query->execute()->fetchCol();
 
+
+
   return $tids;
+
 }
 
+
+
 /**
+
  * Ajax callback: refresh city list.
+
  */
+
 function bookcrossing_get_cities($form, $form_state) {
+
   return $form['place']['city'];
+
 }
 
+
+
 /**
+
  * Ajax callback: refresh places list.
+
  */
+
 function bookcrossing_get_places($form, $form_state) {
+
   return $form['place']['radios'];
+
 }
 
+
+
 /**
+
  * Load a information about book.
+
  * 
+
  * @param int bid
+
  *   book id
+
  * 
+
  * @return array
+
  *   array contains book data
+
  * 
+
  *   array(
+
  *     'bid' => 'book id',
+
  *     'owner' => 'current reader of the book',
+
  *     'node' => array('book class data'),
+
  *     'user' => array('last or current reader of the book'),
+
  *     'place' => array('current or last place of the book'),
+
  *   )
+
  */
+
 function bookcrossing_load($bid = '') {
+
   $book = array();
+
+
 
   if ($bid) {
+
     $query = db_select('bookcrossing_books', 'b');
+
     $query->innerJoin('bookcrossing_history', 'p', 'b.bid = p.bid');
+
     $states = $query->fields('b', array('bid', 'bcid', 'nid', 'status', 'owner', 'color'))
+
         ->fields('p', array('uid', 'place_id', 'place_id_left', 'time_left', 'found'))
+
         ->condition('b.bid', $bid, '=')
+
         ->orderBy('found', 'DESC')
+
         ->range(0, 1)
+
         ->execute();
+
+
 
     $book = $states->fetch(PDO::FETCH_ASSOC);
+
     if ($book) {
+
       $book['user'] = user_load($book['uid']);
+
       unset($book['uid']);
 
+
+
       $book['node'] = node_load($book['nid']);
+
+
 
       $book['place'] = $book['status'] ? taxonomy_term_load($book['place_id']) : taxonomy_term_load($book['place_id_left']);
+
       unset($book['place_id']);
+
     }
+
   }
 
+
+
   return $book;
+
 }
 
+
+
 /**
+
  * Load a information about book.
+
  * 
+
  * @param int bid
+
  *   book id
+
  * 
+
  * @return array
+
  *   the same array as bookcrossing_load() returns.
+
  * 
+
  * @see bookcrossing_load().
+
  */
+
 function bookcrossing_load_by_bcid($bcid = '') {
+
   $book = array();
 
+
+
   if ($bcid) {
+
     $bid = db_select('bookcrossing_books', 'b')->fields('b', array('bid'))->condition('bcid', $bcid, '=')->execute()->fetchField();
 
+
+
     $book = bookcrossing_load($bid);
+
     if ($book) {
+
       $book['node'] = node_load($book['nid']);
+
     }
+
   }
 
+
+
   return $book;
+
 }
 
+
+
 /**
+
  * Loads multiple books at one time.
+
  * 
+
  * @param array $bids
+
  *   array book ids to load
+
  * 
+
  * @return array
+
  *   array of the needed books
+
  */
+
 function bookcrossing_load_multiple($bids = array()) {
+
   $books = array();
 
+
+
   if ($bids) {
+
     $query = db_select('bookcrossing_books', 'b');
+
     $query->innerJoin('bookcrossing_history', 'p', 'b.bid = p.bid');
+
     $states = $query->fields('b', array('bid', 'bcid', 'nid', 'status', 'owner', 'color'))
+
         ->fields('p', array('uid', 'place_id', 'place_id_left', 'time_left', 'found'))
+
         ->condition('b.bid', $bids, 'IN')
+
         ->execute();
+
+
 
     $states = $states->fetchAllAssoc('bid');
 
+
+
     $nids = array();
+
     $tids = array();
+
     $uids = array();
 
+
+
     /*
+
      * Creating array of entity ids for loading multiple in one time.
+
      */
+
     foreach ($states as $state) {
+
       $nids[$state->nid] = $state->nid;
+
       $tids[$state->place_id] = $state->place_id;
+
       $tids[$state->place_id_left] = $state->place_id_left;
+
       $uids[$state->uid] = $state->uid;
+
     }
 
-    /*
-     * Loading needed entities.
-     */
-    $places = taxonomy_term_load_multiple($tids);
-    $users = user_load_multiple($uids);
-    $nodes = node_load_multiple($nids);
+
 
     /*
-     * Creating array of books
+
+     * Loading needed entities.
+
      */
+
+    $places = taxonomy_term_load_multiple($tids);
+
+    $users = user_load_multiple($uids);
+
+    $nodes = node_load_multiple($nids);
+
+
+
+    /*
+
+     * Creating array of books
+
+     */
+
     foreach ($states as $state) {
+
       $book = (array) $state;
+
       $book['user'] = $users[$state->uid];
+
+
 
       $book['node'] = $nodes[$state->nid];
 
+
+
       $book['place'] = $state->status ? $places[$state->place_id] : $places[$state->place_id_left];
 
+
+
       $books[] = $book;
+
     }
+
   }
 
+
+
   return $books;
+
 }
 
+
+
 /**
+
  * Form for releasing the book.
+
  */
+
 function bookcrossing_release_book_form($form, $form_state) {
+
   $form['pre-existed-book'] = array(
+
     '#markup' => '<div class="bcid-pretext">' . t('If you releasing a book you have found earlier, please find its BCID (e.g. ABCD-1234) that written on a book and insert it into fields below.') . '</div>',
+
   );
+
+
 
   $form['existed-book'] = array(
+
     '#type' => 'fieldset',
-    '#title' => t('Release the book(has BCID)'),
+
+    '#title' => t('Release book (already has BCID)'),
+
     '#tree' => TRUE,
+
   );
+
+
 
   $form['existed-book']['bcid-first-part'] = array(
+
     '#type' => 'textfield',
+
     '#size' => 5,
+
   );
+
+
 
   $form['existed-book']['bcid-second-part'] = array(
+
     '#type' => 'textfield',
+
     '#prefix' => '<div class="bcid-separator">-</div>',
+
     '#size' => 10,
+
   );
+
+
 
   $form['existed-book']['submit'] = array(
+
     '#type' => 'submit',
+
     '#value' => t('Release'),
+
     '#submit' => array(
+
       'bookcrossing_release_book_form_submit',
+
     ),
+
   );
 
+
+
   $form['existed-book']['description'] = array(
-    '#markup' => '<p class="help-block">' . t('Enter the number of the read book (Bookcrossing ID)') . '</p>',
+
+    '#markup' => '<p class="help-block">' . t('Enter BCID of book you want to release') . '</p>',
+
   );
+
+
+
 
 
   $form['pre-add-new'] = array(
-    '#markup' => '<div class="bcid-pretext">' . t('To release a new book that is not in catalog yet, please click the button below. After you fill all nessary fields, you will get a new BCID, that should be written on a new book to track its journey.') . '</div>',
+
+    '#markup' => '<div class="clearfix" style="height:50px;"></div><div class="bcid-pretext">' . t('To release a new book that is not in catalog yet, please click the button below. After you fill all nessary fields, you will get a new BCID, that should be written on a new book to track its journey.') . '</div>',
+
   );
+
+
 
   $form['add-new'] = array(
+
     '#type' => 'fieldset',
-    '#title' => t('Add new book (withour BCID)'),
+
+    '#title' => t('Register new book (has no BCID yet)'),
+
     '#tree' => TRUE,
+
   );
+
+
 
   $form['add-new']['submit'] = array(
+
     '#type' => 'submit',
+
     '#value' => t('Add new book'),
+
     '#submit' => array(
+
       'bookcrossing_add_new_book',
+
     ),
+
   );
 
+
+
   return $form;
+
 }
 
+
+
 /**
+
  * Form submit: release book by its BCID.
+
  */
+
 function bookcrossing_release_book_form_submit($form, $form_state) {
+
   $bcid = $form_state['values']['existed-book']['bcid-first-part'] . '-' . $form_state['values']['existed-book']['bcid-second-part'];
+
   $book = bookcrossing_load_by_bcid($bcid);
+
   $error = FALSE;
 
+
+
   global $user;
+
   $reserved = db_select('bookcrossing_books', 'b')
+
       ->fields('b', array('bcid'))
+
       ->condition('bcid', $bcid, '=')
+
       ->condition('owner', $user->uid, '=')
+
       ->condition('status', BOOKCROSSING_BOOK_STATUS_RESERVED, '=')
+
       ->execute()
+
       ->fetchField();
 
+
+
   if (!$book && !$reserved) {
+
     drupal_set_message(t('There is no book with that BCID.'));
+
     $error = TRUE;
+
   }
 
+
+
   /**
+
    * Book is already released.
+
    */
+
   if (isset($book['status']) && !$book['status']) {
+
     drupal_set_message(t('Cannot to release book because its already was released.'));
+
     $error = TRUE;
+
   }
 
+
+
   /**
+
    * Can only release books user reading.
+
    */
+
   if (isset($book['user']->uid) && $book['user']->uid != $user->uid) {
+
     drupal_set_message(t('You cannot release this book because u are not reading it now.'));
+
     $error = TRUE;
+
   }
+
+
 
   if ($reserved && !$error) {
+
     drupal_goto('add-reserved-book/' . $bcid);
+
   }
+
   elseif (!$error) {
+
     drupal_goto('release-book/' . $book['bid']);
+
   }
+
 }
 
+
+
 /**
+
  * Form submit: go to page for adding new book.
+
  */
+
 function bookcrossing_add_new_book($form, $form_state) {
+
   drupal_goto('release-book/add-new');
+
 }
 
+
+
 /**
+
  * Implements hook_form_FORM_ID_alter().
+
  * 
+
  * Adding wrappers for form elements to reload them via ajax.
+
  */
+
 function bookcrossing_form_bookcrossing_node_form_alter(&$form, &$form_state, $info) {
+
   if (!isset($form_state['build_info']['args'][1])) {
+
     return;
+
   }
+
+
 
   /**
+
    * @todo check if javascript is enabled
+
    */
+
   unset($form_state['values']['field_bookcrossing_image']);
+
   // dont update bcid on node update.
+
 //  if (arg(2) != 'edit') {
+
 //    $form['actions']['submit']['#submit'][] = 'bookcrossing_add_book';
+
 //  }
 
+
+
   $bcid = isset($form_state['build_info']['args'][1]) ? $form_state['build_info']['args'][1] : 0;
+
   if ($bcid !== 0 && $bcid != 'add-new-book') {
+
     $form['bcid'] = array(
+
       '#type' => 'value',
+
       '#value' => $bcid,
+
     );
 
+
+
     $form['actions']['submit']['#submit'][] = 'bookcrossing_add_reserved_book';
+
   }
+
   elseif($bcid == 'add-new-book') {
+
     $form['actions']['submit']['#submit'][] = 'bookcrossing_add_book';
+
   }
+
+
 
   $title = isset($form_state['values']['title']) ? $form_state['values']['title'] : '';
+
   if ($title) {
+
     $nid = db_select('node', 'n')->fields('n', array('nid'))->condition('title', $title, '=')->execute()->fetchField();
+
     $node = $nid != '' ? node_load($nid) : array();
 
+
+
     /**
+
      * If we have that book class already, provide default values. 
+
      */
+
     if (!empty($node)) {
+
       if (!$form['nid']['#value']) {
+
         $form['nid']['#value'] = $node->nid;
+
       }
+
+
 
       $authors = bookcrossing_default_value_for_terms($node->field_bookcrossing_author[LANGUAGE_NONE]);
+
       $form['field_bookcrossing_author'][LANGUAGE_NONE]['#value'] = $authors;
+
       $form['field_bookcrossing_author'][LANGUAGE_NONE]['#disabled'] = TRUE;
 
+
+
       $genres = bookcrossing_default_value_for_terms($node->field_bookcrossing_genre[LANGUAGE_NONE]);
+
       $form['field_bookcrossing_genre'][LANGUAGE_NONE]['#value'] = $genres;
+
       $form['field_bookcrossing_genre'][LANGUAGE_NONE]['#disabled'] = TRUE;
 
+
+
       if (isset($node->field_bookcrossing_isbn[LANGUAGE_NONE])) {
+
         $form['field_bookcrossing_isbn'][LANGUAGE_NONE][0]['value']['#value'] = $node->field_bookcrossing_isbn[LANGUAGE_NONE][0]['safe_value'];
+
         $form['field_bookcrossing_isbn'][LANGUAGE_NONE][0]['value']['#disabled'] = TRUE;
+
       }
+
+
 
       $form['field_bookcrossing_description'][LANGUAGE_NONE][0]['value']['#value'] = $node->field_bookcrossing_description[LANGUAGE_NONE][0]['safe_value'];
+
       $form['field_bookcrossing_description'][LANGUAGE_NONE][0]['value']['#disabled'] = TRUE;
+
  
+
       if (isset($node->field_bookcrossing_image[LANGUAGE_NONE])) {
+
         $form['field_bookcrossing_image'][LANGUAGE_NONE][0]['#default_value'] = $node->field_bookcrossing_image[LANGUAGE_NONE][0];
+
         $form['field_bookcrossing_image'][LANGUAGE_NONE][0]['#disabled'] = TRUE;
+
       }
+
+
 
       if (isset($node->field_bookcrossing_cover[LANGUAGE_NONE])) {
+
         $form['field_bookcrossing_cover'][LANGUAGE_NONE]['#value'] = $node->field_bookcrossing_cover[LANGUAGE_NONE][0]['value'];
+
         $form['field_bookcrossing_cover'][LANGUAGE_NONE]['#disabled'] = TRUE;
+
       }
 
+
+
       if (isset($node->field_bookcrossing_year[LANGUAGE_NONE])) {
+
         $form['field_bookcrossing_year'][LANGUAGE_NONE][0]['value']['#value'] = $node->field_bookcrossing_year[LANGUAGE_NONE][0]['value'];
+
         $form['field_bookcrossing_year'][LANGUAGE_NONE][0]['value']['#disabled'] = TRUE;
+
       }
+
+
 
       $form['#validate'] = array();
 
+
+
       if ($bcid === 'add-new-book') {
+
         $form['actions']['submit']['#submit'] = array('bookcrossing_add_book');
+
       }
+
       elseif ($bcid !== 0) {
+
         $form['actions']['submit']['#submit'] = array('bookcrossing_add_reserved_book');
+
       }
+
     }
+
   };
 
+
+
   $form['title']['#ajax'] = array(
+
     'callback' => 'bookcrossing_autocomplete_form',
+
     'event' => 'blur',
+
   );
 
+
+
   $form['field_bookcrossing_isbn']['#prefix'] = '<div id="bookcrossing-first-part">';
+
   $form['field_bookcrossing_genre']['#suffix'] = '</div>';
 
+
+
   $form['field_bookcrossing_description']['#prefix'] = '<div id="bookcrossing-second-part">';
+
   $form['field_bookcrossing_year']['#suffix'] = '</div>';
 
+
+
   //form for selecting book place  
+
   bookcrossing_select_place($form, $form_state);
+
   $form['place']['#weight'] = 7.5; //3.5
+
   $form['actions']['submit']['#submit'][] = 'bookcrossing_save_place';
+
   $form['actions']['submit']['#submit'][] = 'bookcrossing_redirect';
+
 }
 
+
+
 /**
+
  * Implements hook_node_delete().
+
  */
+
 function bookcrossing_node_delete($node) {
+
   if ($node->type == 'bookcrossing') {
+
     $bids = db_select('bookcrossing_books', 'b')
+
       ->fields('b', array('bid'))
+
       ->condition('nid', $node->nid, '=')
+
       ->execute()
+
       ->fetchCol();
 
+
+
    if (empty($bids)) {
+
      return;
+
    }
 
+
+
     db_delete('bookcrossing_books')
+
       ->condition('nid', $node->nid, '=')
+
       ->execute();
+
+
 
     db_delete('bookcrossing_history')
+
       ->condition('bid', $bids, 'IN')
+
       ->execute();
+
+
 
     db_delete('bookcrossing_comment')
+
       ->condition('bid', $bids, 'IN')
+
       ->execute();
 
+
+
     db_delete('bookcrossing_favourites')
+
       ->condition('bid', $bids, 'IN')
+
       ->execute();   
+
   }
+
 }
 
+
+
 /**
+
  * Form submit: redirect to book added page.
+
  */
+
 function bookcrossing_redirect($form, $form_state) {
+
   $_SESSION['added-new-book'] = TRUE;
+
   drupal_goto('book-added/' . $form_state['bcid']);
+
 }
 
+
+
 /**
+
  * Form submit: save place for a book.
+
  */
+
 function bookcrossing_save_place($form, $form_state) {
+
   $bid = db_select('bookcrossing_books', 'b')->fields('b', array('bid'))->condition('bcid', $form_state['bcid'], '=')->execute()->fetchField();
 
+
+
   if ($form_state['values']['create-or-select'] == 'my-place') {
+
     $place_id = $form_state['values']['my-places-list'];
+
   }
+
   elseif ($form_state['values']['create-or-select'] == 'create-new') {
+
     /**
+
      * Saving new place
+
      */
+
     // check user input
+
     $new_place = filter_xss($form_state['values']['new-place'], array());
+
   
+
     $query = db_select('taxonomy_term_data', 't');
+
     $query->innerJoin('taxonomy_term_hierarchy', 'h', 't.tid = h.tid');
+
     $isset = $query->fields('t', array('tid'))
+
       ->condition('t.name', $new_place, '=')
+
       ->condition('t.vid', BOOKCROSSING_PLACES_VID, '=')
+
       ->condition('h.parent', $form_state['values']['city'], '=')
+
       ->execute()
+
       ->fetchField();
+
     
+
     if (!$isset) {
+
       $term = new stdClass();
+
       $term->vid = 3;
+
       $term->name = $new_place;
+
       $term->parent = $form_state['values']['city'];
+
+
 
       taxonomy_term_save($term);
 
+
+
       $place_id = $term->tid;
+
     }
+
     else {
+
       $place_id = $isset;
+
     }
+
+
 
     global $user;
+
     $my_place = db_select('bookcrossing_places', 'p')
+
       ->fields('p', array('uid'))
+
       ->condition('tid', $place_id, '=')
+
       ->condition('uid', $user->uid, '=')
+
       ->execute()
+
       ->fetchField();
 
+
+
     if (!$my_place) {
+
       db_insert('bookcrossing_places')
+
         ->fields(array('uid' => $user->uid, 'tid' => $place_id))
+
         ->execute();
+
     }
+
   }
+
+
 
   // new entry for books history
+
   db_insert('bookcrossing_history')
+
       ->fields(array(
+
         'uid' => $form_state['values']['uid'],
+
         'bid' => $bid,
+
         'time_left' => REQUEST_TIME,
+
         'place_id_left' => $place_id,
+
           )
+
       )
+
       ->execute();
+
+
 
   // update book information
+
   db_update('bookcrossing_books')
+
       ->fields(array(
+
         'current_place' => $place_id,
+
       ))
+
       ->condition('bid', $bid, '=')
+
       ->execute();
+
 }
 
+
+
 /**
+
  * Helper function: returns string from terms values.
+
  * 
+
  * @param array $terms_array
+
  *   array of terms
+
  * 
+
  * @return string
+
  *   string of default value
+
  */
+
 function bookcrossing_default_value_for_terms($terms_array = array()) {
+
   if (empty($terms_array)) {
+
     return '';
+
   }
+
+
 
   $tids = array();
+
   foreach ($terms_array as $tid) {
+
     $tids[] = $tid['tid'];
+
   }
+
+
 
   $names = array();
+
   $terms = taxonomy_term_load_multiple($tids);
+
   foreach ($terms as $term) {
+
     $names[] = $term->name;
+
   }
+
+
 
   return implode(',', $names);
+
 }
 
+
+
 /**
+
  * Form submit for book adding form: save bcid of the book.
+
  */
+
 function bookcrossing_add_book($form, &$form_state) {
+
   $bcid = bookcrossing_generate_bcid();
+
   $form_state['bcid'] = $bcid;
 
+
+
   $color = 0;
+
   if ($form_state['values']['field_bookcrossing_image'][LANGUAGE_NONE][0]['fid'] == 0) {
+
     $color = bookcrossing_generate_color();
+
   }
 
+
+
   // ading new book
+
   db_insert('bookcrossing_books')->fields(array('current_place' => 0, 'bcid' => $bcid, 'nid' => $form_state['values']['nid'], 'color' => $color))->execute();
+
   
+
   $book = array();
+
   $book['bid'] = db_select('bookcrossing_books', 'b')->fields('b', array('bid'))->condition('b.bcid', $bcid, '=')->execute()->fetchField();
+
   $book['node'] = node_load($form_state['values']['nid']);
+
   module_load_include('inc', 'pathauto', 'pathauto');
+
   pathauto_create_alias('bookcrossing', 'insert', 'book/' . $book['bid'], array('book' => $book));
+
 }
+
+
 
 function bookcrossing_generate_color() {
+
   $colors = array('#bb2c26', '#436936', '#5b80ad', '#5c606b', '#e23263', '#693e2b', '#f2c747');
+
   return $colors[mt_rand(0, count($colors) - 1)];
+
 }
 
+
+
 /**
+
  * Form submit for reserved book adding form: save bcid of the book.
+
  */
+
 function bookcrossing_add_reserved_book($form, &$form_state) {
+
   $form_state['bcid'] = $form_state['values']['bcid'];
 
+
+
   // update information about the book
+
   db_update('bookcrossing_books')
+
       ->fields(array('nid' => $form_state['values']['nid'], 'status' => BOOKCROSSING_BOOK_STATUS_FREE, 'owner' => -1))
+
       ->condition('bcid', $form_state['values']['bcid'], '=')
+
       ->condition('owner', $form_state['values']['uid'], '=')
+
       ->execute();
 
+
+
   $book = array();
+
   $book['bid'] = db_select('bookcrossing_books', 'b')->fields('b', array('bid'))->condition('b.bcid', $form_state['values']['bcid'], '=')->execute()->fetchField();
+
   $book['node'] = node_load($form_state['values']['nid']);
+
   module_load_include('inc', 'pathauto', 'pathauto');
+
   pathauto_create_alias('bookcrossing', 'insert', 'book/' . $book['bid'], array('book' => $book));
+
 }
 
+
+
 /**
+
  * Helper function: generates BCID.
+
  * 
+
  * @return string
+
  *   generated unique bcid of the book
+
  * 
+
  * @todo make another generation way for numbers, i.e use $node->nid
+
  */
+
 function bookcrossing_generate_bcid() {
+
   $charset_first_symbol = 'ABCDEFGHIJKLMNOPQRSTUVWYZ';
+
   $charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
   $numbers = '0123456789';
 
+
+
   do {
+
     $bcid  = $charset_first_symbol[mt_rand(0, strlen($charset_first_symbol) - 1)];
-    $bcid .= $charset[mt_rand(0, strlen($charset) - 1)];
-    $bcid .= $charset[mt_rand(0, strlen($charset) - 1)];
+
     $bcid .= $charset[mt_rand(0, strlen($charset) - 1)];
 
+    $bcid .= $charset[mt_rand(0, strlen($charset) - 1)];
+
+    $bcid .= $charset[mt_rand(0, strlen($charset) - 1)];
+
+
+
     $nums = '';
+
     for ($i = 0; $i < 4; $i++) {
+
       $nums .= $numbers[mt_rand(0, strlen($numbers) - 1)];
+
     }
+
+
 
     $bcid .= '-' . $nums;
 
+
+
     // check if the generated bcid is already exists
+
     $exists = db_select('bookcrossing_books', 'b')->fields('b', array('bcid'))->condition('bcid', $bcid, '=')->execute()->fetchField();
+
   } while ($exists);
 
+
+
   return $bcid;
+
 }
 
+
+
 /**
+
  * Ajax callback: adding values to form elements.
+
  */
+
 function bookcrossing_autocomplete_form(&$form, &$form_state) {
+
   $commands = array();
+
+
 
   $form_state['ajax_used'] = TRUE;
 
+
+
   $first_part = render($form['field_bookcrossing_isbn']);
+
   $first_part .= render($form['field_bookcrossing_author']);
+
   $first_part .= render($form['field_bookcrossing_genre']);
 
+
+
   $second_part = render($form['field_bookcrossing_description']);
+
   $second_part .= render($form['field_bookcrossing_image']);
+
   $second_part .= render($form['field_bookcrossing_cover']);
+
   $second_part .= render($form['field_bookcrossing_year']);
 
+
+
   $commands[] = ajax_command_replace("#bookcrossing-first-part", $first_part);
+
   $commands[] = ajax_command_replace("#bookcrossing-second-part", $second_part);
 
+
+
   return array('#type' => 'ajax', '#commands' => $commands);
+
 }
 
+
+
 /**
+
  * Implements hook_field_extra_fields().
+
  */
+
 function bookcrossing_field_extra_fields() {
+
   $fields['node']['bookcrossing']['display'] = array(
+
     'book_links' => array(
+
       'label' => t('Books info links'),
+
       'description' => t('Links: release book, view history, add to bookmarks.'),
+
       'weight' => 0,
+
     ),
+
     'book_status' => array(
+
       'label' => t('Books status'),
+
       'description' => t('Information about current status of the book.'),
+
       'weight' => 0,
+
     ),
+
     'book_found_status' => array(
+
       'label' => t('Found book status'),
+
       'description' => t('Status of found book'),
+
       'weight' => 0,
+
     ),
+
     'book_found' => array(
+
       'label' => t('Where was the book found?'),
+
       'description' => t('Form for adding place where book was found.'),
+
       'weight' => 0,
+
     ),
+
     'book_comment' => array(
+
       'label' => t('Book comment'),
+
       'description' => '',
+
       'weight' => 0,
+
     ),
+
     'book_history' => array(
+
       'label' => t('Book history'),
+
       'description' => '',
+
       'weight' => 0,
+
     ),
+
     'bcid' => array(
+
       'label' => t('Books BCID'),
+
       'description' => '',
+
       'weight' => 0,
+
     ),
+
     'history_pager' => array(
+
       'label' => t('Pager for book history'),
+
       'description' => '',
+
       'weight' => 0,
+
     ),
+
     'book_status_string' => array(
+
       'label' => t('Status string'),
+
       'description' => '',
+
       'weight' => 0,
+
     ),
+
     'author_and_year' => array(
+
       'label' => t('String with authors and year'),
+
       'description' => '',
+
       'weight' => 0,
+
     ),
+
     'facepile' => array(
+
       'label' => t('Facepile'),
+
       'description' => '',
+
       'weight' => 0,
+
     ),
+
     'fb_recommend_bar' => array(
+
       'label' => t('Facebook recommendation bar'),
+
       'description' => '',
+
       'weight' => 0,
+
     ),
+
     'fb_comments' => array(
+
       'label' => t('Facebook comment box'),
+
       'description' => '',
+
       'weight' => 0,
+
     ),
+
   );
+
+
 
   $fields['user']['user']['display'] = array(
+
     'registered' => array(
+
       'label' => t('Time of registration'),
+
       'description' => '',
+
       'weight' => 0,
+
     ),
+
     'book_stats' => array(
+
       'label' => t('User books'),
+
       'description' => '',
+
       'weight' => 0,
+
     ),
+
   );
 
+
+
   return $fields;
+
 }
+
+
 
 function bookcrossing_ds_fields_info_alter(&$fields, $entity_type) {
+
   $fields['ds_user_picture']['function'] = 'bookcrossing_render_user_picture';
+
   $fields['name']['function'] = 'bookcrossing_render_field';
+
 }
 
+
+
 /**
+
  * Render a field.
+
  */
+
 function bookcrossing_render_field($field) {
 
+
+
   $output = '';
+
   $settings = isset($field['formatter_settings']) ? $field['formatter_settings'] : array();
+
   $settings += $field['properties']['default'];
 
+
+
   // Basic string.
+
   if (isset($settings['link text'])) {
+
     $output = t($settings['link text']);
+
   }
+
   elseif (isset($field['properties']['entity_render_key']) && isset($field['entity']->{$field['properties']['entity_render_key']})) {
+
     if ($field['entity_type'] == 'user' && $field['properties']['entity_render_key'] == 'name') {
+
       $output = format_username($field['entity']);
+
     }
+
     else {
+
       $output = $field['entity']->{$field['properties']['entity_render_key']};
+
     }
+
   }
+
+
 
   if (empty($output)) {
+
     return;
+
   }
+
+
 
   // Link.
+
   if ($settings['link']) {
+
     if (isset($field['entity']->uri['path'])) {
+
       $path = $field['entity']->uri['path'];
+
     }
+
     else {
+
       $uri_info = entity_uri($field['entity_type'], $field['entity']);
+
       $path = $uri_info['path'];
+
     }
+
     $attributes = array();
+
     if ($field['entity_type'] == 'user' && $field['properties']['entity_render_key'] == 'name') {
+
       if ($fbid = bookcrossing_load_fbid($field['entity']->uid)) {
+
         $path = 'http://www.facebook.com/profile.php?id=' . $fbid . '&sk=app_bookcrossing_by';
+
         $attributes = array('target' => '_blank');
+
       }
+
     }
+
     $output = l($output, $path, array('attributes' => $attributes));
+
   }
+
   else {
+
     $output = check_plain($output);
+
   }
+
+
 
   // Wrapper and class.
+
   if (!empty($settings['wrapper'])) {
+
     $wrapper = check_plain($settings['wrapper']);
+
     $class = (!empty($settings['class'])) ? ' class="' . check_plain($settings['class']) . '"' : '';
+
     $output = '<' . $wrapper . $class . '>' . $output . '</' . $wrapper . '>';
+
   }
+
+
 
   return $output;
+
 }
 
+
+
 /**
+
  * Render a user picture.
+
  */
+
 function bookcrossing_render_user_picture($field) {
+
   $picture = ds_return_picture($field['entity']);
 
+
+
   if (!empty($picture)) {
+
     $vars = array();
+
     $filepath = (isset($picture->uri)) ? $picture->uri : $picture;
+
     $name = !empty($field['entity']->name) ? $field['entity']->name : variable_get('anonymous', t('Anonymous'));
+
     $alt = t("@user's picture", array('@user' => $name));
+
     $vars = array('path' => $filepath, 'alt' => $alt, 'title' => $alt);
 
+
+
     // If the image does not have a valid Drupal scheme (for eg. HTTP),
+
     // don't load image styles.
+
     if (module_exists('image') && file_valid_uri($filepath)) {
+
       $vars['style_name'] = str_replace('ds_picture_', '', $field['formatter']);
+
       $image = theme('image_style', $vars);
+
     }
+
     else {
+
       $image = theme('image', $vars);
+
     }
+
+
 
     if (!empty($field['entity']->uid) && user_access('access user profiles')) {
+
       if ($fbid = bookcrossing_load_fbid($field['entity']->uid)) {
+
         return l($image, 'http://www.facebook.com/profile.php?id=' . $fbid . '&sk=app_bookcrossing_by', array('html' => TRUE, 'attributes' => array('target' => '_blank')));
+
       }
+
       else {
+
         return l($image, 'user/' . $field['entity']->uid, array('html' => TRUE));
+
       }
+
     }
+
     else {
+
       return $image;
+
     }
+
   }
+
 }
+
+
 
 function bookcrossing_load_fbid($uid) {
+
   $fbid = db_select('fboauth_users', 'f')
+
     ->fields('f', array('fbid'))
+
     ->condition('f.uid', $uid, '=')
+
     ->execute()
+
     ->fetchField();
 
+
+
   return $fbid;
+
 }
 
+
+
 /**
+
  * Implements hook_user_view().
+
  */
+
 function bookcrossing_user_view($account, $view_mode, $langcode) {
+
   //if (isset($account->content['name'][0]['#markup']) && $fbid = fboauth_fbid_load($account->uid)) {
+
   //  $account->content['name'][0]['#markup'] = l($account->name, 'http://www.facebook.com/profile.php?id=' . $fbid);
+
   //}
+
  
+
   //$account->content['ds_user_picture'][0]['#markup'] = '<a href="">' . theme('image',  . '</a>';
 
+
+
   if ($view_mode == 'user_list') {
+
     $account->content['registered'] = array(
+
       '#markup' => '<div class="user-field user-field-registered"><div class="field-label">' . t('Date of registration') . ':' . '</div>' . format_date($account->created, 'custom', 'd F Y') . '</div>',
+
     );
 
+
+
     $query = db_select('bookcrossing_books', 'b');
+
     $query->addExpression('COUNT(*)');
+
     
+
     $query->condition('b.status', BOOKCROSSING_BOOK_STATUS_READ, '=');
+
     $query->condition('b.owner', $account->uid, '=');
+
     $read = $query->execute()->fetchField();
+
+
 
     $output = '<div class="user-stats"><div class="user-field"><div class="field-label">' . t('Reading books') . ':' . '</div>' . $read . '</div>';
 
+
+
     $query = db_select('bookcrossing_books', 'b');
+
     $query->innerJoin('bookcrossing_history', 'h', 'b.bid = h.bid');
 
+
+
     $query->distinct();
+
     $query->addExpression('COUNT(*)');
+
     $query->condition('b.owner', $account->uid, '<>');
+
     $query->condition('h.uid', $account->uid, '=');
+
+
 
     $released = $query->execute()->fetchField();
 
+
+
     $output .= '<div class="user-field"><div class="field-label">' . t('Released user books') . ':' . '</div>' . $released . '</div></div>';
+
  
+
     $account->content['book_stats'] = array(
+
       '#markup' => $output,
+
     );
+
   }
+
 }
 
+
+
 /**
+
  * Implements hook_theme().
+
  */
+
 function bookcrossing_theme() {
+
   return array(
+
     'bookcrossing_main_menu' => array(
+
       'variables' => array('links' => NULL, 'visible' => NULL),
+
     ),
+
     'book_no_image' => array(
+
       'variable' => array('book' => NULL),
+
     ),
+
   );
+
 }
 
+
+
 /**
+
  * Theme main menu
+
  */
+
 /**
+
  * @todo: Important! Move menu layout definition to theme
+
  */
+
 function theme_bookcrossing_main_menu($variables) {
+
   $links = $variables['links'];
+
   $attributes = $variables['attributes'];
+
   $heading = $variables['heading'];
+
   $num_links_visible = theme_get_setting('visible_menu_items');
+
   global $language_url;
+
   $output = '';
 
+
+
   if (count($links) > 0) {
+
     $output = '';
 
+
+
     // Treat the heading first if it is present to prepend it to the list of links.
+
     if (!empty($heading)) {
+
       if (is_string($heading)) {
+
         // Prepare the array that will be used when the passed heading is a string.
+
         $heading = array(
+
           'text' => $heading,
+
           // Set the default level of the heading.
+
           'level' => 'h2',
+
         );
+
       }
+
       $output .= '<' . $heading['level'];
+
       if (!empty($heading['class'])) {
+
         $output .= drupal_attributes(array('class' => $heading['class']));
+
       }
+
       $output .= '>' . check_plain($heading['text']) . '</' . $heading['level'] . '>';
+
     }
+
+
 
     $output .= '<ul class="nav">';
 
+
+
     $num_links = count($links);
+
     $i = 1;
 
+
+
     foreach ($links as $key => $link) {
+
       $class = array($key);
 
+
+
       // Add first, last and active classes to the list of links to help out themers.
+
       if ($i == 1) { $class[] = 'first'; }
+
       if ($i == $num_links) { $class[] = 'last'; }
+
       if (isset($link['href']) && ($link['href'] == $_GET['q'] || ($link['href'] == '<front>' && drupal_is_front_page()))
+
         && (empty($link['language']) || $link['language']->language == $language_url->language)) {
+
         $class[] = 'active';
+
       }
+
       if ($link['href'] == 'users') { $i--; }
 
+
+
       if ($i == $variables['visible']) {
+
         $output .= '
+
 	        <li class="dropdown">
+
 	        	<a href="#" class="dropdown-toggle" data-toggle="dropdown">' . t('more') . '<b class="caret"></b></a>
+
 	            <ul class="dropdown-menu">
+
         ';
+
       }
+
+
 
       $output .= '<li' . drupal_attributes(array('class' => $class)) . '>';
 
+
+
       if (isset($link['href'])) {
+
         if ($link['href'] == 'books' && arg(0) == 'books') {
+
           $link['attributes']['class'][] = 'active';
+
         }
+
+
 
         // Pass in $link as $options, they share the same keys.
+
         $output .= l($link['title'], $link['href'], $link);
+
       }
+
       elseif (!empty($link['title'])) {
+
         // Some links are actually not links, but we wrap these in <span> for adding title and class attributes.
+
         if (empty($link['html'])) {
+
           $link['title'] = check_plain($link['title']);
+
         }
+
         $span_attributes = '';
+
         if (isset($link['attributes'])) {
+
           $span_attributes = drupal_attributes($link['attributes']);
+
         }
+
         $output .= '<span' . $span_attributes . '>' . $link['title'] . '</span>';
+
       }
+
+
 
       $i++;
+
       $output .= "</li>";
+
     }
 
+
+
     $output .= '</ul></li></ul>';
+
   }
 
+
+
   return $output;
+
 }
 
+
+
 /**
+
  * Theme book when there is image uploaded.
+
  */
+
 function theme_book_no_image($variables) {
+
   
+
 }
 
+
+
 /**
+
  * Implements hook_fboauth_actions().
+
  */
+
 /*function bookcrossing_fboauth_actions() {
+
   $actions = array();
 
+
+
   $actions['release-book'] = array(
+
     'title' => t('Release bookmarks'),
+
     'callback' => 'bookcrossing_fb_release',
+
     'theme' => 'bookcrossing_release_link',
+
   );
 
+
+
   return $actions;
+
 }
+
+
 
 function bookcrossing_fb_release($app_id, $access_token) {
+
   watchdog('fb', 'app_id: ' . $app_id);
+
   watchdog('fb', 'access token: ' . $access_token);
+
 }
+
 */
 
+
+
 /**
+
  * Menu callback: add book to bookmarks
+
  */
+
 function bookcrossing_to_favourites($book = array()) {
+
   global $user;
+
   //$bid = isset($_SESSION['book_to_like']) ? $_SESSION['book_to_like'] : '';
+
   
+
   //if (!$bid) {
+
   //  return '<front>';
+
   //}
+
+
 
   //$url = url('book/' . $book['bidbid, array('absolute' => TRUE));
 
+
+
   $exist = db_select('bookcrossing_favourites', 'f')
+
     ->fields('f', array('bid', 'uid'))
+
     ->condition('uid', $user->uid, '=')
+
     ->condition('bid', $book['bid'], '=')
+
     ->execute()
+
     ->fetchField();
 
+
+
   if ($exist) {
+
     return '';//$url;
+
   }
 
+
+
   //$graph_url = 'https://graph.facebook.com/me/bookcrossing_by:like?book=' . $url . '&access_token=' . $access_token;
+
   //$graph_result = drupal_http_request($graph_url);
 
 
+
+
+
   //$data = fboauth_graph_query('me/bookcrossing_by:like', $access_token, array('book' => $url));
+
   //
+
   //$like_book = curl_init('https://graph.facebook.com/me/bookcrossing_by:like?access_token=' . $access_token . '&book=' . $url);
+
   //curl_setopt($like_book, CURLOPT_SSL_VERIFYPEER, false);
+
   //curl_setopt($like_book, CURLOPT_SSL_VERIFYHOST, false);
+
   //curl_setopt($like_book, CURLOPT_RETURNTRANSFER, 1);
+
   //$response = curl_exec($like_book);
+
   //$response = json_decode($response, TRUE);
 
+
+
   //drupal_set_message('<pre>' . print_r($graph_result, 1) . '</pre>');  
+
   
+
   $fbid = db_select('fboauth_users', 'fb')
+
      ->fields('fb', array('fbid'))
+
      ->condition('uid', $user->uid, '=')
+
      ->execute()
+
      ->fetchField();
 
+
+
   if ($fbid) {
+
     db_insert('bookcrossing_favourites')
+
       ->fields(array('uid' => $user->uid, 'bid' => $book['bid']))
+
       ->execute();
+
   }
+
+
 
   //$commands = array(
+
   //  ajax_command_remove('#add-to-favourites'),
+
   //);
+
   //ajax_deliver(array('#type' => 'ajax', '#commands' => $commands));
+
   
+
   //unset($_SESSION['book_to_like']);
 
+
+
   if ($fbid) {
+
     drupal_set_title(t('Book was added to your favourites.'));
+
   }
+
   drupal_goto('book/' . $book['bid']);
+
 }
+
+
 
 function theme_bookcrossing_release_link($variables) {
+
   $action = $variables['action'];
+
   $link = $variables['properties'];
+
   $url = url($link['href'], array('query' => $link['query']));
+
   $link['attributes']['class'] = isset($link['attributes']['class']) ? $link['attributes']['class'] : 'facebook-action-like-book';
+
   $attributes = isset($link['attributes']) ? drupal_attributes($link['attributes']) : '';
+
   return '<a ' . $attributes . ' href="' . $url . '">' . t('Add to bookmarks') . '</a>';
+
   return $url;
+
 }
+
+
 
 function bookcrossing_form_fboauth_settings_form_alter(&$form, $form_state) {
+
   $form['permissions']['fboauth_user_connections']['#options'] += array('publish_actions' => t('Publish actions'));
+
 }
+
+
 
 function bookcrossing_user_delete($account) {
+
   // release books
+
   $bids = db_select('bookcrossing_books', 'b')
+
     ->fields('b', array('bid'))
+
     ->condition('b.status', BOOKCROSSING_BOOK_STATUS_READ, '=')
+
     ->condition('b.owner', $account->uid, '=')
+
     ->execute()
+
     ->fetchCol();
 
+
+
   $books = bookcrossing_load_multiple($bids);
+
   foreach ($books as $book) {
+
     db_update('bookcrossing_books')
+
       ->fields(array(
+
           'owner' => -1,
+
           'current_place' => $book['place']->tid,
+
           'status' => BOOKCROSSING_BOOK_STATUS_FREE,
+
         ))
+
       ->condition('bid', $book['bid'], '=')
+
       ->execute();
+
+
 
     db_update('bookcrossing_history')
+
       ->fields(array('place_id_left' => $book['place']->tid, 'time_left' => REQUEST_TIME))
+
       ->condition('bid', $book['bid'], '=')
+
       ->condition('time_left', 0, '=')
+
       ->execute();
+
   }
 
+
+
   // delete favourites
+
   db_delete('bookcrossing_favourites')->condition('uid', $account->uid, '=')->execute();
 
+
+
   // delete comments
+
   db_delete('bookcrossing_comment')->condition('uid', $account->uid, '=')->execute();
 
+
+
   // delete helper data for user places (not places!!!)
+
   db_delete('bookcrossing_places')->condition('uid', $account->uid, '=')->execute();
 
+
+
   // change deleted user by admin
+
   db_update('bookcrossing_history')
+
     ->fields(array('uid' => 1))
+
     ->condition('uid', $account->uid, '=')
+
     ->execute();
+
 }
+

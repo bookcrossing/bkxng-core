@@ -488,7 +488,7 @@ function bookcrossing_found_book_page($bcid = '') {
   /**
    * Generate output for found book status.
    */
-  $status_string = $book['status'] ? t('Found') : t('Free book');
+  $status_string = $book['status'] ? t('Found') : t('Travelling');
   $items = array(
     '<div class="status-label">' . t('Book status') . ':</div>' . $status_string,
   );
