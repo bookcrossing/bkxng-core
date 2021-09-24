@@ -1,3 +1,5 @@
+@import url("fonts-style.css");
+
 html, body {
     height: 100%;
 }
@@ -28,12 +30,13 @@ body {
 }
 
 #page-wrap:after, #footer-wrap {
-    height: 95px;
+    height: 110px;
 }
 
 #footer-wrap {
-    background-color: #C9E0FF;
-    background-image: url("../images/nav-lines.png");
+    /*background-color: #C9E0FF;*/
+    /*background-image: url("../images/nav-lines.png");*/
+    background: #c9e0ff url("../images/nav-lines.png");
 }
 
 .region-footer-menu ul > li {
@@ -66,6 +69,10 @@ nav.user {
     border: none;
     border-radius: 0;
     box-shadow: none;
+}
+
+@media (max-width: 767px) {
+    .navbar-inner { margin-left: -20px; margin-right: -20px; }
 }
 
 .btn.btn-navbar, .btn.btn-navbar.collapsed {
@@ -108,16 +115,15 @@ body.toolbar-drawer {padding-top: 30px !important;}
 .dropdown-arrow {
   position: relative;
   top: -1px;
-  border-style: solid dashed dashed;
-  border-color: transparent;
-  border-top-color: #777;
+  border: 3px dashed transparent;
+  border-top: solid #777777;
+  border-bottom-width: 0;
   display: -moz-inline-box;
   display: inline-block;
   font-size: 0;
   height: 0;
   line-height: 0;
   width: 0;
-  border-width: 3px 3px 0;
   padding-top: 1px;
   left: 4px;
 }
@@ -138,7 +144,6 @@ body.toolbar-drawer {padding-top: 30px !important;}
 .socicon:before {
     font-style: normal;
     font-weight: normal;
-    speak: none;
     display: inline-block;
     text-decoration: inherit;
     width: 1em;
@@ -251,7 +256,15 @@ table {
 /**
  * Layout
  */
-#nav-and-release-book-wrapper {
+ .region-sidebar-first, .region-sidebar-second, 
+ .two-sidebars .region-content, .sidebar-first .region-content, 
+ #header-wrapper .region, .node-bookcrossing.view-mode-catalog, 
+ .node-bookcrossing.view-mode-book_cover,
+ div.my-name, div.my-shelf {
+   display: inline;
+ }
+
+ #nav-and-release-book-wrapper {
   background-color: #F3F0C2;
   position: relative;
 }
@@ -262,6 +275,11 @@ table {
 
 .fieldset-wrapper .help-block, .block-bookcrossing .help-block {
     margin-top: 17px;
+}
+
+div#block-bookcrossing-social-networks {
+    margin-bottom: 0;
+    margin-top: 4px;
 }
 
 .block-bookcrossing input {
@@ -329,11 +347,6 @@ table {
   position: relative;
 }
 
-#header-wrapper .region {
-  float: left;
-  display: inline;
-}
-
 #header-wrapper .region-header-sidebar-first {
   width: 200px;
   margin-right: 20px;
@@ -344,9 +357,9 @@ table {
 }
 
 #back-top {
-  top: 189px;
-  right: 0px;
-  margin: 0px;
+  bottom: 110px;
+  right: 0;
+  margin: 0;
   position: fixed;
   z-index: 10000;
 }
@@ -354,8 +367,8 @@ table {
 #back-top a { 
   background: none;
   background-color: rgba(255, 102, 0, 0.602);
-  text-shadow: 1px 0px 1px rgba(255, 255, 255, 0.953);
-  border-radius: 5px 0px 0px 5px;
+  text-shadow: 1px 0 1px rgba(255, 255, 255, 0.953);
+  border-radius: 5px 0 0 5px;
   color: #fff;
   font-size: 15px;
   font-family: "Tahoma", "Verdana", "Segoe", sans-serif;
@@ -364,31 +377,8 @@ table {
   text-decoration: none;
 }
 
-.region-sidebar-first {
-  float: left;
-  display: inline;
-  width: 190px;
-}
-
 .region-after-content, .region-under-content {
   padding: 30px;
-}
-
-.region-sidebar-second {
-  float: left;
-  display: inline;
-  width: 170px;  
-}
-
-.two-sidebars .region-content {
-  width: 600px;
-  float: left;
-  display: inline;
-}
-
-.sidebar-first .region-content {
-  float: left;
-  display: inline;
 }
 
 .page-user #content-wrapper {
@@ -440,10 +430,6 @@ ul#main-menu li {
   margin: 5px 0;
 }
 
-ul#main-menu li:hover {
-  
-}
-
 ul#main-menu a {
   text-decoration: none;
   padding: 5px 10px;
@@ -486,9 +472,8 @@ li#main-menu-more:hover #main-menu-more-wrapper a:hover {
   width: 150px;
   top: 24px;
   left: -1px;
-  border-color: #F3F0C2;
-  border-width: 0px 1px 1px 1px;
-  border-style: solid;
+  border: 1px solid #F3F0C2;
+  border-top-width: 0;
   box-shadow: 0 6px 4px 0 #E5E5E5;
   z-index: 2;
 }
@@ -511,11 +496,10 @@ ul#main-menu #main-menu-more-wrapper li a {
 
 
 /**
- * Release buttion
+ * Release button
  */
  #release-button {
-  background-color: #008CD7;
-  background-image: url("../images/btn_gradients.png");
+  background: #008CD7 url("../images/btn_gradients.png");
   background-position: 0 13%;
   position: absolute;
   left: 42%;
@@ -540,26 +524,66 @@ ul#main-menu #main-menu-more-wrapper li a {
 
 
 /**
- * User links
+ * Login via social networks buttons
  */
-a.my-profile {
-  font-weight: bolder;
-  color: #333;
-  font-family: Tahoma, Verdana, Segoe, sans-serif;
-  padding-left: 22px;
-  background: url('../images/user_ico.gif') center left no-repeat;
+.btn-social {
+  background-image: none;
+  color: #ffffff;
+  text-shadow: none;
+  padding: 0;
+  margin: 10px 15px;
+  width: 153px;
+  height: 45px;
+  border: none;
+  text-align: center;
 }
 
+.btn-social:hover {
+  opacity: .95;
+  color: #f1f1f1;
+}
+
+.btn-social:before {
+  content: '';
+  position: absolute;
+  display: block;
+  width: 38px;
+  height: 45px;
+  background-color: rgba(0,0,0,0.18);
+  border-bottom-left-radius: inherit;
+  border-top-left-radius: inherit;
+}
+
+.btn-social.facebook {background-color: #3f5b95;}
+.btn-social.vkontakte {background-color: #638398;}
+.btn-social.disqus {background-color: #2e9fff;}
+.btn-social.goodreads {background-color: #c0864d;}
+
+.btn-social i {
+  display: block;
+  position: absolute;
+  width: 38px;
+/*  height: 45px; */
+  line-height: 40px;
+  text-align: center;
+  text-indent: 0;
+}
+
+.btn-social span {
+  display: block;
+  margin-top: 12px;
+  margin-left: 40px;
+}
+
+
+/**
+ * User links
+ */
 a.logout-link {
   font-family: Tahoma, Verdana, Segoe, sans-serif;
   color: #F30;
   font-size: 9px;
   margin-left: 5px;
-}
-
-.my-name span {
-  padding-left: 22px;
-  background: url('../images/user_ico.gif') center left no-repeat;
 }
 
 .my-name span,
@@ -572,18 +596,13 @@ a.logout-link {
 #login-wrapper {
   position: absolute;
   top: 5px;
-  right: 0px;
+  right: 0;
 }
 
 div.my-shelf a {
   line-height: 12px;
-  padding: 4px 10px 6px;
-  padding-left: 28px;
+  padding: 4px 10px 6px 28px;
   background: url('../images/shelf.png') 4px 2px no-repeat;
-}
-
-div.my-name, div.my-shelf {
-  display: inline;
 }
 
 div.my-shelf a.active,
@@ -596,7 +615,7 @@ div.my-shelf a:hover {
  * Logo
  */
 .brand>div.logo>div.logo-title {display: none;}
-.brand>div.logo>span.logo-contry {text-transform: uppercase; display: block;}
+.brand>div.logo>span.logo-country {text-transform: uppercase; display: block;}
 
 @media (min-width: 980px) {
    .brand>div.logo {
@@ -604,7 +623,7 @@ div.my-shelf a:hover {
       width: 175px;
       height: 43px;
    }
-   .brand>div.logo>span.logo-contry {
+   .brand>div.logo>span.logo-country {
       position: relative;
       top: -2px;
       font-size: 12px;
@@ -618,16 +637,13 @@ div.my-shelf a:hover {
       width: 98px;
       height: 24px;
    }
-   .brand>div.logo>span.logo-contry {
+   .brand>div.logo>span.logo-country {
       position: relative;
       top: 7px;
       font-size: 12px;
       left: 111px;    
    }
 }
-
-a#logo { }
-
  
  /**
   * BCID form
@@ -712,12 +728,33 @@ a#logo { }
 
 .view-mode-book_cover .book-no-image {
   width: 118px;
-  margin-bottom: 0px;
+  margin-bottom: 0;
 }
 
-.book-no-image-container {
-  background-image: url("../images/dustnscratches.png");
-}
+  .book-no-image-container.cl-0 {
+    background: #1f111f url("../images/covers/0.jpg");
+  }
+  .book-no-image-container.cl-436936 {
+    background-image: url("../images/covers/436936.jpg");
+  }
+  .book-no-image-container.cl-5b80ad {
+    background-image: url("../images/covers/5b80ad.jpg");
+  }
+  .book-no-image-container.cl-5c606b {
+    background-image: url("../images/covers/5c606b.jpg");
+  }
+  .book-no-image-container.cl-693e2b {
+    background-image: url("../images/covers/693e2b.jpg");
+  }
+  .book-no-image-container.cl-bb2c26 {
+    background-image: url("../images/covers/bb2c26.jpg");
+  }
+  .book-no-image-container.cl-e23263 {
+    background-image: url("../images/covers/e23263.jpg");
+  }
+  .book-no-image-container.cl-f2c747 {
+    background-image: url("../images/covers/f2c747.jpg");
+  }
 
 .node-bookcrossing.view-mode-default .book-no-image-container,
 .node-bookcrossing.view-mode-front_page .book-no-image-container {
@@ -858,16 +895,15 @@ a#logo { }
 }
 
 .my-places-list-wrapper {
-  min-width: 700px;
-  position: absolute;
-  left: 140px;
-  top: 12px;
+  /* min-width: 700px; */
+  /* position: absolute; */
+  /* left: 140px; */
+  /* top: 12px; */
 }
 
 .my-places-list-wrapper .form-item {
-  margin: 0;
+  margin: 0 10px 0 0;
   float: left;
-  margin-right: 10px;
 }
 
 .form-item-country label, .form-item-city label, .form-item-new-place label {
@@ -886,11 +922,13 @@ a#logo { }
   line-height: 18px;
 }
 
+/* 
 .place-or {
   position: absolute;
   top: 33px;
   left: 19px;
-}
+} 
+*/
 
 #edit-create-or-select .form-item {
   margin: 0;
@@ -1093,26 +1131,6 @@ a#logo { }
   background: url('../images/list.png') 5px 4px no-repeat;
 }
 
-.covers-container {
-  width: 720px;
-  margin: 20px auto 10px;
-}
-
-.node-bookcrossing.view-mode-book_cover {
-  float: left;
-  display: inline;
-  width: 120px;
-  height: 180px;
-}
-
-.node-bookcrossing.view-mode-catalog {
-  float: left;
-  display: inline;
-  width: 305px;
-  margin-top: 10px;
-  height: 90px;
-}
-
 .node-bookcrossing.view-mode-catalog a {
   color: #3B59A9;
   text-decoration: none;
@@ -1132,12 +1150,14 @@ a#logo { }
   font-size: 12px;
   text-align: center;
   text-transform: uppercase;
+  clear: both;
 }
 
 .letters-container span,
 .letters-container a {
   margin: 0 3px;
   line-height: 40px;
+  float: left;
 }
 
 .letters-container a {
@@ -1145,25 +1165,39 @@ a#logo { }
   text-decoration: none;
 }
 
+.covers-container {
+  margin: 20px auto;
+}
+
+.front-page-books { margin: 0 auto; }
+
 @media (min-width: 1200px) {
     .paginator-wrap { float: right; width: 50%; }
+    .front-page-books { width: 80%; }
+    .covers-container { width: 100%; }
 }
 
 @media (min-width: 980px) and (max-width: 1199px) {
     .catalog-sorts { margin-right: 3% !important; }
     .catalog-view-types { margin-right: 3% !important; }
     #paginator { width: 40% !important; }
+    .front-page-books { width: 85%; }
+    .covers-container { width: 100%; }
 }
 
 @media (max-width: 979px) {
     .paginator-wrap { width: 100% !important; clear: both; }
     #paginator { width: 90% !important; float: left !important; margin-top: 4px !important; margin-right: 0 !important; }
     .pager-total { width: 10% !important; margin-top: 7px !important; }
+    .front-page-books { width: 95%; }
+    .covers-container { width: 90%; }
 }
 
 @media (min-width: 768px) and (max-width: 979px) {
     .form-item-bcid-first-part input { width: 90px !important; }
     .form-item-bcid-second-part input { width: 90px !important; }
+    .front-page-books { width: 95%; }
+    .covers-container { width: 95%; }
 }
 
 @media (max-width: 767px) {
@@ -1173,12 +1207,16 @@ a#logo { }
     .pager-total { width: 15% !important; }
     #edit-search { width: 100% !important; }
     #bookcrossing-search-form .form-submit { margin-left: -32px !important; }
+    .front-page-books { width: 50%; }
+    .covers-container { width: 85%; }
 }
 
 @media (max-width: 480px) {
-    .catalog-view-types a { font-size: 0px !important; display: block !important; float: left !important; height: 11px !important; padding-left: 16px !important; }
-    #paginator { width: 80% !important; margin-top: 0px !important; }
+    .catalog-view-types a { font-size: 0 !important; display: block !important; float: left !important; height: 11px !important; padding-left: 16px !important; }
+    #paginator { width: 80% !important; margin-top: 0 !important; }
     .pager-total { width: 20% !important; }
+    .front-page-books { width: 60%; }
+    .covers-container { width: 80%; }
 }
 
 
@@ -1273,14 +1311,20 @@ a#logo { }
     padding: 5px 25px;
   }
 }
+@media (max-width: 767px) {
+  #page-wrap:after, #footer-wrap { 
+    margin-left: -20px;
+    margin-right: -20px;
+  }
+}
 @media (min-width: 480px) and (max-width: 979px) {
   #page-wrap:after, #footer-wrap {
-    height: 130px;
+    height: 160px;
   }
 }
 @media (max-width: 479px) {
   #page-wrap:after, #footer-wrap {
-    height: 155px;
+    height: 190px;
   }
 }
 
@@ -1293,8 +1337,6 @@ a#logo { }
   text-align: center;
   margin-top: 10px;
 }
-
-.ira-young { }
 
 .design-by {
   float: left;
@@ -1414,7 +1456,7 @@ ul.status-info li {
 }
 
 .view-mode-default .field-name-field-bookcrossing-description {
-  margin: 10px 0px 20px 0px;
+  margin: 10px 0 20px 0;
   text-align: justify;
   min-height: 60px;
 }
@@ -1443,7 +1485,7 @@ ul.status-info li {
 .view-mode-book_shelf h2.node-title {
   font-weight: bolder;
   font-size: 12px;
-  margin-bottom: 0px;
+  margin-bottom: 0;
   line-height: 12px;
   color: #333;
   font-family: Tahoma, Verdana, Segoe, sans-serif;
@@ -1502,8 +1544,11 @@ ul.status-info li {
 .view-mode-found_book .group-footer {
   border-top: 1px solid #D9D9D9;
   margin-top: 10px;
-  padding-left: 130px;
   padding-top: 25px;
+}
+
+@media (min-width: 980px) {
+  .view-mode-found_book .group-footer { padding-left: 130px; }
 }
 
 .view-mode-found_book #bookcrossing-book-comment fieldset {
@@ -1516,11 +1561,18 @@ ul.status-info li {
   font-weight: bolder;
 }
 
-#bookcrossing-book-comment #cities-wrapper,
-#bookcrossing-book-comment .form-item-country { }
-
 #bookcrossing-book-comment select {
   min-width: 150px;
+}
+
+@media (max-width: 480px) {
+  #bookcrossing-book-comment select { max-width: 440px; }
+}
+@media (max-width: 768px) {
+  #bookcrossing-book-comment select { max-width: 728px; }
+}
+@media (max-width: 980px) {
+  #bookcrossing-book-comment select { max-width: 940px; }
 }
 
 #bookcrossing-book-comment .form-item-country {
@@ -1530,8 +1582,6 @@ ul.status-info li {
 #bookcrossing-book-comment #places-wrapper {
   clear: both;
 }
-
-#bookcrossing-book-comment input[type="submit"] { } 
 
 
 /**
@@ -1621,11 +1671,6 @@ ul.status-info li {
 /**
  * Book added page
  */
-.bcid-wrapper {
-  background: url('../images/book-added-help.png') bottom center no-repeat;
-  padding-bottom: 320px;
-}
-
 .bcid-instructions p {
   width: 500px;
   margin: 20px auto;
@@ -1806,7 +1851,7 @@ td .release-link {
 .maintenance-page .fb-like {
   position: absolute;
   top: 40px;
-  left: 0px;
+  left: 0;
   margin-left: 100px;
 }
 
@@ -1846,10 +1891,6 @@ td .release-link {
  */
 h3.forum-title {
   margin-top: 20px;
-}
-
-p.forum-descr {
-
 }
 
 
@@ -1896,5 +1937,7 @@ div.place-left-column {
 div.place-right-column {
   float: left;
   width: 700px;
-  margin: 20px 0px 40px 20px;
+  margin: 20px 0 40px 20px;
 }
+
+

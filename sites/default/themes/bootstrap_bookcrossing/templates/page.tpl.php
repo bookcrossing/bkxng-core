@@ -66,32 +66,40 @@
  * @see template_process()
  */
 ?>
+
 <div id="page-wrap">
 
     <section class="container preheader">
+        <div class="row-fluid">
+            <div class="span4">
+                <!--this is the login for the user-->
+                <?php if ($logged_in) : ?>
+                    <nav class="user clearfix"><i
+                            class="icon-user"></i> <?php print l($user->name, 'user/' . $user->uid); ?> <?php print l(t('(log out)'), 'user/logout', array('attributes' => array('class' => array('logout-link')))); ?>
+                    </nav>
+                <?php else : ?>
+                    <nav class="user clearfix">
+                        <i class="icon-user"></i> <a href="#loginModal" role="button" data-toggle="modal" rel="nofollow"><?php print t('Log in'); ?></a>
+                    </nav>
+                <?php endif; ?>
+                <!--close user nav-->
+            </div>
+            <div class="span4 offset4 pull-right visible-desktop">
+                <?php print render($page['social_buttons']); ?>
 
-        <!--this is the login for the user-->
-        <?php if ($logged_in) : ?>
-            <nav class="user clearfix"><i
-                    class="icon-user"></i> <?php print l($user->name, 'user/' . $user->uid); ?> <?php print l(t('(log out)'), 'user/logout', array('attributes' => array('class' => array('logout-link')))); ?>
-            </nav>
-        <?php else : ?>
-            <nav class="user clearfix"><i class="icon-user"></i> <a href="<?php print fboauth_action_display('connect'); ?>"><?php print t('Log in'); ?></a>
-            </nav>
-        <?php endif; ?>
-        <!--close user nav-->
-
-        <ul class="social">
-            <li id="fb-wrapper">
-                <div class="fb-like" data-href="http://www.facebook.com/bookcrossing.by" data-send="false"
-                     data-layout="button_count" data-width="450" data-show-faces="false" data-font="tahoma"></div>
-            </li>
-            <li id="github-wrapper">
-                <iframe src="/github-btn.html?user=bookcrossing&repo=core&type=fork&count=true" allowtransparency="true"
-                        frameborder="0" scrolling="0" width="130" height="20"></iframe>
-            </li>
-        </ul>
-
+        <!--         <ul class="social hidden-phone">
+                    <li id="fb-wrapper">
+                        <div class="fb-like" data-href="http://www.facebook.com/bookcrossing.by" data-send="false"
+                             data-layout="button_count" data-width="450" data-show-faces="false" data-font="tahoma"></div>
+                    </li>
+                    <li id="github-wrapper">
+                        <iframe src="/github-btn.html?user=bookcrossing&repo=core&type=fork&count=true" allowtransparency="true"
+                                frameborder="0" scrolling="0" width="130" height="20"></iframe>
+                    </li>
+                </ul>
+         -->
+            </div>
+        </div>
     </section>
 
     <!-- begin .header-->
@@ -109,7 +117,7 @@
                         <a class="brand" href="<?php print $front_page; ?>" title="<?php print t('BookCrossing'); ?>" rel="home" id="logo">
                             <?php if ($logo): ?>
                                 <div class="logo">
-                                    <div class="logo-title"><?php print t('BookCrossing'); ?></div><span class="logo-contry"><?php print t('Belarus'); ?></span>
+                                    <div class="logo-title"><?php print t('BookCrossing'); ?></div><span class="logo-country"><?php print t('Belarus'); ?></span>
                                 </div>
                             <?php else: ?>
                                 <?php print $site_name; ?>
@@ -120,7 +128,7 @@
                     <div class="nav-collapse collapse navbar-responsive-collapse">
 
                         <!-- begin #main_menu -->
-                        <?php print theme('bookcrossing_main_menu', array('visible' => 3, 'links' => $main_menu, 'attributes' => array('id' => 'main-menu', 'class' => array('links', 'clearfix')), 'heading' => '')); ?>
+                        <?php print theme('bookcrossing_main_menu', array('visible' => theme_get_setting('visible_menu_items'), 'links' => $main_menu, 'attributes' => array('id' => 'main-menu', 'class' => array('links', 'clearfix')), 'heading' => '')); ?>
                         <!-- close #main_menu -->
 
                         <ul class="nav pull-right">
@@ -129,8 +137,8 @@
                                             class="btn btn-success btn-large"><?php print t('Release book'); ?></span></a>
                                 </li>
                             <?php else: ?>
-                                <li><a href="<?php print fboauth_action_display('connect'); ?>"><span
-                                            class="btn btn-success btn-large"><?php print t('Release book'); ?></span></a>
+                                <li>
+                                    <a href="#releaseModal" role="button" data-toggle="modal" rel="nofollow"><span class="btn btn-success btn-large"><?php print t('Release book'); ?></span></a>
                                 </li>
                             <?php endif; ?>
                             <li class="divider-vertical"></li>
@@ -216,35 +224,36 @@
     <div class="container clearfix">
         <div class="row">
             <div class="span10 offset2">
-                <div class="row">
-                    <?php print render($page['footer_menu']); ?>
-                </div>
+                <?php print render($page['footer_menu']); ?>
             </div>
+        </div>
+        <div class="row">
             <div class="span12">
-                <div class="row">
-                    <div class="muted credit">
-                        <?php print render($page['footer_text']); ?>
-                    </div>
+                <div class="credit muted">
+                    <?php print render($page['footer_text']); ?>
                 </div>
             </div>
         </div>
     </div>
 </footer>
 
-
+<!-- Back to top -->
 <div id="back-top" style="display:none;">
   <script type="text/javascript">
 		/*<![CDATA[*/
+    var scrollPosition = 0;
     (function ($) {
 			$(document).ready(function(){
 				$("#back-top").hide();
 				$(function () {
 					$(window).scroll(function () {
-						if ($(this).scrollTop() > 50) {
+                        var scrollCurrent = $(this).scrollTop();
+						if (scrollCurrent > 100 && scrollPosition > scrollCurrent) {
 							$('#back-top').fadeIn();
 						} else {
-							$('#back-top').fadeOut();
+                            $('#back-top').fadeOut();
 						}
+                        scrollPosition = $(this).scrollTop();
 					});
 					$('#back-top a').click(function () {
 						$('body,html').animate({
@@ -258,8 +267,55 @@
 		/*]]>*/
 		</script>
   <a href="#"><?php print t('back to top'); ?></a>
-</div><!-- /#back-top -->
+</div>
+<!-- /Back to top -->
 
+<!-- Modal login -->
+<div id="loginModal" class="modal hide fade text-center" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <img style="float:left; height:32px; width: 32px;" src="<?php print '/'.$directory; ?>/logo_sqr.png" />
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="loginModalLabel"><?php print t('Log in using social profile'); ?></h3>
+  </div>
+  <div class="modal-body">
+    <p><?php print t('To log in you need to create a profile or use your existing profile.'); ?></p>
+    <p>
+<!-- 
+      <a href="<?php print $base_path; ?>hybridauth/window/Facebook?destination=books&destination_error=books-front"><span class="btn btn-social facebook btn-large"><i class="icon-facebook"></i><span><?php print t('Facebook'); ?></span></span></a>
+      <a href="<?php print $base_path; ?>hybridauth/window/Vkontakte?destination=books&destination_error=books-front"><span class="btn btn-social vkontakte btn-large"><i class="icon-vk"></i><span><?php print t('Vkontakte'); ?></span></span></a>
+      <a href="<?php print $base_path; ?>hybridauth/window/Disqus?destination=books&destination_error=books-front"><span class="btn btn-social disqus btn-large"><i class="icon-disqus"></i><span><?php print t('Disqus'); ?></span></span></a>
+      <a href="<?php print $base_path; ?>hybridauth/window/Goodreads?destination=books&destination_error=books-front"><span class="btn btn-social goodreads btn-large"><i class="icon-goodreads"></i><span><?php print t('Goodreads'); ?></span></span></a>
+ -->
+      <a href="<?php print $base_path; ?>hybridauth/window/Vkontakte?destination=books&destination_error=books-front"><span class="btn btn-social vkontakte btn-large"><i class="icon-vk"></i><span><?php print t('Vkontakte'); ?></span></span></a>
+    </p>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true"><?php print t('Cancel'); ?></button>
+  </div>
+</div>    
+<!-- /Modal login -->
+
+<!-- Modal release book -->
+<div id="releaseModal" class="modal hide fade text-center" tabindex="-1" role="dialog" aria-labelledby="releaseModalLabel" aria-hidden="true">
+  <div class="modal-header">
+    <img style="float:left; height:32px; width: 32px;" src="<?php print '/'.$directory; ?>/logo_sqr.png" />
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+    <h3 id="releaseModalLabel"><?php print t('Log into profile to release a book'); ?></h3>
+  </div>
+  <div class="modal-body">
+    <p><?php print t('To release a book you need to create a profile or log into your existing profile.'); ?></p>
+    <p>
+      <a href="<?php print $base_path; ?>hybridauth/window/Facebook?destination=release-book&destination_error=books-front"><span class="btn btn-social facebook btn-large"><i class="icon-facebook"></i><span><?php print t('Facebook'); ?></span></span></a>
+      <a href="<?php print $base_path; ?>hybridauth/window/Vkontakte?destination=release-book&destination_error=books-front"><span class="btn btn-social vkontakte btn-large"><i class="icon-vk"></i><span><?php print t('Vkontakte'); ?></span></span></a>
+      <a href="<?php print $base_path; ?>hybridauth/window/Disqus?destination=release-book&destination_error=books-front"><span class="btn btn-social disqus btn-large"><i class="icon-disqus"></i><span><?php print t('Disqus'); ?></span></span></a>
+      <a href="<?php print $base_path; ?>hybridauth/window/Goodreads?destination=release-book&destination_error=books-front"><span class="btn btn-social goodreads btn-large"><i class="icon-goodreads"></i><span><?php print t('Goodreads'); ?></span></span></a>
+    </p>
+  </div>
+  <div class="modal-footer">
+    <button class="btn" data-dismiss="modal" aria-hidden="true"><?php print t('Cancel'); ?></button>
+  </div>
+</div>    
+<!-- /Modal release book -->
 
 <?php if ($page['banners_footer']): ?>
     <section id="banners-wrapper" class="container clearfix">
@@ -280,3 +336,4 @@
         <?php print render($page['scripts']); ?>
     </section>
 <?php endif; ?>
+

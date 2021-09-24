@@ -7,6 +7,7 @@ base theme = bootstrap
 regions[navigation] = 'Navigation'
 regions[header] = 'Top Bar'
 regions[highlighted] = 'Highlighted'
+regions[social_buttons] = 'Social Buttons'
 regions[help] = 'Help'
 regions[footer] = 'Footer'
 

@@ -12,13 +12,13 @@
   <?php endif; ?>
 
   <?php if ($bc_bookcover): ?>
-    <div class="span3 <?php print $left_classes; ?>">
+    <div class="span3">
       <?php print $bc_bookcover; ?>
     </div>
   <?php endif; ?>
 
   <?php if ($bc_bookdetails): ?>
-    <div class="span8 <?php print $right_classes; ?>">
+    <div class="span8">
       <?php print $bc_bookdetails; ?>
     </div>
   <?php endif; ?>
