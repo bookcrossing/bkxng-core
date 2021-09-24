@@ -1,0 +1,12 @@
+dev-tools
+docs
+profiles
+scripts
+.deployignore
+.gitattributes
+.gitbook.yaml
+.gitignore
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+README.md
+install.php
