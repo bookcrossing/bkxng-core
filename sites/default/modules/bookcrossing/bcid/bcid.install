@@ -1,0 +1,41 @@
+<?php
+
+/**
+ * @file
+ * Defines schema for BCID fields
+ */
+
+/**
+ * Implements hook_field_schema().
+ */
+function bcid_field_schema($field) {
+  return array(
+    'columns' => array(
+		'prefix' => array(
+		    'description' => 'TODO: please describe this field!',
+		    'type' => 'varchar',
+		    'length' => 3,
+		),
+		'bcid' => array(
+			'description' => 'TODO: please describe this field!',
+			'type' => 'varchar',
+			'length' => 12,
+			'not null' => FALSE,
+		),
+        'full_bcid' => array(
+        	'description' => 'TODO: please describe this field!',
+        	'type' => 'varchar',
+        	'length' => 15,
+    	),
+    ),
+	'indexes' => array(
+		'id' => array('id'),
+		'full_bcid' => array('full_bcid'),
+	),
+	'unique keys' => array(
+		'prefix_bcid' => array('prefix', 'bcid'),
+		'full_bcid' => array('full_bcid'),
+	),
+	'primary key' => array('id'),
+  );
+}

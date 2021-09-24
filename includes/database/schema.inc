@@ -92,7 +92,8 @@ require_once dirname(__FILE__) . '/query.inc';
  *    specification). Each specification is an array containing the name of
  *    the referenced table ('table'), and an array of column mappings
  *    ('columns'). Column mappings are defined by key pairs ('source_column' =>
- *    'referenced_column').
+ *    'referenced_column'). This key is for documentation purposes only; foreign
+ *    keys are not created in the database, nor are they enforced by Drupal.
  *  - 'indexes':  An associative array of indexes ('indexname' =>
  *    specification). Each specification is an array of one or more
  *    key column specifiers (see below) that form an index on the
@@ -144,6 +145,8 @@ require_once dirname(__FILE__) . '/query.inc';
  *   'unique keys' => array(
  *     'vid' => array('vid'),
  *   ),
+ *   // For documentation purposes only; foreign keys are not created in the
+ *   // database.
  *   'foreign keys' => array(
  *     'node_revision' => array(
  *       'table' => 'node_revision',
@@ -161,8 +164,16 @@ require_once dirname(__FILE__) . '/query.inc';
  * @see drupal_install_schema()
  */
 
+/**
+ * Base class for database schema definitions.
+ */
 abstract class DatabaseSchema implements QueryPlaceholderInterface {
 
+  /**
+   * The database connection.
+   *
+   * @var DatabaseConnection
+   */
   protected $connection;
 
   /**
@@ -288,7 +299,7 @@ abstract class DatabaseSchema implements QueryPlaceholderInterface {
   protected function buildTableNameCondition($table_name, $operator = '=', $add_prefix = TRUE) {
     $info = $this->connection->getConnectionOptions();
 
-    // Retrive the table name and schema
+    // Retrieve the table name and schema
     $table_info = $this->getPrefixInfo($table_name, $add_prefix);
 
     $condition = new DatabaseCondition('AND');
@@ -337,7 +348,70 @@ abstract class DatabaseSchema implements QueryPlaceholderInterface {
     // couldn't use db_select() here because it would prefix
     // information_schema.tables and the query would fail.
     // Don't use {} around information_schema.tables table.
-    return $this->connection->query("SELECT table_name FROM information_schema.tables WHERE " . (string) $condition, $condition->arguments())->fetchAllKeyed(0, 0);
+    return $this->connection->query("SELECT table_name AS table_name FROM information_schema.tables WHERE " . (string) $condition, $condition->arguments())->fetchAllKeyed(0, 0);
+  }
+
+  /**
+   * Finds all tables that are like the specified base table name. This is a
+   * backport of the change made to findTables in Drupal 8 to work with virtual,
+   * un-prefixed table names. The original function is retained for Backwards
+   * Compatibility.
+   * @see https://www.drupal.org/node/2552435
+   *
+   * @param string $table_expression
+   *   An SQL expression, for example "cache_%" (without the quotes).
+   *
+   * @return array
+   *   Both the keys and the values are the matching tables.
+   */
+  public function findTablesD8($table_expression) {
+    // Load all the tables up front in order to take into account per-table
+    // prefixes. The actual matching is done at the bottom of the method.
+    $condition = $this->buildTableNameCondition('%', 'LIKE');
+    $condition->compile($this->connection, $this);
+
+    $individually_prefixed_tables = $this->connection->getUnprefixedTablesMap();
+    $default_prefix = $this->connection->tablePrefix();
+    $default_prefix_length = strlen($default_prefix);
+    $tables = array();
+    // Normally, we would heartily discourage the use of string
+    // concatenation for conditionals like this however, we
+    // couldn't use db_select() here because it would prefix
+    // information_schema.tables and the query would fail.
+    // Don't use {} around information_schema.tables table.
+    $results = $this->connection->query("SELECT table_name AS table_name FROM information_schema.tables WHERE " . (string) $condition, $condition->arguments());
+    foreach ($results as $table) {
+      // Take into account tables that have an individual prefix.
+      if (isset($individually_prefixed_tables[$table->table_name])) {
+        $prefix_length = strlen($this->connection->tablePrefix($individually_prefixed_tables[$table->table_name]));
+      }
+      elseif ($default_prefix && substr($table->table_name, 0, $default_prefix_length) !== $default_prefix) {
+        // This table name does not start the default prefix, which means that
+        // it is not managed by Drupal so it should be excluded from the result.
+        continue;
+      }
+      else {
+        $prefix_length = $default_prefix_length;
+      }
+
+      // Remove the prefix from the returned tables.
+      $unprefixed_table_name = substr($table->table_name, $prefix_length);
+
+      // The pattern can match a table which is the same as the prefix. That
+      // will become an empty string when we remove the prefix, which will
+      // probably surprise the caller, besides not being a prefixed table. So
+      // remove it.
+      if (!empty($unprefixed_table_name)) {
+        $tables[$unprefixed_table_name] = $unprefixed_table_name;
+      }
+    }
+
+    // Convert the table expression from its SQL LIKE syntax to a regular
+    // expression and escape the delimiter that will be used for matching.
+    $table_expression = str_replace(array('%', '_'), array('.*?', '.'), preg_quote($table_expression, '/'));
+    $tables = preg_grep('/^' . $table_expression . '$/i', $tables);
+
+    return $tables;
   }
 
   /**
@@ -416,7 +490,7 @@ abstract class DatabaseSchema implements QueryPlaceholderInterface {
    *   This is most useful for creating NOT NULL columns with no default
    *   value in existing tables.
    * @param $keys_new
-   *   Optional keys and indexes specification to be created on the
+   *   (optional) Keys and indexes specification to be created on the
    *   table along with adding the field. The format is the same as a
    *   table specification but without the 'fields' element. If you are
    *   adding a type 'serial' field, you MUST specify at least one key
@@ -630,7 +704,7 @@ abstract class DatabaseSchema implements QueryPlaceholderInterface {
    * @param $spec
    *   The field specification for the new field.
    * @param $keys_new
-   *   Optional keys and indexes specification to be created on the
+   *   (optional) Keys and indexes specification to be created on the
    *   table along with changing the field. The format is the same as a
    *   table specification but without the 'fields' element.
    *
@@ -654,7 +728,7 @@ abstract class DatabaseSchema implements QueryPlaceholderInterface {
    */
   public function createTable($name, $table) {
     if ($this->tableExists($name)) {
-      throw new DatabaseSchemaObjectExistsException(t('Table %name already exists.', array('%name' => $name)));
+      throw new DatabaseSchemaObjectExistsException(t('Table @name already exists.', array('@name' => $name)));
     }
     $statements = $this->createTableSql($name, $table);
     foreach ($statements as $statement) {

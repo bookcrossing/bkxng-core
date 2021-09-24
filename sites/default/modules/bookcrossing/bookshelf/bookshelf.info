@@ -1,0 +1,11 @@
+name = Bookcrossing Safe Zone
+description = Bookcrossing Safe Zone
+package = "bookcrossing"
+
+dependencies[] = getlocations
+dependencies[] = getlocations_fields
+
+version = 7.x-1.2
+core = 7.x
+
+project = "bookshelf"

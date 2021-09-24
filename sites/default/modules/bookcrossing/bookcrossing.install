@@ -8,13 +8,14 @@
 /**
  * Implements hook_install().
  */
-function bookcrossing_install() {
+function bookcrossing_install()
+{
   // adding book node type
   $bookcrossing_node_type = array(
     'type' => 'bookcrossing',
     'name' => t('Book'),
     'base' => 'node_content',
-    'description' => t('Use this node type for adding book desription.'),
+    'description' => t('Use this node type for adding book description.'),
     'custom' => 0,
     'module' => 'bookcrossing',
     'modified' => 1,
@@ -23,7 +24,8 @@ function bookcrossing_install() {
   
   $bookcrossing_node_type = node_type_set_defaults($bookcrossing_node_type);
   node_type_save($bookcrossing_node_type);
-  
+
+
   // adding isbn field to book
 /*  $isbn_field = array(
     'field_name' => 'field_bookcrossing_isbn',
@@ -201,9 +203,12 @@ function bookcrossing_install() {
 /**
  * Implements hook_uninstall().
  */
-function bookcrossing_uninstall() {
-  node_type_delete('bookcrossing');
-  
+function bookcrossing_uninstall()
+{
+    node_type_delete('bookcrossing');
+    node_type_delete('book_classificator');
+    node_type_delete('book_item');
+
 //  $field_names = array(
 //    'field_bookcrossing_isbn',
 //    'field_bookcrossing_author',
@@ -228,52 +233,278 @@ function bookcrossing_uninstall() {
 /**
  * Implements hook_schema().
  */
-function bookcrossing_schema() {
-  $schema = array();
-  
-  $schema['bookcrossing_bcid'] = array(
-    'description' => 'Each bcid identifies a unique book.',
-    'fields' => array(
-      'bid' => array(
-        'type' => 'serial',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'bcid' => array(
-        'type' => 'varchar',
-        'length' => 32,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'nid' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-    ),
-    'primary key' => array('bid'),
-  );
-  
-  $schema['bookcrossing_user_places'] = array(
-    'fields' => array(
-      'uid' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'place_id' => array(
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-    ),
-    'indexes' => array(
-      'uid' => array('uid'),
-    ),
-  );
-  
-  return $schema;
+function bookcrossing_schema()
+{
+    $schema = array();
+    $schema['bookcrossing_books'] = array(
+        'description' => 'Each bcid identifies a unique book.',
+        'fields' => array(
+            'bid' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'serial',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+            ),
+            'bcid' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'varchar',
+                'length' => '32',
+                'not null' => TRUE,
+                'default' => '',
+            ),
+            'nid' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+                'default' => 0,
+            ),
+            'status' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'int',
+                'not null' => TRUE,
+                'default' => 0,
+            ),
+            'owner' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'int',
+                'not null' => TRUE,
+                'default' => -1,
+            ),
+            'current_place' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+            ),
+            'color' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'varchar',
+                'length' => '10',
+                'not null' => TRUE,
+                'default' => '0',
+            ),
+        ),
+        'primary key' => array('bid'),
+    );
+    $schema['bookcrossing_comment'] = array(
+        'description' => 'TODO: please describe this table!',
+        'fields' => array(
+            'cid' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'serial',
+                'not null' => TRUE,
+            ),
+            'bid' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+            ),
+            'uid' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+            ),
+            'comment' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'varchar',
+                'length' => '1024',
+                'not null' => TRUE,
+                'default' => '',
+            ),
+        ),
+        'primary key' => array('cid'),
+        'indexes' => array(
+            'bid' => array('bid'),
+        ),
+    );
+    $schema['bookcrossing_favourites'] = array(
+        'description' => 'TODO: please describe this table!',
+        'fields' => array(
+            'uid' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+            ),
+            'bid' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+            ),
+        ),
+        'indexes' => array(
+            'bid' => array('bid'),
+        ),
+    );
+    $schema['bookcrossing_history'] = array(
+        'description' => 'TODO: please describe this table!',
+        'fields' => array(
+            'user_id' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+            ),
+            'book_id' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+            ),
+            'place_id' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+                'default' => 0,
+            ),
+            'event_type' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'int',
+                'not null' => TRUE,
+                'default' => 0,
+            ),
+            'date_time' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+                'default' => 0,
+            ),
+
+//            'time_left' => array(
+//                'description' => 'TODO: please describe this field!',
+//                'type' => 'int',
+//                'unsigned' => TRUE,
+//                'not null' => TRUE,
+//                'default' => 0,
+//            ),
+//            'place_id_left' => array(
+//                'description' => 'TODO: please describe this field!',
+//                'type' => 'int',
+//                'unsigned' => TRUE,
+//                'not null' => TRUE,
+//                'default' => 0,
+//            ),
+//            'found' => array(
+//                'description' => 'TODO: please describe this field!',
+//                'type' => 'int',
+//                'unsigned' => TRUE,
+//                'not null' => TRUE,
+//                'default' => 0,
+//            ),
+        ),
+        'indexes' => array(
+            'user_id' => array('user_id'),
+        ),
+    );
+    $schema['bookcrossing_places'] = array(
+        'description' => 'TODO: please describe this table!',
+        'fields' => array(
+            'uid' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+            ),
+            'tid' => array(
+                'description' => 'TODO: please describe this field!',
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+            ),
+        ),
+        'indexes' => array(
+            'uid' => array('uid'),
+        ),
+    );
+    $schema['bookcrossing_bcid'] = array(
+        'description' => 'Each bcid identifies a unique book.',
+        'fields' => array(
+            'bid' => array(
+                'type' => 'serial',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+            ),
+            'bcid' => array(
+                'type' => 'varchar',
+                'length' => 32,
+                'not null' => TRUE,
+                'default' => '',
+            ),
+            'nid' => array(
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+                'default' => 0,
+            ),
+        ),
+        'primary key' => array('bid'),
+    );
+    $schema['bookcrossing_user_places'] = array(
+        'fields' => array(
+            'uid' => array(
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+                'default' => 0,
+            ),
+            'place_id' => array(
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE,
+                'default' => 0,
+            ),
+        ),
+        'indexes' => array(
+            'uid' => array('uid'),
+        ),
+    );
+    return $schema;
+}
+
+function bookcrossing_update_6001()
+{
+    db_query("UPDATE {field_data_field_bookcrossing_isbn} SET field_bookcrossing_isbn_value = REPLACE(REPLACE(field_bookcrossing_isbn_value,' ',''),'-','')");
+    db_query("UPDATE {field_revision_field_bookcrossing_isbn} SET field_bookcrossing_isbn_value = REPLACE(REPLACE(field_bookcrossing_isbn_value,' ',''),'-','')");
+}
+
+/**
+ * Update bookcrossing_history table, add event_types column, fill in with values from bookcrossing_book table.
+ * Re-structure bookcrossing_history table, fill in 'date_time' gaps with 'found' values, fill in 'place_id' gaps with 'place_id_left' values.
+ */
+function bookcrossing_update_6002()
+{
+    db_query("ALTER TABLE {bookcrossing_history} ADD event_type INT DEFAULT '0' NOT NULL;");
+    db_query("UPDATE {bookcrossing_history} SET event_type = 1 WHERE found != 0;");
+
+    db_query("ALTER TABLE {bookcrossing_history} CHANGE time_left date_time INT(15) unsigned NOT NULL DEFAULT '0';");
+    db_query("UPDATE {bookcrossing_history} SET place_id = place_id_left WHERE place_id = 0;");
+    db_query("UPDATE {bookcrossing_history} SET date_time = found WHERE date_time = 0;");
+
+    db_query("ALTER TABLE {bookcrossing_history} CHANGE uid user_id INT(10) unsigned NOT NULL DEFAULT '0';");
+    db_query("ALTER TABLE {bookcrossing_history} CHANGE bid book_id INT(11) unsigned NOT NULL;");
+
+    db_query("ALTER TABLE {bookcrossing_history}
+                MODIFY COLUMN place_id_left INT(11) unsigned NOT NULL DEFAULT '0' AFTER date_time,
+                MODIFY COLUMN event_type INT(11) NOT NULL DEFAULT '0' AFTER book_id,
+                MODIFY COLUMN place_id INT(10) unsigned NOT NULL DEFAULT '0' AFTER book_id;");
+
+    db_query("ALTER TABLE {bookcrossing_history} DROP place_id_left;");
+    db_query("ALTER TABLE {bookcrossing_history} DROP found;");
+
+    db_query("DROP INDEX uid ON {bookcrossing_history};
+              CREATE INDEX user_id ON {bookcrossing_history} (uid);");
+}
+
+/**
+ * Create new table to store settings
+ */
+function bookcrossing_update_6003()
+{
+//    db_query("CREATE TABLE {bookcrossing_settings} (id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(30) NOT NULL, value TEXT);");
 }

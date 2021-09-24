@@ -1,0 +1,219 @@
+<?php
+
+/**
+ * @file
+ *  Maintains a consistant relationship between nodes and BCIDs.
+ */
+
+require_once ("Bcid.inc");
+
+/**
+ * Implements hook_field_info().
+ */
+function bcid_field_info() {
+  return array(
+    'bcid' => array(
+      'label' => 'BCID',
+      'description' => t('This field stores and renders BCID numbers.'),
+      'default_widget' => 'bcid_textfield',
+      'default_formatter' => 'bcid_default',
+      'property_type' => 'text',
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_validate().
+ */
+function bcid_field_validate($obj_type, $object, $field, $instance, $langcode, $items, &$errors) {
+  foreach ($items as $delta => $item) {
+
+    $bcid = bcid_clean_data($item['bcid']);
+
+    if ($bcid != '' && !bcid_check_10($bcid) && !bcid_check_13($bcid)) {
+
+      if (strlen($bcid) < 10 && strlen($bcid) > 13) {
+        $message = t('"%bcid" isn\'t a valid BCID number. A valid BCID number has 10 or 13 digits.', array('%bcid' => $bcid));
+      }
+      else {
+        if (strlen($bcid) == 10 && !bcid_check_10($bcid)) {
+          $message = t('"%bcid" isn\'t a valid 10 digit BCID number.', array('%bcid' => $bcid));
+        }
+
+        if (strlen($bcid) == 13 && !bcid_check_13($bcid)) {
+          $message = t('"%bcid" isn\'t a valid 13 digit BCID number.', array('%bcid' => $bcid));
+        }
+      }
+
+      $errors[$field['field_name']][$langcode][$delta][] = array(
+        'error' => "bcid_invalid",
+        'message' => $message,
+      );
+    }
+  }
+}
+
+/**
+ * Implements hook_field_widget_error().
+ */
+function bcid_field_widget_error($element, $error, $form, &$form_state) {
+  form_error($element, $error['message']);
+}
+
+/**
+ * Implements hook_field_is_empty().
+ */
+function bcid_field_is_empty($item, $field) {
+  return empty($item['bcid']);
+}
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function bcid_field_formatter_info() {
+  $formats = array(
+    'bcid_default' => array(
+      'label' => t('Not formated BCID'),
+      'description' => t('Display the BCID number without format.'),
+      'field types' => array('bcid'),
+    ),
+  );
+  return $formats;
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function bcid_field_formatter_view($object_type, $object, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+  switch ($display['type']) {
+    case 'bcid_default':
+      foreach ($items as $delta => $item) {
+        $element[$delta] = array('#markup' => $item['bcid']);
+      }
+      break;
+  }
+  return $element;
+}
+
+/**
+ * Implements hook_field_widget_info().
+ */
+function bcid_field_widget_info() {
+  return array(
+    'bcid_textfield' => array(
+      'label' => t('Text field'),
+      'field types' => array('bcid'),
+      'settings' => array('size' => 13),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_widget_settings_form().
+ */
+function bcid_field_widget_settings_form($field, $instance) {
+  $widget = $instance['widget'];
+  $settings = $widget['settings'];
+
+  $form['size'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Size of textfield'),
+    '#default_value' => $settings['size'],
+    '#required' => TRUE,
+    '#element_validate' => array('_element_validate_integer_positive'),
+  );
+  return $form;
+}
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function bcid_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $base) {
+  $element = $base;
+  $element['bcid'] = $base + array(
+    '#type' => 'textfield',
+    '#default_value' => isset($items[$delta]['bcid']) ? $items[$delta]['bcid'] : NULL,
+    '#size' => $instance['widget']['settings']['size'],
+    '#prefix' => '<div class="text-full-wrapper">',
+    '#suffix' => '</div>',
+  );
+  return $element;
+}
+
+/**
+ * Implements hook_field_presave().
+ */
+function bcid_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
+  if ($field['type'] == 'bcid') {
+    foreach ($items as $delta => $item) {
+      // Cleaning the data before saving it.
+      if (isset($item['bcid'])) {
+        $items[$delta]['bcid'] = bcid_clean_data($item['bcid']);
+      }
+    }
+  }
+}
+
+/**
+ * Remove all non-valid characters.
+ *
+ * @param $bcid
+ *   The BCID number typed by the user.
+ *
+ * @return
+ *   The BCID number without invalid characters.
+ */
+function bcid_clean_data($bcid) {
+  return preg_replace('/([^xX0-9]*)/', "", $bcid);
+}
+
+/**
+ * Check if the BCID number is a valid 10 digit.
+ *
+ * @param $bcid
+ *   The BCID number with only valid characters.
+ *
+ * @return
+ *   True if it's a valid 10 digit BCID number, false otherwise.
+ */
+function bcid_check_10($bcid) {
+  if (strlen($bcid) < 10) {
+    return FALSE;
+  }
+  $check = 0;
+
+  for ($i = 0; $i < 9; $i++) {
+    $check += (10 - $i) * $bcid[$i];
+  }
+
+  $tenth = $bcid[9]; // tenth digit (aka checksum or check digit)
+  $check += (strtoupper($tenth) == 'X') ? 10 : $tenth;
+  return $check % 11 == 0;
+}
+
+/**
+ * Check if the BCID number is a valid 13 digit.
+ *
+ * @param $bcid
+ *   The BCID number with only valid characters.
+ *
+ * @return
+ *   True if it's a valid 13 digit BCID number, false otherwise.
+ */
+function bcid_check_13($bcid) {
+  if (strlen($bcid) < 13) {
+    return FALSE;
+  }
+  $check = 0;
+
+  for ($i = 0; $i < 13; $i+=2) {
+    $check += $bcid[$i];
+  }
+
+  for ($i = 1; $i < 12; $i+=2) {
+    $check += 3 * $bcid[$i];
+  }
+
+  return ($check % 10) == 0;
+}

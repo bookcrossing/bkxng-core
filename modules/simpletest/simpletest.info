@@ -11,10 +11,12 @@ configure = admin/config/development/testing/settings
 files[] = tests/actions.test
 files[] = tests/ajax.test
 files[] = tests/batch.test
+files[] = tests/boot.test
 files[] = tests/bootstrap.test
 files[] = tests/cache.test
 files[] = tests/common.test
 files[] = tests/database_test.test
+files[] = tests/entity_crud.test
 files[] = tests/entity_crud_hook_test.test
 files[] = tests/entity_query.test
 files[] = tests/error.test
@@ -31,6 +33,7 @@ files[] = tests/pager.test
 files[] = tests/password.test
 files[] = tests/path.test
 files[] = tests/registry.test
+files[] = tests/request_sanitizer.test
 files[] = tests/schema.test
 files[] = tests/session.test
 files[] = tests/tablesort.test
@@ -55,8 +58,7 @@ files[] = tests/upgrade/update.trigger.test
 files[] = tests/upgrade/update.field.test
 files[] = tests/upgrade/update.user.test
 
-; Information added by Drupal.org packaging script on 2014-01-03
-version = "7.25"
+; Information added by Drupal.org packaging script on 2021-07-21
+version = "7.82"
 project = "drupal"
-datestamp = "1388709506"
-
+datestamp = "1626883669"

@@ -1,0 +1,166 @@
+<?php
+
+require_once('YandexReferat.inc');
+
+/**
+ * Implements hook_block_info().
+ *
+ */
+function bookcensored_block_info()
+{
+    $block = array();
+
+    /**
+     * Block with random censored content.
+     */
+    $block['bookcensored'] = array(
+        'info' => t('Random censored page'),
+        'cache' => DRUPAL_NO_CACHE,
+    );
+
+    return $block;
+}
+
+
+/**
+ * Implements hook_block_view()
+ *
+ * @param string $block_type
+ *   defines type of the block to be displayed
+ *
+ * @return string
+ *   html string of the block
+ */
+function bookcensored_block_view($block_type = 'bookcensored')
+{
+    $block = array();
+    drupal_add_css(drupal_get_path('module', 'bookcensored') . '/assets/styles.css');
+    switch ($block_type) {
+        case 'bookcensored':
+            $is_censored = variable_get('bookcensored_is_censored', 1);
+            $topics = explode("+", variable_get('bookcensored_topics', 'literature'));
+            $referat = new YandexReferat($topics);
+            //["literature", "mathematics", "music", "polit", "geography", "philosophy", "estetica"]
+            $referat->request();
+
+            $block_subject = "<p class='ref-title'>" . $referat->getTitle() . "</p>";
+            $block_body = "";
+            foreach ($referat->getBody() as $key => $phrase)
+            {
+                $block_body .= "<p class='ref-phrase'>";
+
+                if ($is_censored) {
+                    $words = explode(" ", $phrase);
+                    $words_total = count($words) - 1;
+                    $current_word = 0;
+
+                    while ($current_word < $words_total) {
+                        $start_word = mt_rand($current_word, $words_total);
+                        $words[$start_word] = "<span class='ref-censored'>" . $words[$start_word];
+                        $end_word = mt_rand($start_word, $words_total);
+                        if ($start_word > $current_word + 1) {
+                            $words[$end_word] .= "</span>";
+                        }
+                        $current_word = $end_word;
+                    }
+                    $block_body .= implode(" ", $words);
+                } else {
+                    $block_body .= $phrase;
+                }
+
+                $block_body .= "</p>";
+            }
+
+            $block['subject'] = t("@referat_type", array('@referat_type' => $referat->getType()), array('langcode' => 'ru')) . " " . t("was censored") . ". " . t("If you believe, you should have access to censored content, please contact administrator.");
+            $block['content'] = "<div class='ref-sheet'>" . $block_subject . "<br/>" . $block_body . "<p class='ref-page-number'>403</p></div>";
+            unset($referat);
+        break;
+
+        default:
+        break;
+    }
+
+    return $block;
+}
+
+
+/**
+ * Implements hook_block_configure().
+ * @param string $block_type
+ * @return array
+ */
+function bookcensored_block_configure($block_type = '')
+{
+    $form = array();
+
+    switch ($block_type) {
+        case 'bookcensored':
+            $form['is-censored'] = array(
+                '#type' => 'checkbox',
+                '#title' => t("Censor the article"),
+                '#description' => t("If checked, random parts of the article text will be blacked out."),
+                '#default_value' => variable_get('bookcensored_is_censored', 1),
+            );
+
+            $user_topics = explode("+", variable_get('bookcensored_topics', 'literature'));
+            $form['referat-topics'] = array(
+                '#type' => 'fieldset',
+                '#title' => t('Choose topics to generate an article'),
+            );
+            $referat = new YandexReferat();
+            $available_topics = $referat->getAvalibleTopics();
+            foreach ($available_topics as $topic_code => $topic_title)
+            {
+                $value = in_array($topic_code, $user_topics);
+                $form['referat-topics'][$topic_code] = array(
+                    '#type' => 'checkbox',
+                    '#title' => t($topic_title),
+                    '#default_value' => $value,
+                );
+
+            }
+            unset($referat);
+            break;
+
+        default:
+            break;
+    }
+
+    return $form;
+}
+
+/**
+ * Implements hook_block_save().
+ *
+ * @param string $block_type
+ *   defines type of the block to be displayed
+ * @param array $edit
+ *   array containing values to be saved
+ */
+function bookcensored_block_save($block_type, $edit = array())
+{
+    switch ($block_type) {
+        case 'bookcensored':
+            variable_set('bookcensored_is_censored', $edit['is-censored']);
+
+            $referat = new YandexReferat();
+            $available_topics = $referat->getAvalibleTopics();
+            foreach ($available_topics as $topic_code => $topic_title)
+            {
+                if ($edit[$topic_code])
+                {
+                    $save[] = $topic_code;
+                }
+            }
+            variable_set('bookcensored_topics', implode("+", $save));
+            unset($referat);
+            break;
+
+        default:
+            break;
+    }
+
+    return;
+}
+
+?>

@@ -60,6 +60,8 @@ function bookcrossing_users_list($type = 'date') {
   $output .= paginator3000pager();
   $output .= '</div>';
   
+//  dpm($users);
+
   if ($users) {
     $output .= bookcrossing_users_list_show_users($users);
   }
@@ -118,7 +120,7 @@ function bookcrossing_users_list_sort_by_name() {
   $limit = variable_get('bookcrossing_users_list_pager_limit', 10);
   
   $query = db_select('users', 'u');
-  $query->innerJoin('fboauth_users', 'f', 'u.uid = f.uid');
+  $query->innerJoin('hybridauth_identity', 'ha', 'u.uid = ha.uid');
   $query = $query->extend('PagerDefault');
   $query->limit($limit);
   
@@ -138,7 +140,7 @@ function bookcrossing_users_list_sort_by_date() {
   $limit = variable_get('bookcrossing_users_list_pager_limit', 10);
 
   $query = db_select('users', 'u');
-  $query->innerJoin('fboauth_users', 'f', 'u.uid = f.uid');
+  $query->innerJoin('hybridauth_identity', 'ha', 'u.uid = ha.uid');
   $query = $query->extend('PagerDefault');
 
   $query->fields('u', array('uid'));

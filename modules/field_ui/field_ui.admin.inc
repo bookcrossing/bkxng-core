@@ -936,7 +936,7 @@ function field_ui_display_overview_form($form, &$form_state, $entity_type, $bund
   $field_label_options = array(
     'above' => t('Above'),
     'inline' => t('Inline'),
-    'hidden' => t('<Hidden>'),
+    'hidden' => '<' . t('Hidden') . '>',
   );
   $extra_visibility_options = array(
     'visible' => t('Visible'),
@@ -992,7 +992,7 @@ function field_ui_display_overview_form($form, &$form_state, $entity_type, $bund
     );
 
     $formatter_options = field_ui_formatter_options($field['type']);
-    $formatter_options['hidden'] = t('<Hidden>');
+    $formatter_options['hidden'] = '<' . t('Hidden') . '>';
     $table[$name]['format'] = array(
       'type' => array(
         '#type' => 'select',
@@ -1026,6 +1026,10 @@ function field_ui_display_overview_form($form, &$form_state, $entity_type, $bund
 
     $instance['display'][$view_mode]['type'] = $formatter_type;
     $formatter = field_info_formatter_types($formatter_type);
+    // For hidden fields, $formatter will be NULL, but we expect an array later.
+    // To maintain BC, but avoid PHP 7.4 Notices, ensure $formatter is an array
+    // with a 'module' element.
+    $formatter['module'] = isset($formatter['module']) ? $formatter['module'] : '';
     $instance['display'][$view_mode]['module'] = $formatter['module'];
     $instance['display'][$view_mode]['settings'] = $settings;
 
@@ -2105,6 +2109,10 @@ function field_ui_next_destination($entity_type, $bundle) {
   $destinations = !empty($_REQUEST['destinations']) ? $_REQUEST['destinations'] : array();
   if (!empty($destinations)) {
     unset($_REQUEST['destinations']);
+  }
+  // Remove any external URLs.
+  $destinations = array_diff($destinations, array_filter($destinations, 'url_is_external'));
+  if ($destinations) {
     return field_ui_get_destinations($destinations);
   }
   $admin_path = _field_ui_bundle_admin_path($entity_type, $bundle);

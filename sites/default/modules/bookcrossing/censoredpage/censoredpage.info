@@ -1,0 +1,10 @@
+name = Censored Page Block
+description = Block that generates random text using Yandex.Referat service and optionaly marks parts of the text as censored
+package = "bookcrossing"
+
+# dependencies[] = bookcrossing
+
+version = 7.x-1.0
+core = 7.x
+
+project = "censoredpage"

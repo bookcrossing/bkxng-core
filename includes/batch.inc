@@ -460,10 +460,10 @@ function _batch_finished() {
       if (isset($batch_set['file']) && is_file($batch_set['file'])) {
         include_once DRUPAL_ROOT . '/' . $batch_set['file'];
       }
-      if (function_exists($batch_set['finished'])) {
+      if (is_callable($batch_set['finished'])) {
         $queue = _batch_queue($batch_set);
         $operations = $queue->getAllItems();
-        $batch_set['finished']($batch_set['success'], $batch_set['results'], $operations, format_interval($batch_set['elapsed'] / 1000));
+        call_user_func($batch_set['finished'], $batch_set['success'], $batch_set['results'], $operations, format_interval($batch_set['elapsed'] / 1000));
       }
     }
   }
@@ -478,17 +478,16 @@ function _batch_finished() {
         $queue->deleteQueue();
       }
     }
+    // Clean-up the session. Not needed for CLI updates.
+    if (isset($_SESSION)) {
+      unset($_SESSION['batches'][$batch['id']]);
+      if (empty($_SESSION['batches'])) {
+        unset($_SESSION['batches']);
+      }
+    }
   }
   $_batch = $batch;
   $batch = NULL;
-
-  // Clean-up the session. Not needed for CLI updates.
-  if (isset($_SESSION)) {
-    unset($_SESSION['batches'][$batch['id']]);
-    if (empty($_SESSION['batches'])) {
-      unset($_SESSION['batches']);
-    }
-  }
 
   // Redirect if needed.
   if ($_batch['progressive']) {

@@ -232,10 +232,10 @@ class DatabaseSchema_sqlite extends DatabaseSchema {
 
   public function renameTable($table, $new_name) {
     if (!$this->tableExists($table)) {
-      throw new DatabaseSchemaObjectDoesNotExistException(t("Cannot rename %table to %table_new: table %table doesn't exist.", array('%table' => $table, '%table_new' => $new_name)));
+      throw new DatabaseSchemaObjectDoesNotExistException(t("Cannot rename @table to @table_new: table @table doesn't exist.", array('@table' => $table, '@table_new' => $new_name)));
     }
     if ($this->tableExists($new_name)) {
-      throw new DatabaseSchemaObjectExistsException(t("Cannot rename %table to %table_new: table %table_new already exists.", array('%table' => $table, '%table_new' => $new_name)));
+      throw new DatabaseSchemaObjectExistsException(t("Cannot rename @table to @table_new: table @table_new already exists.", array('@table' => $table, '@table_new' => $new_name)));
     }
 
     $schema = $this->introspectSchema($table);
@@ -244,7 +244,7 @@ class DatabaseSchema_sqlite extends DatabaseSchema {
     // database. So the syntax '...RENAME TO database.table' would fail.
     // So we must determine the full table name here rather than surrounding
     // the table with curly braces incase the db_prefix contains a reference
-    // to a database outside of our existsing database.
+    // to a database outside of our existing database.
     $info = $this->getPrefixInfo($new_name);
     $this->connection->query('ALTER TABLE {' . $table . '} RENAME TO ' . $info['table']);
 
@@ -278,10 +278,10 @@ class DatabaseSchema_sqlite extends DatabaseSchema {
 
   public function addField($table, $field, $specification, $keys_new = array()) {
     if (!$this->tableExists($table)) {
-      throw new DatabaseSchemaObjectDoesNotExistException(t("Cannot add field %table.%field: table doesn't exist.", array('%field' => $field, '%table' => $table)));
+      throw new DatabaseSchemaObjectDoesNotExistException(t("Cannot add field @table.@field: table doesn't exist.", array('@field' => $field, '@table' => $table)));
     }
     if ($this->fieldExists($table, $field)) {
-      throw new DatabaseSchemaObjectExistsException(t("Cannot add field %table.%field: field already exists.", array('%field' => $field, '%table' => $table)));
+      throw new DatabaseSchemaObjectExistsException(t("Cannot add field @table.@field: field already exists.", array('@field' => $field, '@table' => $table)));
     }
 
     // SQLite doesn't have a full-featured ALTER TABLE statement. It only
@@ -494,10 +494,10 @@ class DatabaseSchema_sqlite extends DatabaseSchema {
 
   public function changeField($table, $field, $field_new, $spec, $keys_new = array()) {
     if (!$this->fieldExists($table, $field)) {
-      throw new DatabaseSchemaObjectDoesNotExistException(t("Cannot change the definition of field %table.%name: field doesn't exist.", array('%table' => $table, '%name' => $field)));
+      throw new DatabaseSchemaObjectDoesNotExistException(t("Cannot change the definition of field @table.@name: field doesn't exist.", array('@table' => $table, '@name' => $field)));
     }
     if (($field != $field_new) && $this->fieldExists($table, $field_new)) {
-      throw new DatabaseSchemaObjectExistsException(t("Cannot rename field %table.%name to %name_new: target field already exists.", array('%table' => $table, '%name' => $field, '%name_new' => $field_new)));
+      throw new DatabaseSchemaObjectExistsException(t("Cannot rename field @table.@name to @name_new: target field already exists.", array('@table' => $table, '@name' => $field, '@name_new' => $field_new)));
     }
 
     $old_schema = $this->introspectSchema($table);
@@ -559,10 +559,10 @@ class DatabaseSchema_sqlite extends DatabaseSchema {
 
   public function addIndex($table, $name, $fields) {
     if (!$this->tableExists($table)) {
-      throw new DatabaseSchemaObjectDoesNotExistException(t("Cannot add index %name to table %table: table doesn't exist.", array('%table' => $table, '%name' => $name)));
+      throw new DatabaseSchemaObjectDoesNotExistException(t("Cannot add index @name to table @table: table doesn't exist.", array('@table' => $table, '@name' => $name)));
     }
     if ($this->indexExists($table, $name)) {
-      throw new DatabaseSchemaObjectExistsException(t("Cannot add index %name to table %table: index already exists.", array('%table' => $table, '%name' => $name)));
+      throw new DatabaseSchemaObjectExistsException(t("Cannot add index @name to table @table: index already exists.", array('@table' => $table, '@name' => $name)));
     }
 
     $schema['indexes'][$name] = $fields;
@@ -591,10 +591,10 @@ class DatabaseSchema_sqlite extends DatabaseSchema {
 
   public function addUniqueKey($table, $name, $fields) {
     if (!$this->tableExists($table)) {
-      throw new DatabaseSchemaObjectDoesNotExistException(t("Cannot add unique key %name to table %table: table doesn't exist.", array('%table' => $table, '%name' => $name)));
+      throw new DatabaseSchemaObjectDoesNotExistException(t("Cannot add unique key @name to table @table: table doesn't exist.", array('@table' => $table, '@name' => $name)));
     }
     if ($this->indexExists($table, $name)) {
-      throw new DatabaseSchemaObjectExistsException(t("Cannot add unique key %name to table %table: unique key already exists.", array('%table' => $table, '%name' => $name)));
+      throw new DatabaseSchemaObjectExistsException(t("Cannot add unique key @name to table @table: unique key already exists.", array('@table' => $table, '@name' => $name)));
     }
 
     $schema['unique keys'][$name] = $fields;
@@ -617,14 +617,14 @@ class DatabaseSchema_sqlite extends DatabaseSchema {
 
   public function addPrimaryKey($table, $fields) {
     if (!$this->tableExists($table)) {
-      throw new DatabaseSchemaObjectDoesNotExistException(t("Cannot add primary key to table %table: table doesn't exist.", array('%table' => $table)));
+      throw new DatabaseSchemaObjectDoesNotExistException(t("Cannot add primary key to table @table: table doesn't exist.", array('@table' => $table)));
     }
 
     $old_schema = $this->introspectSchema($table);
     $new_schema = $old_schema;
 
     if (!empty($new_schema['primary key'])) {
-      throw new DatabaseSchemaObjectExistsException(t("Cannot add primary key to table %table: primary key already exists.", array('%table' => $table)));
+      throw new DatabaseSchemaObjectExistsException(t("Cannot add primary key to table @table: primary key already exists.", array('@table' => $table)));
     }
 
     $new_schema['primary key'] = $fields;
@@ -646,7 +646,7 @@ class DatabaseSchema_sqlite extends DatabaseSchema {
 
   public function fieldSetDefault($table, $field, $default) {
     if (!$this->fieldExists($table, $field)) {
-      throw new DatabaseSchemaObjectDoesNotExistException(t("Cannot set default value of field %table.%field: field doesn't exist.", array('%table' => $table, '%field' => $field)));
+      throw new DatabaseSchemaObjectDoesNotExistException(t("Cannot set default value of field @table.@field: field doesn't exist.", array('@table' => $table, '@field' => $field)));
     }
 
     $old_schema = $this->introspectSchema($table);
@@ -658,7 +658,7 @@ class DatabaseSchema_sqlite extends DatabaseSchema {
 
   public function fieldSetNoDefault($table, $field) {
     if (!$this->fieldExists($table, $field)) {
-      throw new DatabaseSchemaObjectDoesNotExistException(t("Cannot remove default value of field %table.%field: field doesn't exist.", array('%table' => $table, '%field' => $field)));
+      throw new DatabaseSchemaObjectDoesNotExistException(t("Cannot remove default value of field @table.@field: field doesn't exist.", array('@table' => $table, '@field' => $field)));
     }
 
     $old_schema = $this->introspectSchema($table);
@@ -668,6 +668,9 @@ class DatabaseSchema_sqlite extends DatabaseSchema {
     $this->alterTable($table, $old_schema, $new_schema);
   }
 
+  /**
+   * {@inheritdoc}
+   */
   public function findTables($table_expression) {
     // Don't add the prefix, $table_expression already includes the prefix.
     $info = $this->getPrefixInfo($table_expression, FALSE);
@@ -680,4 +683,32 @@ class DatabaseSchema_sqlite extends DatabaseSchema {
     ));
     return $result->fetchAllKeyed(0, 0);
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function findTablesD8($table_expression) {
+    $tables = array();
+
+    // The SQLite implementation doesn't need to use the same filtering strategy
+    // as the parent one because individually prefixed tables live in their own
+    // schema (database), which means that neither the main database nor any
+    // attached one will contain a prefixed table name, so we just need to loop
+    // over all known schemas and filter by the user-supplied table expression.
+    $attached_dbs = $this->connection->getAttachedDatabases();
+    foreach ($attached_dbs as $schema) {
+      // Can't use query placeholders for the schema because the query would
+      // have to be :prefixsqlite_master, which does not work. We also need to
+      // ignore the internal SQLite tables.
+      $result = db_query("SELECT name FROM " . $schema . ".sqlite_master WHERE type = :type AND name LIKE :table_name AND name NOT LIKE :pattern", array(
+        ':type' => 'table',
+        ':table_name' => $table_expression,
+        ':pattern' => 'sqlite_%',
+      ));
+      $tables += $result->fetchAllKeyed(0, 0);
+    }
+
+    return $tables;
+  }
+
 }

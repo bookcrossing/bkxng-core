@@ -1,0 +1,269 @@
+<?php
+
+require_once('socialicons.inc');
+
+/**
+ * Implements hook_block_info().
+ *
+ */
+function booksocial_block_info()
+{
+    $block = array();
+    /**
+     * Block with responsive social profiles buttons.
+     */
+    $block['social-networks'] = array(
+        'info' => t('Responsive social network buttons'),
+        'cache' => DRUPAL_CACHE_GLOBAL,
+    );
+
+    return $block;
+}
+
+
+/**
+ * Implements hook_block_view()
+ *
+ * @param string $block_type
+ *   defines type of the block to be displayed
+ *
+ * @return string
+ *   html string of the block
+ */
+function booksocial_block_view($block_type = 'social-networks')
+{
+    $block = array();
+    drupal_add_css(drupal_get_path('module', 'booksocial') . '/assets/styles.css');
+
+    /**
+     * @todo Add block configuration
+     */
+    switch ($block_type) {
+        case 'social-networks':
+            libraries_load('rrssb');
+            $block['subject'] = '';
+            $block['content'] = bookcrossing_social_buttons(
+                array(
+                    'facebook' => array(
+                        'name' => 'Facebook',
+                        'url' => 'https://www.facebook.com/groups/bookcrossing',
+                        'class' => ''
+                    ),
+                    'vk' => array(
+                        'name' => 'VKontakte',
+                        'url' => 'https://vk.com/bookcrossing_by',
+                        'class' => ''
+                    ),
+                    'twitter' => array(
+                        'name' => 'Twitter',
+                        'url' => 'https://twitter.com/bookcrossing_by',
+                        'class' => ''
+                    ),
+                    'pinterest' => array(
+                        'name' => 'Pinterest',
+                        'url' => 'https://www.pinterest.com/bookcrossing_by/',
+                        'class' => ''
+                    ),
+                    'instagram' => array(
+                        'name' => 'Instagram',
+                        'url' => 'https://www.instagram.com/bookcrossing_by/',
+                        'class' => ''
+                    ),
+                    'github' => array(
+                        'name' => 'Github',
+                        'url' => 'https://github.com/bookcrossing/bkxng-core',
+                        'class' => 'visible-desktop'
+                    ),
+                )
+            );
+        break;
+
+        default:
+        break;
+    }
+
+    return $block;
+}
+
+
+/**
+ * Implements hook_block_configure().
+ * @param string $block_type
+ * @return array
+ */
+function booksocial_block_configure($block_type = '')
+{
+    $form = array();
+
+    switch ($block_type) {
+        case 'social-networks':
+            $form['is-censored'] = array(
+                '#type' => 'checkbox',
+                '#title' => t("Censor the article"),
+                '#description' => t("If checked, random parts of the article text will be blacked out."),
+                '#default_value' => variable_get('bookcensored_is_censored', 1),
+            );
+
+            $user_topics = explode("+", variable_get('bookcensored_topics', 'literature'));
+            $form['referat-topics'] = array(
+                '#type' => 'fieldset',
+                '#title' => t('Choose topics to generate an article'),
+            );
+            $referat = new YandexReferat();
+            $available_topics = $referat->getAvalibleTopics();
+            foreach ($available_topics as $topic_code => $topic_title)
+            {
+                $value = in_array($topic_code, $user_topics);
+                $form['referat-topics'][$topic_code] = array(
+                    '#type' => 'checkbox',
+                    '#title' => t($topic_title),
+                    '#default_value' => $value,
+                );
+
+            }
+            unset($referat);
+            break;
+
+        default:
+            break;
+    }
+
+    return $form;
+}
+
+/**
+ * Implements hook_block_save().
+ *
+ * @param string $block_type
+ *   defines type of the block to be displayed
+ * @param array $edit
+ *   array containing values to be saved
+ */
+function booksocial_block_save($block_type, $edit = array())
+{
+    switch ($block_type) {
+        case 'booksocial':
+            variable_set('bookcensored_is_censored', $edit['is-censored']);
+
+            $referat = new YandexReferat();
+            $available_topics = $referat->getAvalibleTopics();
+            foreach ($available_topics as $topic_code => $topic_title)
+            {
+                if ($edit[$topic_code])
+                {
+                    $save[] = $topic_code;
+                }
+            }
+            variable_set('bookcensored_topics', implode("+", $save));
+            unset($referat);
+            break;
+
+        default:
+            break;
+    }
+
+    return;
+}
+
+/**
+ * Helper functions to generate social buttons
+ */
+function booksocial_buttons ($social_networks = array() )
+{
+    $social_network_icon = array(
+        'facebook' => FACEBOOK_SVG,
+        'linkedin' => LINKEDIN_SVG,
+        'twitter' => TWITTER_SVG,
+        'googleplus' => GOOGLEPLUS_SVG,
+        'pinterest' => PINTEREST_SVG,
+        'tumblr' => TUMBLR_SVG,
+        'reddit' => REDDIT_SVG,
+        'hackernews' => HACKERNEWS_SVG,
+        'youtube' => YOUTUBE_SVG,
+        'pocket' => POCKET_SVG,
+        'github' => GITHUB_SVG,
+        'vk' => VK_SVG,
+        'instagram' => INSTAGRAM_SVG,
+    );
+
+    $output = '<ul class="rrssb-buttons clearfix">';
+    foreach ($social_networks as $id => $attributes) {
+        $output .= '<li class="rrssb-' . $id . ' ' . $attributes['class'] . '">';
+        $output .=   '<a href="' . $attributes['url'] . '" target="_blank">';
+        $output .=     '<span class="rrssb-icon">' . $social_network_icon[$id] . '</span>';
+        $output .=     '<span class="rrssb-text">' . $attributes['name'] . '</span>';
+        $output .=   '</a>';
+        $output .= '</li>';
+    }
+    $output .= '</ul>';
+
+    return $output;
+}
+
+function booksocial_share ($buttons = array(), $share_text, $share_image, $share_url)
+{
+    $share_links = array(
+        'email' => '<a href="mailto:?subject=' . urlencode($share_text) . '&amp;body=' . $share_url . '">
+            <span class="rrssb-icon">' . EMAIL_SVG . '</span>
+            <span class="rrssb-text">email</span>
+          </a>',
+        'facebook' => '<a href="https://www.facebook.com/sharer/sharer.php?u=' . $share_url . '" class="popup">
+            <span class="rrssb-icon">' . FACEBOOK_SVG . '</span>
+            <span class="rrssb-text">facebook</span>
+          </a>',
+        'linkedin' => '<a href="http://www.linkedin.com/shareArticle?mini=true&amp;url=' . $share_url .'&amp;title=' . urlencode($share_text) . '" class="popup">
+            <span class="rrssb-icon">' . LINKEDIN_SVG . '</span>
+            <span class="rrssb-text">linkedin</span>
+          </a>',
+        'twitter' => '<a href="http://twitter.com/home?status=' . urlencode($share_text) . '%20' .  $share_url . '" class="popup">
+            <span class="rrssb-icon">' . TWITTER_SVG . '</span>
+            <span class="rrssb-text">twitter</span>
+          </a>',
+        'googleplus' => '<a href="https://plus.google.com/share?url=' . urlencode($share_text) . '%20' . $share_url . '" class="popup">
+            <span class="rrssb-icon">' . GOOGLEPLUS_SVG . '</span>
+            <span class="rrssb-text">google+</span>
+          </a>',
+        'pinterest' => '<a href="http://pinterest.com/pin/create/button/?url=' . $share_url . '&amp;media=' . $share_image .'&amp;description=' . urlencode($share_text) . '" class="popup">
+            <span class="rrssb-icon">' . PINTEREST_SVG . '</span>
+            <span class="rrssb-text">pinterest</span>
+          </a>',
+        'tumblr' => '<a href="http://tumblr.com/share?s=&amp;v=3&t='. urlencode($share_text) . '&amp;u=' . $share_url . '">
+            <span class="rrssb-icon">' . TUMBLR_SVG . '</span>
+            <span class="rrssb-text">tumblr</span>
+          </a>',
+        'reddit' => '<a href="http://www.reddit.com/submit?url=' . $share_url . '">
+            <span class="rrssb-icon">' . REDDIT_SVG . '</span>
+            <span class="rrssb-text">reddit</span>
+          </a>',
+        'hackernews' => '<a href="https://news.ycombinator.com/submitlink?u=' . $share_url . '&t=' . urlencode($share_text) . '&text=' . urlencode($share_text) . '" class="popup">
+            <span class="rrssb-icon">' . HACKERNEWS_SVG . '</span>
+            <span class="rrssb-text">hackernews</span>
+          </a>',
+        'youtube' => '<a href="https://www.youtube.com/user/' . check_plain(variable_get('rrssb_youtube_username', '')) . '">
+            <span class="rrssb-icon">' . YOUTUBE_SVG . '</span>
+            <span class="rrssb-text">youtube</span>
+          </a>',
+        'pocket' => '<a href="https://getpocket.com/save?url=' . $share_url . '">
+            <span class="rrssb-icon">' . POCKET_SVG . '</span>
+            <span class="rrssb-text">pocket</span>
+          </a>',
+        'github' => '<a href="https://github.com/'. check_plain(variable_get('rrssb_github_username', '')) . '">
+            <span class="rrssb-icon">' . GITHUB_SVG . '</span>
+            <span class="rrssb-text">github</span>
+          </a>',
+        'vk' => '<a href="http://vk.com/share.php?url=' . $share_url . '" class="popup">
+            <span class="rrssb-icon">' . VK_SVG . '</span>
+            <span class="rrssb-text">VKontakte</span>
+          </a>',
+    );
+
+    $output = '<ul class="rrssb-buttons clearfix">';
+    foreach ($buttons as $index => $button_type) {
+        $output .= '<li class="rrssb-' . $button_type . $index = 0?' first':'' . '">';
+        $output .= $share_links[$button_type];
+        $output .= '</li>';
+    }
+    $output .= '</ul>';
+
+    return $output;
+}

@@ -2,6 +2,7 @@ dev-tools
 docs
 profiles
 scripts
+.editorconfig
 .deployignore
 .gitattributes
 .gitbook.yaml

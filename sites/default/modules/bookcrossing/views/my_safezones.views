@@ -1,0 +1,210 @@
+ 
+$view = new view();
+$view->name = 'my_safezones';
+$view->description = 'List of safe zones created by current user';
+$view->tag = 'default';
+$view->base_table = 'taxonomy_term_data';
+$view->human_name = 'My Safe Zones';
+$view->core = 7;
+$view->api_version = '3.0';
+$view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+
+/* Display: Master */
+$handler = $view->new_display('default', 'Master', 'default');
+$handler->display->display_options['title'] = 'Safe Zones';
+$handler->display->display_options['use_more_always'] = FALSE;
+$handler->display->display_options['access']['type'] = 'perm';
+$handler->display->display_options['access']['perm'] = 'edit own safe zone';
+$handler->display->display_options['cache']['type'] = 'none';
+$handler->display->display_options['query']['type'] = 'views_query';
+$handler->display->display_options['exposed_form']['type'] = 'basic';
+$handler->display->display_options['pager']['type'] = 'full';
+$handler->display->display_options['pager']['options']['items_per_page'] = '20';
+$handler->display->display_options['style_plugin'] = 'default';
+$handler->display->display_options['style_options']['grouping'] = array(
+  0 => array(
+    'field' => 'field_status',
+    'rendered' => 1,
+    'rendered_strip' => 0,
+  ),
+);
+$handler->display->display_options['row_plugin'] = 'fields';
+$handler->display->display_options['row_options']['inline'] = array(
+  'tid' => 'tid',
+  'name' => 'name',
+  'field_status' => 'field_status',
+);
+/* Field: Taxonomy term: Term ID */
+$handler->display->display_options['fields']['tid']['id'] = 'tid';
+$handler->display->display_options['fields']['tid']['table'] = 'taxonomy_term_data';
+$handler->display->display_options['fields']['tid']['field'] = 'tid';
+$handler->display->display_options['fields']['tid']['label'] = '';
+$handler->display->display_options['fields']['tid']['exclude'] = TRUE;
+$handler->display->display_options['fields']['tid']['alter']['path'] = 'bookshelf/[tid]/edit';
+$handler->display->display_options['fields']['tid']['element_label_colon'] = FALSE;
+$handler->display->display_options['fields']['tid']['separator'] = '';
+/* Field: Taxonomy term: Name */
+$handler->display->display_options['fields']['name']['id'] = 'name';
+$handler->display->display_options['fields']['name']['table'] = 'taxonomy_term_data';
+$handler->display->display_options['fields']['name']['field'] = 'name';
+$handler->display->display_options['fields']['name']['label'] = '';
+$handler->display->display_options['fields']['name']['alter']['alter_text'] = TRUE;
+$handler->display->display_options['fields']['name']['alter']['text'] = '[name] (<a href="/safe-zone/[tid]/edit">edit</a>)';
+$handler->display->display_options['fields']['name']['alter']['word_boundary'] = FALSE;
+$handler->display->display_options['fields']['name']['alter']['ellipsis'] = FALSE;
+$handler->display->display_options['fields']['name']['element_label_colon'] = FALSE;
+/* Field: Taxonomy term: Status */
+$handler->display->display_options['fields']['field_status']['id'] = 'field_status';
+$handler->display->display_options['fields']['field_status']['table'] = 'field_data_field_status';
+$handler->display->display_options['fields']['field_status']['field'] = 'field_status';
+$handler->display->display_options['fields']['field_status']['label'] = '';
+$handler->display->display_options['fields']['field_status']['exclude'] = TRUE;
+$handler->display->display_options['fields']['field_status']['element_label_colon'] = FALSE;
+/* Sort criterion: Taxonomy term: Term ID */
+$handler->display->display_options['sorts']['tid']['id'] = 'tid';
+$handler->display->display_options['sorts']['tid']['table'] = 'taxonomy_term_data';
+$handler->display->display_options['sorts']['tid']['field'] = 'tid';
+$handler->display->display_options['sorts']['tid']['order'] = 'DESC';
+/* Filter criterion: Taxonomy vocabulary: Machine name */
+$handler->display->display_options['filters']['machine_name']['id'] = 'machine_name';
+$handler->display->display_options['filters']['machine_name']['table'] = 'taxonomy_vocabulary';
+$handler->display->display_options['filters']['machine_name']['field'] = 'machine_name';
+$handler->display->display_options['filters']['machine_name']['value'] = array(
+  'safe_zone' => 'safe_zone',
+);
+/* Filter criterion: Taxonomy term: uid (field_uid) */
+$handler->display->display_options['filters']['field_uid_value']['id'] = 'field_uid_value';
+$handler->display->display_options['filters']['field_uid_value']['table'] = 'field_data_field_uid';
+$handler->display->display_options['filters']['field_uid_value']['field'] = 'field_uid_value';
+$handler->display->display_options['filters']['field_uid_value']['value']['value'] = '0';
+$handler->display->display_options['filters']['field_uid_value']['expose']['operator_id'] = 'field_uid_value_op';
+$handler->display->display_options['filters']['field_uid_value']['expose']['label'] = 'uid (field_uid)';
+$handler->display->display_options['filters']['field_uid_value']['expose']['operator'] = 'field_uid_value_op';
+$handler->display->display_options['filters']['field_uid_value']['expose']['identifier'] = 'field_uid_value';
+
+/* Display: Page */
+$handler = $view->new_display('page', 'Page', 'page');
+$handler->display->display_options['path'] = 'user/my-safe-zones';
+$handler->display->display_options['menu']['type'] = 'normal';
+$handler->display->display_options['menu']['title'] = 'My Safe Zones';
+$handler->display->display_options['menu']['weight'] = '0';
+$handler->display->display_options['menu']['name'] = 'user-menu';
+$handler->display->display_options['menu']['context'] = 0;
+$handler->display->display_options['menu']['context_only_inline'] = 0;
+
+/* Display: Safe Zones for Moderator */
+$handler = $view->new_display('page', 'Safe Zones for Moderator', 'page_1');
+$handler->display->display_options['defaults']['style_plugin'] = FALSE;
+$handler->display->display_options['style_plugin'] = 'default';
+$handler->display->display_options['style_options']['grouping'] = array(
+  0 => array(
+    'field' => 'field_status',
+    'rendered' => 1,
+    'rendered_strip' => 0,
+  ),
+);
+$handler->display->display_options['defaults']['style_options'] = FALSE;
+$handler->display->display_options['defaults']['row_plugin'] = FALSE;
+$handler->display->display_options['row_plugin'] = 'fields';
+$handler->display->display_options['row_options']['inline'] = array(
+  'tid' => 'tid',
+  'name' => 'name',
+  'field_status' => 'field_status',
+  'field_uid' => 'field_uid',
+  'field_places' => 'field_places',
+);
+$handler->display->display_options['defaults']['row_options'] = FALSE;
+$handler->display->display_options['defaults']['fields'] = FALSE;
+/* Field: Taxonomy term: Term ID */
+$handler->display->display_options['fields']['tid']['id'] = 'tid';
+$handler->display->display_options['fields']['tid']['table'] = 'taxonomy_term_data';
+$handler->display->display_options['fields']['tid']['field'] = 'tid';
+$handler->display->display_options['fields']['tid']['label'] = '';
+$handler->display->display_options['fields']['tid']['exclude'] = TRUE;
+$handler->display->display_options['fields']['tid']['alter']['path'] = 'bookshelf/[tid]/manage';
+$handler->display->display_options['fields']['tid']['element_label_colon'] = FALSE;
+$handler->display->display_options['fields']['tid']['separator'] = '';
+/* Field: Taxonomy term: Name */
+$handler->display->display_options['fields']['name']['id'] = 'name';
+$handler->display->display_options['fields']['name']['table'] = 'taxonomy_term_data';
+$handler->display->display_options['fields']['name']['field'] = 'name';
+$handler->display->display_options['fields']['name']['label'] = '';
+$handler->display->display_options['fields']['name']['alter']['alter_text'] = TRUE;
+$handler->display->display_options['fields']['name']['alter']['text'] = '[name] (<a href="/safe-zone/[tid]/manage">manage</a>)';
+$handler->display->display_options['fields']['name']['alter']['word_boundary'] = FALSE;
+$handler->display->display_options['fields']['name']['alter']['ellipsis'] = FALSE;
+$handler->display->display_options['fields']['name']['element_label_colon'] = FALSE;
+/* Field: Taxonomy term: Places */
+$handler->display->display_options['fields']['field_places']['id'] = 'field_places';
+$handler->display->display_options['fields']['field_places']['table'] = 'field_data_field_places';
+$handler->display->display_options['fields']['field_places']['field'] = 'field_places';
+$handler->display->display_options['fields']['field_places']['label'] = '';
+$handler->display->display_options['fields']['field_places']['element_label_colon'] = FALSE;
+$handler->display->display_options['fields']['field_places']['settings'] = array(
+  'linked' => 0,
+);
+/* Field: Taxonomy term: Status */
+$handler->display->display_options['fields']['field_status']['id'] = 'field_status';
+$handler->display->display_options['fields']['field_status']['table'] = 'field_data_field_status';
+$handler->display->display_options['fields']['field_status']['field'] = 'field_status';
+$handler->display->display_options['fields']['field_status']['label'] = '';
+$handler->display->display_options['fields']['field_status']['exclude'] = TRUE;
+$handler->display->display_options['fields']['field_status']['element_label_colon'] = FALSE;
+/* Field: Taxonomy term: uid */
+$handler->display->display_options['fields']['field_uid']['id'] = 'field_uid';
+$handler->display->display_options['fields']['field_uid']['table'] = 'field_data_field_uid';
+$handler->display->display_options['fields']['field_uid']['field'] = 'field_uid';
+$handler->display->display_options['fields']['field_uid']['label'] = '';
+$handler->display->display_options['fields']['field_uid']['element_label_colon'] = FALSE;
+$handler->display->display_options['fields']['field_uid']['type'] = 'list_user';
+$handler->display->display_options['fields']['field_uid']['settings'] = array(
+  'thousand_separator' => ' ',
+  'prefix_suffix' => 1,
+);
+$handler->display->display_options['defaults']['filter_groups'] = FALSE;
+$handler->display->display_options['defaults']['filters'] = FALSE;
+/* Filter criterion: Taxonomy vocabulary: Machine name */
+$handler->display->display_options['filters']['machine_name']['id'] = 'machine_name';
+$handler->display->display_options['filters']['machine_name']['table'] = 'taxonomy_vocabulary';
+$handler->display->display_options['filters']['machine_name']['field'] = 'machine_name';
+$handler->display->display_options['filters']['machine_name']['value'] = array(
+  'safe_zone' => 'safe_zone',
+);
+/* Filter criterion: Taxonomy term: Status (field_status) */
+$handler->display->display_options['filters']['field_status_value']['id'] = 'field_status_value';
+$handler->display->display_options['filters']['field_status_value']['table'] = 'field_data_field_status';
+$handler->display->display_options['filters']['field_status_value']['field'] = 'field_status_value';
+$handler->display->display_options['filters']['field_status_value']['value'] = array(
+  0 => '0',
+  2 => '2',
+  3 => '3',
+);
+$handler->display->display_options['path'] = 'admin/config/bookcrossing/safe-zones';
+$handler->display->display_options['menu']['type'] = 'normal';
+$handler->display->display_options['menu']['title'] = 'Manage Safe Zones';
+$handler->display->display_options['menu']['weight'] = '0';
+$handler->display->display_options['menu']['name'] = 'management';
+$handler->display->display_options['menu']['context'] = 0;
+$handler->display->display_options['menu']['context_only_inline'] = 0;
+$translatables['my_safezones'] = array(
+  t('Master'),
+  t('Safe zones'),
+  t('more'),
+  t('Apply'),
+  t('Reset'),
+  t('Sort by'),
+  t('Asc'),
+  t('Desc'),
+  t('Items per page'),
+  t('- All -'),
+  t('Offset'),
+  t('« first'),
+  t('‹ previous'),
+  t('next ›'),
+  t('last »'),
+  t('.'),
+  t('[name] (<a href="/safe-zone/[tid]/manage">manage</a>)'),
+  t('uid (field_uid)'),
+  t('Page'),
+  t('Manage Safe Zones'),
+);

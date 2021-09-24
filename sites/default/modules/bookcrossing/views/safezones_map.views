@@ -1,0 +1,48 @@
+$view = new view();
+$view->name = 'safezones_map';
+$view->description = 'Display safe zone on a map';
+$view->tag = 'default';
+$view->base_table = 'getlocations_fields';
+$view->human_name = 'Safe Zones Map';
+$view->core = 7;
+$view->api_version = '3.0';
+$view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
+
+/* Display: Master */
+$handler = $view->new_display('default', 'Master', 'default');
+$handler->display->display_options['title'] = 'Safe Zones Map';
+$handler->display->display_options['use_more_always'] = FALSE;
+$handler->display->display_options['access']['type'] = 'none';
+$handler->display->display_options['cache']['type'] = 'none';
+$handler->display->display_options['query']['type'] = 'views_query';
+$handler->display->display_options['exposed_form']['type'] = 'basic';
+$handler->display->display_options['pager']['type'] = 'some';
+$handler->display->display_options['pager']['options']['items_per_page'] = '5';
+$handler->display->display_options['style_plugin'] = 'getlocations';
+$handler->display->display_options['style_options']['width'] = '700px';
+$handler->display->display_options['style_options']['height'] = '350px';
+$handler->display->display_options['style_options']['usemarkermanager'] = 0;
+$handler->display->display_options['style_options']['useclustermanager'] = 0;
+$handler->display->display_options['style_options']['fullscreen_disable'] = 1;
+$handler->display->display_options['style_options']['category_method'] = '0';
+$handler->display->display_options['style_options']['category_term_reference_field'] = 'field_bookcrossing_genre';
+$handler->display->display_options['style_options']['empty_result'] = 1;
+/* Field: Getlocations Fields: Glid */
+$handler->display->display_options['fields']['glid']['id'] = 'glid';
+$handler->display->display_options['fields']['glid']['table'] = 'getlocations_fields';
+$handler->display->display_options['fields']['glid']['field'] = 'glid';
+
+/* Display: Block */
+$handler = $view->new_display('block', 'Block', 'block');
+$translatables['safezones_map'] = array(
+  t('Master'),
+  t('Safe Zones Map'),
+  t('more'),
+  t('Apply'),
+  t('Reset'),
+  t('Sort by'),
+  t('Asc'),
+  t('Desc'),
+  t('Glid'),
+  t('Block'),
+);

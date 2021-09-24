@@ -17,7 +17,7 @@ Drupal.behaviors.autocomplete = {
       $($input[0].form).submit(Drupal.autocompleteSubmit);
       $input.parent()
         .attr('role', 'application')
-        .append($('<span class="element-invisible" aria-live="assertive"></span>')
+        .append($('<span class="element-invisible" aria-live="assertive" aria-atomic="true"></span>')
           .attr('id', $input.attr('id') + '-autocomplete-aria-live')
         );
       new Drupal.jsAC($input, acdb[uri]);
@@ -114,6 +114,7 @@ Drupal.jsAC.prototype.onkeyup = function (input, e) {
  */
 Drupal.jsAC.prototype.select = function (node) {
   this.input.value = $(node).data('autocompleteValue');
+  $(this.input).trigger('autocompleteSelect', [node]);
 };
 
 /**
@@ -167,7 +168,7 @@ Drupal.jsAC.prototype.unhighlight = function (node) {
 Drupal.jsAC.prototype.hidePopup = function (keycode) {
   // Select item if the right key or mousebutton was pressed.
   if (this.selected && ((keycode && keycode != 46 && keycode != 8 && keycode != 27) || !keycode)) {
-    this.input.value = $(this.selected).data('autocompleteValue');
+    this.select(this.selected);
   }
   // Hide popup.
   var popup = this.popup;
@@ -220,7 +221,7 @@ Drupal.jsAC.prototype.found = function (matches) {
   for (key in matches) {
     $('<li></li>')
       .html($('<div></div>').html(matches[key]))
-      .mousedown(function () { ac.select(this); })
+      .mousedown(function () { ac.hidePopup(this); })
       .mouseover(function () { ac.highlight(this); })
       .mouseout(function () { ac.unhighlight(this); })
       .data('autocompleteValue', key)
@@ -270,8 +271,11 @@ Drupal.ACDB.prototype.search = function (searchString) {
   var db = this;
   this.searchString = searchString;
 
-  // See if this string needs to be searched for anyway.
-  searchString = searchString.replace(/^\s+|\s+$/, '');
+  // See if this string needs to be searched for anyway. The pattern ../ is
+  // stripped since it may be misinterpreted by the browser.
+  searchString = searchString.replace(/^\s+|\.{2,}\/|\s+$/g, '');
+  // Skip empty search strings, or search strings ending with a comma, since
+  // that is the separator between search terms.
   if (searchString.length <= 0 ||
     searchString.charAt(searchString.length - 1) == ',') {
     return;
@@ -293,8 +297,9 @@ Drupal.ACDB.prototype.search = function (searchString) {
     // encodeURIComponent to allow autocomplete search terms to contain slashes.
     $.ajax({
       type: 'GET',
-      url: db.uri + '/' + Drupal.encodePath(searchString),
+      url: Drupal.sanitizeAjaxUrl(db.uri + '/' + Drupal.encodePath(searchString)),
       dataType: 'json',
+      jsonp: false,
       success: function (matches) {
         if (typeof matches.status == 'undefined' || matches.status != 0) {
           db.cache[searchString] = matches;
@@ -306,7 +311,7 @@ Drupal.ACDB.prototype.search = function (searchString) {
         }
       },
       error: function (xmlhttp) {
-        alert(Drupal.ajaxError(xmlhttp, db.uri));
+        Drupal.displayAjaxError(Drupal.ajaxError(xmlhttp, db.uri));
       }
     });
   }, this.delay);

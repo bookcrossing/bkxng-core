@@ -14,6 +14,8 @@
 
 Drupal.ajax = Drupal.ajax || {};
 
+Drupal.settings.urlIsAjaxTrusted = Drupal.settings.urlIsAjaxTrusted || {};
+
 /**
  * Attaches the Ajax behavior to each Ajax form element.
  */
@@ -130,6 +132,11 @@ Drupal.ajax = function (base, element, element_settings) {
   // 5. /nojs# - Followed by a fragment.
   //      E.g.: path/nojs#myfragment
   this.url = element_settings.url.replace(/\/nojs(\/|$|\?|&|#)/g, '/ajax$1');
+  // If the 'nojs' version of the URL is trusted, also trust the 'ajax' version.
+  if (Drupal.settings.urlIsAjaxTrusted[element_settings.url]) {
+    Drupal.settings.urlIsAjaxTrusted[this.url] = true;
+  }
+
   this.wrapper = '#' + element_settings.wrapper;
 
   // If there isn't a form, jQuery.ajax() will be used instead, allowing us to
@@ -142,7 +149,7 @@ Drupal.ajax = function (base, element, element_settings) {
   // The 'this' variable will not persist inside of the options object.
   var ajax = this;
   ajax.options = {
-    url: ajax.url,
+    url: Drupal.sanitizeAjaxUrl(ajax.url),
     data: ajax.submit,
     beforeSerialize: function (element_settings, options) {
       return ajax.beforeSerialize(element_settings, options);
@@ -155,26 +162,67 @@ Drupal.ajax = function (base, element, element_settings) {
       ajax.ajaxing = true;
       return ajax.beforeSend(xmlhttprequest, options);
     },
-    success: function (response, status) {
+    success: function (response, status, xmlhttprequest) {
       // Sanity check for browser support (object expected).
       // When using iFrame uploads, responses must be returned as a string.
       if (typeof response == 'string') {
         response = $.parseJSON(response);
       }
+
+      // Prior to invoking the response's commands, verify that they can be
+      // trusted by checking for a response header. See
+      // ajax_set_verification_header() for details.
+      // - Empty responses are harmless so can bypass verification. This avoids
+      //   an alert message for server-generated no-op responses that skip Ajax
+      //   rendering.
+      // - Ajax objects with trusted URLs (e.g., ones defined server-side via
+      //   #ajax) can bypass header verification. This is especially useful for
+      //   Ajax with multipart forms. Because IFRAME transport is used, the
+      //   response headers cannot be accessed for verification.
+      if (response !== null && !Drupal.settings.urlIsAjaxTrusted[ajax.url]) {
+        if (xmlhttprequest.getResponseHeader('X-Drupal-Ajax-Token') !== '1') {
+          var customMessage = Drupal.t("The response failed verification so will not be processed.");
+          return ajax.error(xmlhttprequest, ajax.url, customMessage);
+        }
+      }
+
       return ajax.success(response, status);
     },
-    complete: function (response, status) {
+    complete: function (xmlhttprequest, status) {
       ajax.ajaxing = false;
       if (status == 'error' || status == 'parsererror') {
-        return ajax.error(response, ajax.url);
+        return ajax.error(xmlhttprequest, ajax.url);
       }
     },
     dataType: 'json',
+    jsonp: false,
     type: 'POST'
   };
 
+  // For multipart forms (e.g., file uploads), jQuery Form targets the form
+  // submission to an iframe instead of using an XHR object. The initial "src"
+  // of the iframe, prior to the form submission, is set to options.iframeSrc.
+  // "about:blank" is the semantically correct, standards-compliant, way to
+  // initialize a blank iframe; however, some old IE versions (possibly only 6)
+  // incorrectly report a mixed content warning when iframes with an
+  // "about:blank" src are added to a parent document with an https:// origin.
+  // jQuery Form works around this by defaulting to "javascript:false" instead,
+  // but that breaks on Chrome 83, so here we force the semantically correct
+  // behavior for all browsers except old IE.
+  // @see https://www.drupal.org/project/drupal/issues/3143016
+  // @see https://github.com/jquery-form/form/blob/df9cb101b9c9c085c8d75ad980c7ff1cf62063a1/jquery.form.js#L68
+  // @see https://bugs.chromium.org/p/chromium/issues/detail?id=1084874
+  // @see https://html.spec.whatwg.org/multipage/browsers.html#creating-browsing-contexts
+  // @see https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy
+  if (navigator.userAgent.indexOf("MSIE") === -1) {
+    ajax.options.iframeSrc = 'about:blank';
+  }
+
   // Bind the ajaxSubmit function to the element event.
   $(ajax.element).bind(element_settings.event, function (event) {
+    if (!Drupal.settings.urlIsAjaxTrusted[ajax.url] && !Drupal.urlIsLocal(ajax.url)) {
+      throw new Error(Drupal.t('The callback URL is not local and not trusted: !url', {'!url': ajax.url}));
+    }
     return ajax.eventResponse(this, event);
   });
 
@@ -348,7 +396,7 @@ Drupal.ajax.prototype.beforeSend = function (xmlhttprequest, options) {
     // this is only needed for IFRAME submissions.
     var v = $.fieldValue(this.element);
     if (v !== null) {
-      options.extraData[this.element.name] = v;
+      options.extraData[this.element.name] = Drupal.checkPlain(v);
     }
   }
 
@@ -360,7 +408,7 @@ Drupal.ajax.prototype.beforeSend = function (xmlhttprequest, options) {
 
   // Insert progressbar or throbber.
   if (this.progress.type == 'bar') {
-    var progressBar = new Drupal.progressBar('ajax-progress-' + this.element.id, eval(this.progress.update_callback), this.progress.method, eval(this.progress.error_callback));
+    var progressBar = new Drupal.progressBar('ajax-progress-' + this.element.id, $.noop, this.progress.method, $.noop);
     if (this.progress.message) {
       progressBar.setProgress(-1, this.progress.message);
     }
@@ -447,8 +495,8 @@ Drupal.ajax.prototype.getEffect = function (response) {
 /**
  * Handler for the form redirection error.
  */
-Drupal.ajax.prototype.error = function (response, uri) {
-  alert(Drupal.ajaxError(response, uri));
+Drupal.ajax.prototype.error = function (xmlhttprequest, uri, customMessage) {
+  Drupal.displayAjaxError(Drupal.ajaxError(xmlhttprequest, uri, customMessage));
   // Remove the progress element.
   if (this.progress.element) {
     $(this.progress.element).remove();
@@ -462,7 +510,7 @@ Drupal.ajax.prototype.error = function (response, uri) {
   $(this.element).removeClass('progress-disabled').removeAttr('disabled');
   // Reattach behaviors, if they were detached in beforeSerialize().
   if (this.form) {
-    var settings = response.settings || this.settings || Drupal.settings;
+    var settings = this.settings || Drupal.settings;
     Drupal.attachBehaviors(this.form, settings);
   }
 };
@@ -616,6 +664,33 @@ Drupal.ajax.prototype.commands = {
       .removeClass('odd even')
       .filter(':even').addClass('odd').end()
       .filter(':odd').addClass('even');
+  },
+
+  /**
+   * Command to add css.
+   *
+   * Uses the proprietary addImport method if available as browsers which
+   * support that method ignore @import statements in dynamically added
+   * stylesheets.
+   */
+  add_css: function (ajax, response, status) {
+    // Add the styles in the normal way.
+    $('head').prepend(response.data);
+    // Add imports in the styles using the addImport method if available.
+    var match, importMatch = /^@import url\("(.*)"\);$/igm;
+    if (document.styleSheets[0].addImport && importMatch.test(response.data)) {
+      importMatch.lastIndex = 0;
+      while (match = importMatch.exec(response.data)) {
+        document.styleSheets[0].addImport(match[1]);
+      }
+    }
+  },
+
+  /**
+   * Command to update a form's build ID.
+   */
+  updateBuildId: function(ajax, response, status) {
+    $('input[name="form_build_id"][value="' + response['old'] + '"]').val(response['new']);
   }
 };
 

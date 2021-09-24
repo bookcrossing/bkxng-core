@@ -1,0 +1,10 @@
+name = BookCrossing ID
+description = Adds support for BCID field
+package = "bookcrossing"
+
+# dependencies[] = bookcrossing
+
+version = 7.x-1.0
+core = 7.x
+
+project = "bcid"

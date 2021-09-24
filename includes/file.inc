@@ -273,7 +273,9 @@ function file_default_scheme() {
  *   The normalized URI.
  */
 function file_stream_wrapper_uri_normalize($uri) {
-  $scheme = file_uri_scheme($uri);
+  // Inline file_uri_scheme() function call for performance reasons.
+  $position = strpos($uri, '://');
+  $scheme = $position ? substr($uri, 0, $position) : FALSE;
 
   if ($scheme && file_stream_wrapper_valid_scheme($scheme)) {
     $target = file_uri_target($uri);
@@ -530,10 +532,24 @@ SetHandler Drupal_Security_Do_Not_Remove_See_SA_2006_006
 <IfModule mod_php5.c>
   php_flag engine off
 </IfModule>
+<IfModule mod_php7.c>
+  php_flag engine off
+</IfModule>
 EOF;
 
   if ($private) {
-    $lines = "Deny from all\n\n" . $lines;
+    $lines = <<<EOF
+# Deny all requests from Apache 2.4+.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+
+# Deny all requests from Apache 2.0-2.2.
+<IfModule !mod_authz_core.c>
+  Deny from all
+</IfModule>
+EOF
+    . "\n\n" . $lines;
   }
 
   return $lines;
@@ -621,7 +637,11 @@ function file_save(stdClass $file) {
     module_invoke_all('entity_update', $file, 'file');
   }
 
+  // Clear internal properties.
   unset($file->original);
+  // Clear the static loading cache.
+  entity_get_controller('file')->resetCache(array($file->fid));
+
   return $file;
 }
 
@@ -883,7 +903,6 @@ function file_valid_uri($uri) {
  */
 function file_unmanaged_copy($source, $destination = NULL, $replace = FILE_EXISTS_RENAME) {
   $original_source = $source;
-  $original_destination = $destination;
 
   // Assert that the source file actually exists.
   if (!file_exists($source)) {
@@ -977,8 +996,15 @@ function file_build_uri($path) {
  * @return
  *   The destination filepath, or FALSE if the file already exists
  *   and FILE_EXISTS_ERROR is specified.
+ *
+ * @throws RuntimeException
+ *   Thrown if the filename contains invalid UTF-8.
  */
 function file_destination($destination, $replace) {
+  $basename = drupal_basename($destination);
+  if (!drupal_validate_utf8($basename)) {
+    throw new RuntimeException(sprintf("Invalid filename '%s'", $basename));
+  }
   if (file_exists($destination)) {
     switch ($replace) {
       case FILE_EXISTS_REPLACE:
@@ -986,7 +1012,6 @@ function file_destination($destination, $replace) {
         break;
 
       case FILE_EXISTS_RENAME:
-        $basename = drupal_basename($destination);
         $directory = drupal_dirname($destination);
         $destination = file_create_filename($basename, $directory);
         break;
@@ -1122,8 +1147,8 @@ function file_unmanaged_move($source, $destination = NULL, $replace = FILE_EXIST
  * exploit.php_.pps.
  *
  * Specifically, this function adds an underscore to all extensions that are
- * between 2 and 5 characters in length, internal to the file name, and not
- * included in $extensions.
+ * between 2 and 5 characters in length, internal to the file name, and either
+ * included in the list of unsafe extensions, or not included in $extensions.
  *
  * Function behavior is also controlled by the Drupal variable
  * 'allow_insecure_uploads'. If 'allow_insecure_uploads' evaluates to TRUE, no
@@ -1132,7 +1157,8 @@ function file_unmanaged_move($source, $destination = NULL, $replace = FILE_EXIST
  * @param $filename
  *   File name to modify.
  * @param $extensions
- *   A space-separated list of extensions that should not be altered.
+ *   A space-separated list of extensions that should not be altered. Note that
+ *   extensions that are unsafe will be altered regardless of this parameter.
  * @param $alerts
  *   If TRUE, drupal_set_message() will be called to display a message if the
  *   file name was changed.
@@ -1148,7 +1174,11 @@ function file_munge_filename($filename, $extensions, $alerts = TRUE) {
     // Remove any null bytes. See http://php.net/manual/security.filesystem.nullbytes.php
     $filename = str_replace(chr(0), '', $filename);
 
-    $whitelist = array_unique(explode(' ', trim($extensions)));
+    $whitelist = array_unique(explode(' ', strtolower(trim($extensions))));
+
+    // Remove unsafe extensions from the list of allowed extensions. The list is
+    // copied from file_save_upload().
+    $whitelist = array_diff($whitelist, explode('|', 'php|phar|pl|py|cgi|asp|js'));
 
     // Split the filename up by periods. The first part becomes the basename
     // the last part the final extension.
@@ -1161,7 +1191,7 @@ function file_munge_filename($filename, $extensions, $alerts = TRUE) {
     // of allowed extensions.
     foreach ($filename_parts as $filename_part) {
       $new_filename .= '.' . $filename_part;
-      if (!in_array($filename_part, $whitelist) && preg_match("/^[a-zA-Z]{2,5}\d?$/", $filename_part)) {
+      if (!in_array(strtolower($filename_part), $whitelist) && preg_match("/^[a-zA-Z]{2,5}\d?$/", $filename_part)) {
         $new_filename .= '_';
       }
     }
@@ -1202,11 +1232,20 @@ function file_unmunge_filename($filename) {
  * @return
  *   File path consisting of $directory and a unique filename based off
  *   of $basename.
+ *
+ * @throws RuntimeException
+ *   Thrown if the $basename is not valid UTF-8 or another error occurs
+ *   stripping control characters.
  */
 function file_create_filename($basename, $directory) {
+  $original = $basename;
   // Strip control characters (ASCII value < 32). Though these are allowed in
   // some filesystems, not many applications handle them well.
   $basename = preg_replace('/[\x00-\x1F]/u', '_', $basename);
+  if (preg_last_error() !== PREG_NO_ERROR) {
+    throw new RuntimeException(sprintf("Invalid filename '%s'", $original));
+  }
+
   if (substr(PHP_OS, 0, 3) == 'WIN') {
     // These characters are not allowed in Windows filenames
     $basename = str_replace(array(':', '*', '?', '"', '<', '>', '|'), '_', $basename);
@@ -1293,6 +1332,7 @@ function file_delete(stdClass $file, $force = FALSE) {
   if (file_unmanaged_delete($file->uri)) {
     db_delete('file_managed')->condition('fid', $file->fid)->execute();
     db_delete('file_usage')->condition('fid', $file->fid)->execute();
+    entity_get_controller('file')->resetCache();
     return TRUE;
   }
   return FALSE;
@@ -1402,8 +1442,9 @@ function file_space_used($uid = NULL, $status = FILE_STATUS_PERMANENT) {
  * Temporary files are periodically cleaned. To make the file a permanent file,
  * assign the status and use file_save() to save the changes.
  *
- * @param $source
- *   A string specifying the filepath or URI of the uploaded file to save.
+ * @param $form_field_name
+ *   A string that is the associative array key of the upload form element in
+ *   the form array.
  * @param $validators
  *   An optional, associative array of callback functions used to validate the
  *   file. See file_validate() for a full discussion of the array format.
@@ -1414,9 +1455,9 @@ function file_space_used($uid = NULL, $status = FILE_STATUS_PERMANENT) {
  *   (Beware: this is not safe and should only be allowed for trusted users, if
  *   at all).
  * @param $destination
- *   A string containing the URI $source should be copied to.
- *   This must be a stream wrapper URI. If this value is omitted, Drupal's
- *   temporary files scheme will be used ("temporary://").
+ *   A string containing the URI that the file should be copied to. This must
+ *   be a stream wrapper URI. If this value is omitted, Drupal's temporary
+ *   files scheme will be used ("temporary://").
  * @param $replace
  *   Replace behavior when the destination file already exists:
  *   - FILE_EXISTS_REPLACE: Replace the existing file.
@@ -1434,45 +1475,45 @@ function file_space_used($uid = NULL, $status = FILE_STATUS_PERMANENT) {
  *   - source: Path to the file before it is moved.
  *   - destination: Path to the file after it is moved (same as 'uri').
  */
-function file_save_upload($source, $validators = array(), $destination = FALSE, $replace = FILE_EXISTS_RENAME) {
+function file_save_upload($form_field_name, $validators = array(), $destination = FALSE, $replace = FILE_EXISTS_RENAME) {
   global $user;
   static $upload_cache;
 
   // Return cached objects without processing since the file will have
   // already been processed and the paths in _FILES will be invalid.
-  if (isset($upload_cache[$source])) {
-    return $upload_cache[$source];
+  if (isset($upload_cache[$form_field_name])) {
+    return $upload_cache[$form_field_name];
   }
 
   // Make sure there's an upload to process.
-  if (empty($_FILES['files']['name'][$source])) {
+  if (empty($_FILES['files']['name'][$form_field_name])) {
     return NULL;
   }
 
   // Check for file upload errors and return FALSE if a lower level system
   // error occurred. For a complete list of errors:
   // See http://php.net/manual/features.file-upload.errors.php.
-  switch ($_FILES['files']['error'][$source]) {
+  switch ($_FILES['files']['error'][$form_field_name]) {
     case UPLOAD_ERR_INI_SIZE:
     case UPLOAD_ERR_FORM_SIZE:
-      drupal_set_message(t('The file %file could not be saved, because it exceeds %maxsize, the maximum allowed size for uploads.', array('%file' => $_FILES['files']['name'][$source], '%maxsize' => format_size(file_upload_max_size()))), 'error');
+      drupal_set_message(t('The file %file could not be saved, because it exceeds %maxsize, the maximum allowed size for uploads.', array('%file' => $_FILES['files']['name'][$form_field_name], '%maxsize' => format_size(file_upload_max_size()))), 'error');
       return FALSE;
 
     case UPLOAD_ERR_PARTIAL:
     case UPLOAD_ERR_NO_FILE:
-      drupal_set_message(t('The file %file could not be saved, because the upload did not complete.', array('%file' => $_FILES['files']['name'][$source])), 'error');
+      drupal_set_message(t('The file %file could not be saved, because the upload did not complete.', array('%file' => $_FILES['files']['name'][$form_field_name])), 'error');
       return FALSE;
 
     case UPLOAD_ERR_OK:
       // Final check that this is a valid upload, if it isn't, use the
       // default error handler.
-      if (is_uploaded_file($_FILES['files']['tmp_name'][$source])) {
+      if (is_uploaded_file($_FILES['files']['tmp_name'][$form_field_name])) {
         break;
       }
 
     // Unknown error
     default:
-      drupal_set_message(t('The file %file could not be saved. An unknown error has occurred.', array('%file' => $_FILES['files']['name'][$source])), 'error');
+      drupal_set_message(t('The file %file could not be saved. An unknown error has occurred.', array('%file' => $_FILES['files']['name'][$form_field_name])), 'error');
       return FALSE;
   }
 
@@ -1480,10 +1521,10 @@ function file_save_upload($source, $validators = array(), $destination = FALSE, 
   $file = new stdClass();
   $file->uid      = $user->uid;
   $file->status   = 0;
-  $file->filename = trim(drupal_basename($_FILES['files']['name'][$source]), '.');
-  $file->uri      = $_FILES['files']['tmp_name'][$source];
+  $file->filename = trim(drupal_basename($_FILES['files']['name'][$form_field_name]), '.');
+  $file->uri      = $_FILES['files']['tmp_name'][$form_field_name];
   $file->filemime = file_get_mimetype($file->filename);
-  $file->filesize = $_FILES['files']['size'][$source];
+  $file->filesize = $_FILES['files']['size'][$form_field_name];
 
   $extensions = '';
   if (isset($validators['file_validate_extensions'])) {
@@ -1506,25 +1547,35 @@ function file_save_upload($source, $validators = array(), $destination = FALSE, 
     $validators['file_validate_extensions'][0] = $extensions;
   }
 
-  if (!empty($extensions)) {
-    // Munge the filename to protect against possible malicious extension hiding
-    // within an unknown file type (ie: filename.html.foo).
-    $file->filename = file_munge_filename($file->filename, $extensions);
-  }
-
-  // Rename potentially executable files, to help prevent exploits (i.e. will
-  // rename filename.php.foo and filename.php to filename.php.foo.txt and
-  // filename.php.txt, respectively). Don't rename if 'allow_insecure_uploads'
-  // evaluates to TRUE.
-  if (!variable_get('allow_insecure_uploads', 0) && preg_match('/\.(php|pl|py|cgi|asp|js)(\.|$)/i', $file->filename) && (substr($file->filename, -4) != '.txt')) {
-    $file->filemime = 'text/plain';
-    $file->uri .= '.txt';
-    $file->filename .= '.txt';
-    // The .txt extension may not be in the allowed list of extensions. We have
-    // to add it here or else the file upload will fail.
+  if (!variable_get('allow_insecure_uploads', 0)) {
     if (!empty($extensions)) {
-      $validators['file_validate_extensions'][0] .= ' txt';
-      drupal_set_message(t('For security reasons, your upload has been renamed to %filename.', array('%filename' => $file->filename)));
+      // Munge the filename to protect against possible malicious extension hiding
+      // within an unknown file type (ie: filename.html.foo).
+      $file->filename = file_munge_filename($file->filename, $extensions);
+    }
+
+    // Rename potentially executable files, to help prevent exploits (i.e. will
+    // rename filename.php.foo and filename.php to filename.php_.foo_.txt and
+    // filename.php_.txt, respectively). Don't rename if 'allow_insecure_uploads'
+    // evaluates to TRUE.
+    if (preg_match('/\.(php|phar|pl|py|cgi|asp|js)(\.|$)/i', $file->filename)) {
+      // If the file will be rejected anyway due to a disallowed extension, it
+      // should not be renamed; rather, we'll let file_validate_extensions()
+      // reject it below.
+      if (!isset($validators['file_validate_extensions']) || !file_validate_extensions($file, $extensions)) {
+        $file->filemime = 'text/plain';
+        if (substr($file->filename, -4) != '.txt') {
+          // The destination filename will also later be used to create the URI.
+          $file->filename .= '.txt';
+        }
+        $file->filename = file_munge_filename($file->filename, $extensions, FALSE);
+        drupal_set_message(t('For security reasons, your upload has been renamed to %filename.', array('%filename' => $file->filename)));
+        // The .txt extension may not be in the allowed list of extensions. We have
+        // to add it here or else the file upload will fail.
+        if (!empty($validators['file_validate_extensions'][0])) {
+          $validators['file_validate_extensions'][0] .= ' txt';
+        }
+      }
     }
   }
 
@@ -1540,20 +1591,26 @@ function file_save_upload($source, $validators = array(), $destination = FALSE, 
     return FALSE;
   }
 
-  $file->source = $source;
+  $file->source = $form_field_name;
   // A URI may already have a trailing slash or look like "public://".
   if (substr($destination, -1) != '/') {
     $destination .= '/';
   }
-  $file->destination = file_destination($destination . $file->filename, $replace);
+  try {
+    $file->destination = file_destination($destination . $file->filename, $replace);
+  }
+  catch (RuntimeException $e) {
+    drupal_set_message(t('The file %source could not be uploaded because the name is invalid.', array('%source' => $form_field_name)), 'error');
+    return FALSE;
+  }
   // If file_destination() returns FALSE then $replace == FILE_EXISTS_ERROR and
   // there's an existing file so we need to bail.
   if ($file->destination === FALSE) {
-    drupal_set_message(t('The file %source could not be uploaded because a file by that name already exists in the destination %directory.', array('%source' => $source, '%directory' => $destination)), 'error');
+    drupal_set_message(t('The file %source could not be uploaded because a file by that name already exists in the destination %directory.', array('%source' => $form_field_name, '%directory' => $destination)), 'error');
     return FALSE;
   }
 
-  // Add in our check of the the file name length.
+  // Add in our check of the file name length.
   $validators['file_validate_name_length'] = array();
 
   // Call the validation functions specified by this function's caller.
@@ -1568,7 +1625,7 @@ function file_save_upload($source, $validators = array(), $destination = FALSE, 
     else {
       $message .= ' ' . array_pop($errors);
     }
-    form_set_error($source, $message);
+    form_set_error($form_field_name, $message);
     return FALSE;
   }
 
@@ -1576,8 +1633,8 @@ function file_save_upload($source, $validators = array(), $destination = FALSE, 
   // directory. This overcomes open_basedir restrictions for future file
   // operations.
   $file->uri = $file->destination;
-  if (!drupal_move_uploaded_file($_FILES['files']['tmp_name'][$source], $file->uri)) {
-    form_set_error($source, t('File upload error. Could not move uploaded file.'));
+  if (!drupal_move_uploaded_file($_FILES['files']['tmp_name'][$form_field_name], $file->uri)) {
+    form_set_error($form_field_name, t('File upload error. Could not move uploaded file.'));
     watchdog('file', 'Upload error. Could not move uploaded file %file to destination %destination.', array('%file' => $file->filename, '%destination' => $file->uri));
     return FALSE;
   }
@@ -1596,8 +1653,22 @@ function file_save_upload($source, $validators = array(), $destination = FALSE, 
 
   // If we made it this far it's safe to record this file in the database.
   if ($file = file_save($file)) {
+    // Track non-public files in the session if they were uploaded by an
+    // anonymous user. This allows modules such as the File module to only
+    // grant view access to the specific anonymous user who uploaded the file.
+    // See file_file_download().
+    // The 'file_public_schema' variable is used to allow other publicly
+    // accessible file schemes to be treated the same as the public:// scheme
+    // provided by Drupal core and to avoid adding unnecessary data to the
+    // session (and the resulting bypass of the page cache) in those cases. For
+    // security reasons, only schemes that are completely publicly accessible,
+    // with no download restrictions, should be added to this variable. See
+    // file_managed_file_value().
+    if (!$user->uid && !in_array($destination_scheme, variable_get('file_public_schema', array('public')))) {
+      $_SESSION['anonymous_allowed_file_ids'][$file->fid] = $file->fid;
+    }
     // Add file to the cache.
-    $upload_cache[$source] = $file;
+    $upload_cache[$form_field_name] = $file;
     return $file;
   }
   return FALSE;
@@ -1672,7 +1743,18 @@ function file_validate(stdClass &$file, $validators = array()) {
   }
 
   // Let other modules perform validation on the new file.
-  return array_merge($errors, module_invoke_all('file_validate', $file));
+  $errors = array_merge($errors, module_invoke_all('file_validate', $file));
+
+  // Ensure the file does not contain a malicious extension. At this point
+  // file_save_upload() will have munged the file so it does not contain a
+  // malicious extension. Contributed and custom code that calls this method
+  // needs to take similar steps if they need to permit files with malicious
+  // extensions to be uploaded.
+  if (empty($errors) && !variable_get('allow_insecure_uploads', 0) && preg_match('/\.(php|phar|pl|py|cgi|asp|js)(\.|$)/i', $file->filename)) {
+    $errors[] = t('For security reasons, your upload has been rejected.');
+  }
+
+  return $errors;
 }
 
 /**
@@ -1723,8 +1805,6 @@ function file_validate_extensions(stdClass $file, $extensions) {
 /**
  * Checks that the file's size is below certain limits.
  *
- * This check is not enforced for the user #1.
- *
  * @param $file
  *   A Drupal file object.
  * @param $file_limit
@@ -1742,20 +1822,17 @@ function file_validate_extensions(stdClass $file, $extensions) {
  */
 function file_validate_size(stdClass $file, $file_limit = 0, $user_limit = 0) {
   global $user;
-
   $errors = array();
 
-  // Bypass validation for uid  = 1.
-  if ($user->uid != 1) {
-    if ($file_limit && $file->filesize > $file_limit) {
-      $errors[] = t('The file is %filesize exceeding the maximum file size of %maxsize.', array('%filesize' => format_size($file->filesize), '%maxsize' => format_size($file_limit)));
-    }
-
-    // Save a query by only calling file_space_used() when a limit is provided.
-    if ($user_limit && (file_space_used($user->uid) + $file->filesize) > $user_limit) {
-      $errors[] = t('The file is %filesize which would exceed your disk quota of %quota.', array('%filesize' => format_size($file->filesize), '%quota' => format_size($user_limit)));
-    }
+  if ($file_limit && $file->filesize > $file_limit) {
+    $errors[] = t('The file is %filesize exceeding the maximum file size of %maxsize.', array('%filesize' => format_size($file->filesize), '%maxsize' => format_size($file_limit)));
   }
+
+  // Save a query by only calling file_space_used() when a limit is provided.
+  if ($user_limit && (file_space_used($user->uid) + $file->filesize) > $user_limit) {
+    $errors[] = t('The file is %filesize which would exceed your disk quota of %quota.', array('%filesize' => format_size($file->filesize), '%quota' => format_size($user_limit)));
+  }
+
   return $errors;
 }
 
@@ -1784,7 +1861,7 @@ function file_validate_is_image(stdClass $file) {
 /**
  * Verifies that image dimensions are within the specified maximum and minimum.
  *
- * Non-image files will be ignored. If a image toolkit is available the image
+ * Non-image files will be ignored. If an image toolkit is available the image
  * will be scaled to fit within the desired maximum dimensions.
  *
  * @param $file
@@ -1993,23 +2070,7 @@ function file_download() {
   $target = implode('/', $args);
   $uri = $scheme . '://' . $target;
   if (file_stream_wrapper_valid_scheme($scheme) && file_exists($uri)) {
-    // Let other modules provide headers and controls access to the file.
-    // module_invoke_all() uses array_merge_recursive() which merges header
-    // values into a new array. To avoid that and allow modules to override
-    // headers instead, use array_merge() to merge the returned arrays.
-    $headers = array();
-    foreach (module_implements('file_download') as $module) {
-      $function = $module . '_file_download';
-      $result = $function($uri);
-      if ($result == -1) {
-        // Throw away the headers received so far.
-        $headers = array();
-        break;
-      }
-      if (isset($result) && is_array($result)) {
-        $headers = array_merge($headers, $result);
-      }
-    }
+    $headers = file_download_headers($uri);
     if (count($headers)) {
       file_transfer($uri, $headers);
     }
@@ -2021,6 +2082,69 @@ function file_download() {
   drupal_exit();
 }
 
+/**
+ * Retrieves headers for a private file download.
+ *
+ * Calls all module implementations of hook_file_download() to retrieve headers
+ * for files by the module that originally provided the file. The presence of
+ * returned headers indicates the current user has access to the file.
+ *
+ * @param $uri
+ *   The URI for the file whose headers should be retrieved.
+ *
+ * @return
+ *   If access is allowed, headers for the file, suitable for passing to
+ *   file_transfer(). If access is not allowed, an empty array will be returned.
+ *
+ * @see file_transfer()
+ * @see file_download_access()
+ * @see hook_file_download()
+ */
+function file_download_headers($uri) {
+  // Let other modules provide headers and control access to the file.
+  // module_invoke_all() uses array_merge_recursive() which merges header
+  // values into a new array. To avoid that and allow modules to override
+  // headers instead, use array_merge() to merge the returned arrays.
+  $headers = array();
+  foreach (module_implements('file_download') as $module) {
+    $function = $module . '_file_download';
+    $result = $function($uri);
+    if ($result == -1) {
+      // Throw away the headers received so far.
+      $headers = array();
+      break;
+    }
+    if (isset($result) && is_array($result)) {
+      $headers = array_merge($headers, $result);
+    }
+  }
+  return $headers;
+}
+
+/**
+ * Checks that the current user has access to a particular file.
+ *
+ * The return value of this function hinges on the return value from
+ * file_download_headers(), which is the function responsible for collecting
+ * access information through hook_file_download().
+ *
+ * If immediately transferring the file to the browser and the headers will
+ * need to be retrieved, the return value of file_download_headers() should be
+ * used to determine access directly, so that access checks will not be run
+ * twice.
+ *
+ * @param $uri
+ *   The URI for the file whose access should be retrieved.
+ *
+ * @return
+ *   Boolean TRUE if access is allowed. FALSE if access is not allowed.
+ *
+ * @see file_download_headers()
+ * @see hook_file_download()
+ */
+function file_download_access($uri) {
+  return count(file_download_headers($uri)) > 0;
+}
 
 /**
  * Finds all files that match a given mask in a given directory.
@@ -2056,9 +2180,33 @@ function file_download() {
  *   'filename', and 'name' members corresponding to the matching files.
  */
 function file_scan_directory($dir, $mask, $options = array(), $depth = 0) {
+  // Default nomask option.
+  $nomask = '/(\.\.?|CVS)$/';
+
+  // Overrides the $nomask variable accordingly if $options['nomask'] is set.
+  //
+  // Allow directories specified in settings.php to be ignored. You can use this
+  // to not check for files in common special-purpose directories. For example,
+  // node_modules and bower_components. Ignoring irrelevant directories is a
+  // performance boost.
+  if (!isset($options['nomask'])) {
+    $ignore_directories = variable_get(
+      'file_scan_ignore_directories',
+      array()
+    );
+
+    foreach ($ignore_directories as $index => $ignore_directory) {
+      $ignore_directories[$index] = preg_quote($ignore_directory, '/');
+    }
+
+    if (!empty($ignore_directories)) {
+      $nomask = '/^(\.\.?)|CVS|' . implode('|', $ignore_directories) . '$/';
+    }
+  }
+
   // Merge in defaults.
   $options += array(
-    'nomask' => '/(\.\.?|CVS)$/',
+    'nomask' => $nomask,
     'callback' => 0,
     'recurse' => TRUE,
     'key' => 'uri',
@@ -2503,7 +2651,6 @@ function file_directory_temp() {
  *   An associative array of headers, as expected by file_transfer().
  */
 function file_get_content_headers($file) {
-  $name = mime_header_encode($file->filename);
   $type = mime_header_encode($file->filemime);
 
   return array(

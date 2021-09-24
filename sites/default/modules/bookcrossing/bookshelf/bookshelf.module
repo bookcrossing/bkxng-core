@@ -1,0 +1,380 @@
+<?php
+
+define('BOOKCROSSING_SAFEZONE_VID', 4);
+define('BOOKCROSSING_SAFEZONE_NAME', 'safe_zone');
+define('BOOKCROSSING_CATALOG_PAGE_LIMIT', 30);
+
+module_load_include('inc', 'bookcrossing', 'bookcrossing.formatter');
+module_load_include('inc', 'bookcrossing', 'bookcrossing');
+
+/**
+ * Implements hook_menu().
+ */
+function bookshelf_menu()
+{
+    $items['safe-zone/add'] = array(
+        'title' => t('Add safe zone'),
+        'page callback' => 'bookshelf_safezone_edit',
+        'page arguments' => array(NULL),
+        'access arguments' => array('add safe zone'),
+        'menu_name' => 'user-menu',
+    );
+
+    $items['safe-zone/%taxonomy_term/manage'] = array(
+        'title' => t('Manage safe zone'),
+        'page callback' => 'bookshelf_safezone_manage',
+        'page arguments' => array(1),
+        'access arguments' => array('manage safe zone'),
+        'file' => 'bookshelf.admin.inc',
+        'type' => MENU_CALLBACK,
+    );
+
+    $items['safe-zone/%taxonomy_term/edit'] = array(
+        'title' => t('Edit own safe zone'),
+        'page callback' => 'bookshelf_safezone_edit',
+        'page arguments' => array(1),
+        'access arguments' => array('edit own safe zone'),
+        'type' => MENU_CALLBACK,
+    );
+
+    $items['safe-zones'] = array(
+        'title' => t('All safe zones by country'),
+        'page callback' => 'bookshelf_safezones',
+        'access callback' => 'user_access',
+        'access arguments' => array('access content'),
+        'type' => MENU_CALLBACK,
+    );
+
+    return $items;
+}
+
+function bookshelf_safezone_edit($term = NULL)
+{
+    // Return 403 if 
+    // - user has no permission to add safe zone or 
+    // - user is trying to edit safe zone he hasn't created or
+    // - user is trying to edit safe zone he has created but has no sufficient permissions
+    if( (is_null($term) && !user_access('add safe zone')) || 
+        (!is_null($term) && !bookshelf_permission_check_author($term)) ||
+        (!is_null($term) && bookshelf_permission_check_author($term) && !user_access('edit own safe zone')) ) {
+        return MENU_ACCESS_DENIED;
+    }
+
+    $vocabulary = taxonomy_vocabulary_load(BOOKCROSSING_SAFEZONE_VID, FALSE);
+    if (!is_null($term)) {
+        $term = taxonomy_term_load($term->tid);
+        //$term['parent'] = (array)$parent;
+    }
+    //module_load_include('module', 'bookcrossing', 'bookcrossing');
+    module_load_include('inc', 'taxonomy', 'taxonomy.admin');
+    drupal_add_library('system', 'drupal.ajax');
+    drupal_add_library('system', 'jquery.form');
+
+    //For redirect after submit form
+    $vocabulary->page = BOOKCROSSING_SAFEZONE_NAME;
+
+
+    $form = drupal_get_form('taxonomy_form_term', $term, $vocabulary);
+
+    
+    return drupal_render($form);
+}
+
+function bookshelf_safezone_edit_submit(&$form, &$form_state)
+{
+    $form_state['redirect'] = 'user/my-safe-zones';
+}
+
+function bookshelf_safezones()
+{
+    /**
+     * Map by views
+     */
+    $view = views_get_view('safezones_map');
+    $view->set_display('block');
+    $view->execute();
+    $out = $view->render();
+    /**
+     * Search form
+     */
+    $out .= drupal_render(drupal_get_form('bookshelf_form_safezone_list'));
+
+    return $out;
+}
+
+function bookshelf_form_safezone_list($form, &$form_state)
+{
+    global $conf;
+    $form = array();
+    $form['zones'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Safe zones'),
+        '#prefix' => '<div class="container-inline">',
+        '#suffix' => '</div>',
+    );
+
+    $form['#prefix'] = '<div id="all-safe-zones">';
+    $form['#suffix'] = '</div>';
+
+    $countries = bookcrossing_terms_to_options(taxonomy_get_tree(3, 0, 1));
+
+    if (isset($form_state['values']['country']) && $form_state['values']['country']) {
+        $country = $form_state['values']['country'];
+    } else {
+        $country = variable_get('safe-zone-default-country', key($countries));
+    }
+    $form['zones']['country'] = array(
+        '#type' => 'select',
+        '#title' => t('Country'),
+        '#options' => $countries,
+        '#default_value' => $country,
+        '#ajax' => array(
+            'wrapper' => 'all-safe-zones',
+            'callback' => 'bookshelf_callback_update',
+        ),
+    );
+    $cities = bookcrossing_terms_to_options(taxonomy_get_tree(3, $country, 1));
+
+    if(isset($form_state['values']) && is_array($form_state['values'])){
+        //form rebuild
+        if (isset($form_state['values']['city']) && array_key_exists($form_state['values']['city'], $cities)) {
+            $city = $form_state['values']['city'];
+        }else{
+            $city = key($cities);
+        }
+    }
+    else {
+        //new form
+        $city = variable_get('safe-zone-default-city', key($cities));
+    }
+
+    $form['zones']['city'] = array(
+        '#type' => 'select',
+        '#title' => t('City'),
+        '#options' => $cities,
+        '#default_value' => $city,
+        '#ajax' => array(
+            'callback' => 'bookshelf_callback_update',
+            'wrapper' => 'all-safe-zones',
+        ),
+    );
+
+    $form['results'] = array(
+        '#markup' => bookshelf_search_safezones($city),
+        '#weight' => 50,
+    );
+
+    return $form;
+}
+
+function bookshelf_callback_update($form, $form_state)
+{
+    return $form;
+}
+
+/**
+ * Get list safe zones by city
+ */
+function bookshelf_search_safezones($city)
+{
+    $key = 'safezone:' . $city.':'.(int)user_is_anonymous();
+
+    $cache = cache_get($key, 'cache');
+    if ($cache && !empty($cache->data)) {
+        $out = $cache->data;
+    } 
+    else {
+        $query = db_select('taxonomy_term_hierarchy', 'th')->distinct();
+        $query->innerJoin('field_data_field_places', 'p', 'p.field_places_tid = th.tid');
+        $query->innerJoin('taxonomy_term_data', 'td', 'td.tid = p.entity_id');
+        $query->innerJoin('field_data_field_status', 's', 's.entity_id = td.tid and s.field_status_value = 1');
+        $query->innerJoin('field_data_field_safe_zone_type', 'type', 'type.entity_id = td.tid');
+        $query->innerJoin('taxonomy_term_data', 'td_type', 'td_type.tid = type.field_safe_zone_type_tid');
+        $query->fields('td', array('tid', 'name'))->fields('td_type', array('name'));
+        $query->condition('th.parent', $city);
+        $query->orderBy('td_type.weight');
+        $terms = $query->execute();
+        
+        $items = array();
+        foreach ($terms as $term) {
+            $items[$term->td_type_name][] = l($term->name, 'taxonomy/term/' . $term->tid);
+        }
+
+        if (count($items)) {
+            $out = '';
+            foreach ($items as $city => $item) {
+                $out .= $city . theme('item_list', array('items' => $item));
+            }
+        } 
+        else {
+            $out = t('Your search did not match any Safe zones.') . ' ';
+            if (user_is_anonymous())
+                $out .= '<a href="#loginModal" role="button" data-toggle="modal" rel="nofollow">' . t('Log in to add new safe zone') . '</a>';
+            else
+                $out .= l( t('Do you want add new safe zone?'), 'safe-zone/add' );
+        }
+        cache_set($key, $out, 'cache');
+    }
+    return $out;
+}
+
+function _taxonomy_name_validate($element, $form, &$form_state)
+{
+    $terms = taxonomy_get_term_by_name($element['#value'], BOOKCROSSING_SAFEZONE_NAME);
+    //Exclude current term while editting
+    if (!is_null($form_state['tid']['#value']))
+        unset($terms[$form_state['tid']['#value']]);
+
+    if (!empty($element['#value']) && (boolean)$terms) {
+        form_error($element, t('"!name" safe zone is already exists.', array('!name' => t($element['#value']))));
+    }
+}
+
+function bookshelf_form_taxonomy_form_term_alter(&$form, &$form_state, $form_id)
+{
+    global $user;
+
+    if (!user_access('manage safe zone')) {
+        hide($form['field_status']);
+        $form['field_status'][LANGUAGE_NONE]['#default_value'] = 0; //set 'waiting for approval' status
+        hide($form['field_uid']);
+        $form['field_uid'][LANGUAGE_NONE][0]['value']['#default_value'] = $user->uid;
+    }
+    if ($form['#vocabulary']->page == BOOKCROSSING_SAFEZONE_NAME) {
+        array_push($form['#submit'], 'bookshelf_safezone_edit_submit');
+    }
+    $form['name']['#element_validate'][] = '_taxonomy_name_validate';
+
+    $form['relations']['#access'] = FALSE;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function bookshelf_permission()
+{
+    $permissions = array(
+        'add safe zone' => array(
+            'title' => t('Add safe zone'),
+        ),
+        'edit own safe zone' => array(
+            'title' => t('Edit own safe zone'),
+        ),
+        'manage safe zone' => array(
+            'title' => t('Manage safe zone'),
+        ),
+    );
+
+    return $permissions;
+}
+
+function bookshelf_permission_check_author($term)
+{
+    global $user;
+    return ($term->field_uid[LANGUAGE_NONE][0]['value'] == $user->uid) ? TRUE : FALSE;
+}
+
+/**
+ * My Safe Zone view
+ */
+function bookshelf_views_pre_build(&$view)
+{
+    global $user;
+    if ($view->name == 'my_safezones' && $view->current_display == 'page') {
+        $view->display['page']->handler->handlers['filter']['field_uid_value']->value['value'] = $user->uid;
+    }
+}
+
+function bookshelf_menu_alter(&$items)
+{
+    $items['taxonomy/term/%taxonomy_term']['page callback'] = 'taxonomy_terms_page';
+    $items['taxonomy/term/%taxonomy_term']['page arguments'] = array(2);
+    $items['taxonomy/term/%taxonomy_term']['access arguments'] = array('access content');
+    // Avoid views to override tvi
+    unset($items['taxonomy/term/%']);
+}
+
+
+function taxonomy_terms_page($term)
+{
+    drupal_set_title($term->name);
+
+    $current = (object)array(
+        'tid' => $term->tid,
+    );
+    $breadcrumb = array();
+    while ($parents = taxonomy_get_parents($current->tid)) {
+        $current = array_shift($parents);
+        $breadcrumb[] = l($current->name, 'taxonomy/term/' . $current->tid);
+    }
+    $breadcrumb[] = l(t('Home'), NULL);
+    $breadcrumb = array_reverse($breadcrumb);
+    drupal_set_breadcrumb($breadcrumb);
+    drupal_add_feed('taxonomy/term/' . $term->tid . '/feed', 'RSS - ' . $term->name);
+
+    // Set the term path as the canonical URL to prevent duplicate content.
+    $uri = entity_uri('taxonomy_term', $term);
+    drupal_add_html_head_link(array('rel' => 'canonical', 'href' => url($uri['path'], $uri['options'])), TRUE);
+    // Set the non-aliased path as a default shortlink.
+    drupal_add_html_head_link(array('rel' => 'shortlink', 'href' => url($uri['path'], array_merge($uri['options'], array('alias' => TRUE)))), TRUE);
+
+    // Normally we would call taxonomy_term_show() here, but for backwards
+    // compatibility in Drupal 7 we do not want to do that (it produces different
+    // data structures and HTML markup than what Drupal 7 released with). Calling
+    // taxonomy_term_view() directly provides essentially the same thing, but
+    // allows us to wrap the rendered term in our desired array structure.
+
+    $build['term_heading'] = array(
+        '#prefix' => '<div class="term-listing-heading">',
+        '#suffix' => '</div>',
+        'term' => taxonomy_term_view($term, 'full'),
+    );
+    module_load_include('inc', 'bookcrossing', 'bookcrossing.catalog');
+
+    /**
+     * Get all places for current safe zone
+     */
+    foreach ($term->field_places[LANGUAGE_NONE] as $_term) {
+        $tids[] = $_term['tid'];
+    };
+
+    $books = bookshelf_get_catalog_books($tids, BOOKCROSSING_CATALOG_PAGE_LIMIT);
+
+    /**
+     * For grouping
+     */
+    $_GET['place'] ='tile';
+    $out = paginator3000pager();
+    $out .= bookcrossing_catalog_sort_tile('place', $books);
+    unset($_GET['place']);
+
+    if ($term->vid == BOOKCROSSING_SAFEZONE_VID) {
+        $build['page'] = array(
+            '#prefix' => '<div class="safe-zone-places">',
+            '#suffix' => '</div>',
+            '#markup' => t('Places').':'.$out,
+        );
+    }
+    return $build;
+}
+
+/**
+ * Lite version bookcrossing_catalog_filter_by_place()
+ *
+ */
+function bookshelf_get_catalog_books($tids, $limit = 10)
+{
+    $query = db_select('bookcrossing_books', 'book');
+    $query->fields('book', array('bid'));
+    $query->condition('book.status', BOOKCROSSING_BOOK_STATUS_RESERVED, '<>');
+    $query->condition('book.current_place', $tids, 'IN');
+    $query = $query->extend('PagerDefault');
+    $query->limit($limit);
+    $bids = $query->execute()->fetchCol();
+    $books = array();
+
+    foreach ($bids as $bid) {
+        $books[] = bookcrossing_load($bid);
+    }
+    return $books;
+}

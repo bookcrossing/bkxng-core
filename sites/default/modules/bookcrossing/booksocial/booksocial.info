@@ -1,0 +1,11 @@
+name = Social Profiles
+description = Block displaying set of social profiles buttons using RRSSB library
+package = "bookcrossing"
+
+# dependencies[] = bookcrossing
+dependencies[] = rrssb
+
+version = 7.x-1.0
+core = 7.x
+
+project = "booksocial"

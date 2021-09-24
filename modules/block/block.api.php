@@ -87,13 +87,13 @@
  *     and any value provided can be modified by a user on the block
  *     configuration screen.
  *   - pages: (optional) See 'visibility' above. A string that contains one or
- *     more page paths separated by '\n', '\r', or '\r\n' when 'visibility' is
- *     set to BLOCK_VISIBILITY_NOTLISTED or BLOCK_VISIBILITY_LISTED, or custom
- *     PHP code when 'visibility' is set to BLOCK_VISIBILITY_PHP. Paths may use
- *     '*' as a wildcard (matching any number of characters); '<front>'
- *     designates the site's front page. For BLOCK_VISIBILITY_PHP, the PHP
- *     code's return value should be TRUE if the block is to be made visible or
- *     FALSE if the block should not be visible.
+ *     more page paths separated by "\n", "\r", or "\r\n" when 'visibility' is
+ *     set to BLOCK_VISIBILITY_NOTLISTED or BLOCK_VISIBILITY_LISTED (example:
+ *     "<front>\nnode/1"), or custom PHP code when 'visibility' is set to
+ *     BLOCK_VISIBILITY_PHP. Paths may use '*' as a wildcard (matching any
+ *     number of characters); '<front>' designates the site's front page. For
+ *     BLOCK_VISIBILITY_PHP, the PHP code's return value should be TRUE if the
+ *     block is to be made visible or FALSE if the block should not be visible.
  *
  * For a detailed usage example, see block_example.module.
  *
@@ -361,6 +361,31 @@ function hook_block_list_alter(&$blocks) {
       unset($blocks[$key]);
     }
   }
+}
+
+/**
+ * Act on block cache ID (cid) parts before the cid is generated.
+ *
+ * This hook allows you to add, remove or modify the custom keys used to
+ * generate a block cache ID (by default, these keys are set to the block
+ * module and delta). These keys will be combined with the standard ones
+ * provided by drupal_render_cid_parts() to generate the final block cache ID.
+ *
+ * To change the cache granularity used by drupal_render_cid_parts(), this hook
+ * cannot be used; instead, set the 'cache' key in the block's definition in
+ * hook_block_info().
+ *
+ * @params $cid_parts
+ *   An array of elements used to build the cid.
+ * @param $block
+ *   The block object being acted on.
+ *
+ * @see _block_get_cache_id()
+ */
+function hook_block_cid_parts_alter(&$cid_parts, $block) {
+  global $user;
+  // This example shows how to cache a block based on the user's timezone.
+  $cid_parts[] = $user->timezone;
 }
 
 /**

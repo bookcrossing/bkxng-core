@@ -33,12 +33,12 @@ function bookcrossing_reserve_bcid($js = 'ajax') {
         ->fetchCol();
 
     $num = count($bcids);
-    if ($num == BOOKCROSSING_RESRVED_BCIDS) {
+    if ($num == BOOKCROSSING_RESERVED_BCIDS) {
       return NULL;
     }
 
     $commands = array();
-    $generate = BOOKCROSSING_RESRVED_BCIDS - $num;
+    $generate = BOOKCROSSING_RESERVED_BCIDS - $num;
 
     for ($i = 0; $i < $generate; $i++) {
       $bcid = bookcrossing_generate_bcid();
@@ -108,11 +108,11 @@ function bookcrossing_delete_reserved_bcid($bcid = '', $js = 'ajax') {
  * Menu callback: html output for a front page.
  */
 function bookcrossing_front_page() {
-  $bids = db_select('bookcrossing_books', 'b')
-      ->fields('b', array('bid'))
+  $bids = db_select('bookcrossing_books', 'book')
+      ->fields('book', array('bid'))
       ->condition('status', BOOKCROSSING_BOOK_STATUS_RESERVED, '<>')
       ->range(0, 3)
-      ->orderRandom('bid')
+      ->orderBy('bid', 'DESC')
       ->execute()
       ->fetchCol();
   $books = bookcrossing_load_multiple($bids);
@@ -124,61 +124,52 @@ function bookcrossing_front_page() {
     $output .= render($build);
   }
 
-  return $output . '<div style="clear: left"></div>';
+  return '<div class="front-page-books">' . $output . '</div>';
 }
 
 /**
  * Menu callback: release book.
  */
 function bookcrossing_release_book($book) {
-  /**
-   * Book wasnt found in db.
-   */
-  if (!$book) {
-    return array(
-      '#markup' => t('There is no book with that BCID.'),
+    // Book is not found in DB
+    if (!$book) {
+        watchdog('bookcrossing.pages.inc', 'Incorrect object was passed into bookcrossing_release_book() function.', WATCHDOG_NOTICE);
+        return array(
+            '#markup' => t("Book with such BCID is not registered. Please make sure you are entering correct BCID."),
+        );
+    }
+
+    // Book is already released
+    if (!$book['status']) {
+        return array(
+            '#markup' => t("Book with such BCID was already released."),
+        );
+    }
+
+    global $user;
+    // Can only release books user reading
+    if ($book['user']->uid != $user->uid) {
+        return array(
+            '#markup' => t("You are trying to register as found book that was not released. If you believe this is incorrect behaviour, please report to <a href='mailto:bug@bookcrossing.by'>bug@bookcrossing.by</a>."),
+        );
+    }
+
+    $build = node_view($book['node'], 'found_book');
+    $build = bookcrossing_prepare_book_view($build, $book, FALSE);
+
+    // Form for adding comment and place
+    $build['book_found'] = drupal_get_form('bookcrossing_book_comment', $book);
+
+    // Status of the found book
+    $build['book_found_status'] = array(
+        '#markup' => bookcrossing_book_status($book),
     );
-  }
 
-  /**
-   * Book is already released.
-   */
-  if (!$book['status']) {
-    return array(
-      '#markup' => t('Cannot to release book because its already was released.'),
+    $build['author_and_year'] = array(
+        '#markup' => bookcrossing_author_and_year($book),
     );
-  }
 
-  global $user;
-  /**
-   * Can only release books user reading.
-   */
-  if ($book['user']->uid != $user->uid) {
-    return array(
-      '#markup' => t('You cannot release this book because u are not reading it now.'),
-    );
-  }
-
-  $build = node_view($book['node'], 'found_book');
-  $build = bookcrossing_prepare_book_view($build, $book, FALSE);
-
-  /**
-   * Form for adding comment and place.
-   */
-  $build['book_found'] = drupal_get_form('bookcrossing_book_comment', $book);
-
-  /**
-   * Status of the found book.
-   */
-  $build['book_found_status'] = array(
-    '#markup' => bookcrossing_book_status($book),
-  );
-
-  $build['author_and_year'] = array(
-    '#markup' => bookcrossing_author_and_year($book),
-  );
-  
-  return $build;
+    return $build;
 }
 
 /**
@@ -188,10 +179,10 @@ function bookcrossing_change_comment($bid = '', $js = 'ajax') {
   if ($js == 'ajax') {
     global $user;
 
-    $is_read_book = db_select('bookcrossing_history', 'h')
-        ->fields('h', array('bid'))
-        ->condition('uid', $user->uid, '=')
-        ->condition('bid', $bid, '=')
+    $is_read_book = db_select('bookcrossing_history', 'history')
+        ->fields('history', array('book_id'))
+        ->condition('user_id', $user->uid, '=')
+        ->condition('book_id', $bid, '=')
         ->execute()
         ->fetchField();
 
@@ -214,115 +205,119 @@ function bookcrossing_change_comment($bid = '', $js = 'ajax') {
 /**
  * Menu callback: view history page.
  */
-function bookcrossing_view_history($history) {
-  $build = node_view($history['node'], 'history');
-  global $user;
-  $build = bookcrossing_prepare_book_view($build, $history, FALSE);
+// @todo: Function needs to be refactred after re-structure of 'bookcrossing_history' table
+function bookcrossing_view_history($book)
+{
+    $build = node_view($book['node'], 'history');
+    global $user;
+    $build = bookcrossing_prepare_book_view($build, $book, FALSE);
 
-  drupal_set_title(t('Book history') . ' - ' . $history['node']->title);
-  /**
-   * Adding comment of the logged user to the output.
-   */
-  $isset = FALSE;
-  $my_comment = '<div id="my-comment-text">';
-  if (isset($history['comments'][$user->uid])) {
-    $my_comment .= $history['comments'][$user->uid];
-    $isset = TRUE;
-  }
-
-  if (!$isset) {
-    $query = db_select('bookcrossing_history', 'h');
-    //$query->innerJoin('bookcrossing_books', 'b');
-    $exist = $query
-      ->fields('h', array('bid'))
-      ->condition('h.uid', $user->uid, '=')
-      ->condition('h.bid', $history['bid'], '=')
-      ->execute()
-      ->fetchField();
-
-    if ($exist) {
-      $my_comment .= t('Review wasnt added. You can add it by pressing "change" link.');
+    drupal_set_title(t('Book history') . ' - ' . $book['node']->title);
+    // Adding comment of the logged user to the output.
+    $isset = FALSE;
+    $my_comment = '<div id="my-comment-text">';
+    if (isset($book['comments'][$user->uid]))
+    {
+        $my_comment .= $book['comments'][$user->uid];
+        $isset = TRUE;
     }
-    else {
-      $my_comment .= t('You cant write reviews for book u didnt find.');
+
+    if (!$isset)
+    {
+        $query = db_select('bookcrossing_history', 'history');
+        //$query->innerJoin('bookcrossing_books', 'b');
+        $exist = $query
+            ->fields('history', array('book_id'))
+            ->condition('history.user_id', $user->uid, '=')
+            ->condition('history.book_id', $book['bid'], '=')
+            ->execute()
+            ->fetchField();
+
+        if ($exist)
+        {
+            $my_comment .= t("Would you recommend this book to a friend and why? Click 'change' to add a comment.");
+        }
+        else
+        {
+            $my_comment .= t("You can not write a review for a book you did not find.");
+        }
     }
-  }
   
-  $my_comment .= '</div>';
+    $my_comment .= '</div>';
 
-  $is_read_book = db_select('bookcrossing_history', 'h')
-      ->fields('h', array('bid'))
-      ->condition('uid', $user->uid, '=')
-      ->condition('bid', $history['bid'], '=')
-      ->execute()
-      ->fetchField();
+    $is_read_book = db_select('bookcrossing_history', 'history')
+        ->fields('history', array('book_id'))
+        ->condition('user_id', $user->uid, '=')
+        ->condition('book_id', $book['bid'], '=')
+        ->execute()
+        ->fetchField();
 
-  $change_link = '';
-  if ($is_read_book) {
-    $change_link = l(t('(change)'), 'change-comment/' . $history['bid'], array('attributes' => array('class' => array('use-ajax'))));
-  }
-  $build['book_comment'] = array(
-    '#markup' => '<div class="back-to-book">' . l(t('<<back to book'), 'book/' . $history['bid']) . '</div><div class="my-comment"><div class="my-comment-title">' . t('My review') . $change_link . '</div>' . $my_comment . '</div>',
-  );
-  
-  $build['author_and_year'] = array(
-    '#markup' => bookcrossing_author_and_year($history),
-  );
-
-  /**
-   * Generate output for history of the book.
-   */
-  $output = '<div class="history-wrapper">';
-  foreach ($history['places'] as $place) {
-    $comment = isset($history['comments'][$place['user']->uid]) ? $history['comments'][$place['user']->uid] : '';
-    $my_comment_class = $place['user']->uid == $user->uid ? ' m-c' : '';
-    $user_link = '';
-    $fbid = bookcrossing_load_fbid($place['user']->uid);
-    if ($fbid) {
-      $vars = array();
-      $filepath = (isset($place['user']->picture->uri)) ? $place['user']->picture->uri : '';
-      $name = !empty($place['user']->name) ? $place['user']->name : variable_get('anonymous', t('Anonymous'));
-      $alt = t("@user's picture", array('@user' => $name));
-      $vars = array('path' => $filepath, 'alt' => $alt, 'title' => $alt);
-      $vars['style_name'] = 'user-in-history';
-      $image = theme('image_style', $vars);
-      $user_link = l($image, 'http://www.facebook.com/profile.php?id=' . $fbid . '&sk=app_bookcrossing_by', array('html' => TRUE));
+    $change_link = '';
+    if ($is_read_book)
+    {
+        $change_link = l(t('(change)'), 'change-comment/' . $book['bid'], array('attributes' => array('class' => array('use-ajax'))));
     }
-    $output .= '<div class="place-wrapper clearfix">
-                  <div class="history-comment' . $my_comment_class . '">' . $comment . '</div>
-                  <div class="history-user-foto">' . $user_link . '</div>
-                  <div class="history-user-info">'
-        . l($place['user']->name, $fbid ? 'http://www.facebook.com/profile.php?id=' . $fbid . '&sk=app_bookcrossing_by' : 'user/' . $place['user']->uid)
-        . '<div class="history-places">';
+    $build['book_comment'] = array(
+        '#markup' => '<div class="back-to-book">' . l(t('<<back to book'), 'book/' . $book['bid']) . '</div><div class="my-comment"><div class="my-comment-title">' . t('My review') . $change_link . '</div>' . $my_comment . '</div>',
+    );
 
-    if ($place['place']) {
-      $output .= '<div class="place-found">' . t('Found') . ':<div class="place-date-found">' . format_date($place['found']) . ',' . $place['place']->name . '</div></div>';
+    $build['author_and_year'] = array(
+        '#markup' => bookcrossing_author_and_year($book),
+    );
+
+    // Generate output for history of the book.
+    $output = '<div class="history-wrapper">';
+    foreach ($book['history'] as $history)
+    {
+        $comment = isset($history['comment']) ? $history['comment'] : '';
+        $my_comment_class = $history['user']->uid == $user->uid ? ' my-comment' : '';
+        $user_link = '';
+        $user_profile = bookcrossing_get_social_profile($history['user']);
+        if ($user_profile)
+        {
+            $filepath = (isset($history['user']->picture->uri)) ? $history['user']->picture->uri : '';
+            $name = !empty($history['user']->name) ? $history['user']->name : variable_get('anonymous', t('Anonymous'));
+            $alt = t("@user's picture", array('@user' => $name));
+            $image = theme('image_style', array('path' => $filepath, 'alt' => $alt, 'title' => $alt, 'style_name' => 'user-in-history'));
+            $user_link = l($image, $user_profile['profileURL'], array('html' => TRUE));
+        }
+        $output .= '<div class="place-wrapper clearfix">
+                      <div class="history-comment' . $my_comment_class . '">' . $comment . '</div>
+                      <div class="history-user-foto">' . $user_link . '</div>
+                      <div class="history-user-info">'
+                . l($history['user']->name, $user_profile ? $user_profile['profileURL'] : 'user/' . $history['user']->uid)
+                . '<div class="history-places">';
+
+        switch ($history['event_type'])
+        {
+            case BOOKCROSSING_BOOK_STATUS_FREE:
+                $output .= '<div class="place-left">' . t('Released') . ':<div class="place-date-left">' . format_date($history['date_time']) . ', ' . $history['place']->name . '</div></div>';
+            break;
+            case BOOKCROSSING_BOOK_STATUS_FOUND:
+                $output .= '<div class="place-found">' . t('Found') . ':<div class="place-date-found">' . format_date($history['date_time']) . ',' . $history['place']->name . '</div></div>';
+            break;
+            default:
+            break;
+        }
+        $output .= '</div></div></div>';
     }
 
-    if ($place['place_left']) {
-      $output .= '<div class="place-left">' . t('Released') . ':<div class="place-date-left">' . format_date($place['time_left']) . ', ' . $place['place_left']->name . '</div></div>';
-    }
+    $output .= '</div>';
 
-    $output .= '</div></div></div>';
-  }
-  $output .= '</div>';
+    $build['book_history'] = array(
+        '#markup' => $output,
+    );
 
-  $build['book_history'] = array(
-    '#markup' => $output,
-  );
+    // Generate item list with status of the book.
+    $build['book_status'] = array(
+        '#markup' => bookcrossing_book_status($book, TRUE),
+    );
 
-  /**
-   * Generate item list with status of the book.
-   */
-  $build['book_status'] = array(
-    '#markup' => bookcrossing_book_status($history),
-  );
+    $build['history_pager'] = array(
+        '#theme' => 'pager',
+    );
 
-  $build['history_pager'] = array(
-    '#theme' => 'pager',
-  );
-
-  return $build;
+    return $build;
 }
 
 /**
@@ -336,7 +331,7 @@ function bookcrossing_view_book($book = array()) {
    * Generate output for status of the book.
    */
   $build['book_status'] = array(
-    '#markup' => bookcrossing_book_status($book),
+    '#markup' => bookcrossing_book_status($book, TRUE),
   );
 
   /**
@@ -344,12 +339,13 @@ function bookcrossing_view_book($book = array()) {
    */
   $items = array();
 
-  global $user;
+  global $user, $language;
   if ($user->uid == $book['user']->uid && $book['status']) {
     $items[] = l(t('Release'), 'release-book/' . $book['bid']);
   }
 
-  $items[] = l(t('View history'), 'view-history/' . $book['bid']);
+  // $items[] = l("<i class='icon-time'></i>" . t('View history'), 'view-history/' . $book['bid']);
+  $items[] = '<i class="icon-time"></i> <a href="/' . $language->language . '/view-history/' . $book['bid'] . '">' . t('View history') . '</a>';
 
   $query = db_select('bookcrossing_favourites', 'f');
   $query->fields('f', array('uid'));
@@ -361,31 +357,9 @@ function bookcrossing_view_book($book = array()) {
     /**
      * @todo add facebook like action.
      */
-    $items[] = l(t('Add to bookmarks'), 'add-to-bookmarks/' . $book['bid'], array('attributes' => array('onclick' => 'return like()')));
-//fboauth_action_display('like-book');
-//l(t('Add to favourites'), 'ajax/favourites/' . $book['bid'], array('absolute' => TRUE, 'attributes' => array('id' => 'add-to-favourites', 'class' => array('use-ajax'))));
+    // $items[] = l(t('Add to bookmarks'), 'add-to-bookmarks/' . $book['bid'], array('attributes' => array('onclick' => 'return like()')));
+    $items[] = '<i class="icon-bookmark"></i> <a href="/add-to-bookmarks/' . $book['bid'] . '" onclick="return like()">' . t('Add to bookmarks') . '</a>';
   }
-
-  $app_id = variable_get('fboauth_id', '');
-  $init = "window.fbAsyncInit = function() {
-      FB.init({
-        appId      : $app_id,
-        status     : true,
-        cookie     : true,
-        xfbml      : true
-      });
-    };
-
-    // Load the SDK Asynchronously
-    (function(d){
-      var js, id = 'facebook-jssdk'; if (d.getElementById(id)) {return;}
-      js = d.createElement('script'); js.id = id; js.async = true;
-      js.src = '//connect.facebook.net/ru_RU/all.js';
-      d.getElementsByTagName('head')[0].appendChild(js);
-    }(document));";
- 
-  //$script = '<script>' . $init . '</script>';
-  drupal_add_js($init, 'inline');
 
   $build['book_links'] = array(
     '#markup' => theme_item_list(array('title' => '', 'items' => $items, 'type' => 'ul', 'attributes' => array('class' => 'book-links'))),
@@ -397,24 +371,9 @@ function bookcrossing_view_book($book = array()) {
   
   bookcrossing_add_fb_js($book['bid'], url('book/' . $book['bid'], array('absolute' => TRUE)));
 
-  $build['facepile'] = array(
-    '#markup' => '<fb:facepile href="' . url($_GET['q'], array('absolute' => TRUE)) . '" action="bookcrossing_by:bookmark" width="200" size="large" max_rows="3"></fb:facepile>',
-  );
-//    '#markup' => '<script src="http://connect.facebook.net/ru_RU/all.js#appId=' . variable_get('fboauth_id', '') . '&amp;xfbml=1"></script><fb:facepile href="' . url($_GET['q'], array('absolute' => TRUE)) . '" action="bookcrossing_by:bookmark" width="300" size="large" max_rows="3"></fb:facepile>',
-
   $data_href = url('book/' . $book['bid'], array('absolute' => TRUE));
 
-  $build['fb_recommend_bar'] = array(
-    '#markup' => '<div class="fb-recommendations-bar" data-href="' . $data_href . '" data-trigger="onvisible" data-read-time="20" data-action="like" data-side="right" data-num_recommendations="3"></div>',
-  );
 
-  $build['fb_comments'] = array(
-    '#markup' => '<div class="fb-comments" data-href="' . $data_href . '" data-num-posts="3" data-width="635"></div>',
-  );
-
-/*
-<div class="fb-facepile" data-href="' . url($_GET['q'], array('absolute' => TRUE)) . '" data-action="bookcrossing_by:bookmark" data-size="large" data-max-rows="1" data-width="300"></div>
-*/
   return $build;
 }
 
@@ -468,7 +427,7 @@ function bookcrossing_found_book_page($bcid = '') {
    */
   if (!$book) {
     return array(
-      '#markup' => t('There is no book with that BCID.'),
+      '#markup' => t('There is no book with such BCID.'),
     );
   }
 
@@ -550,6 +509,8 @@ function bookcrossing_add_new_book_form() {
  * Menu callback: page for showing bcid of added book
  */
 function bookcrossing_book_added($bcid = '') {
+  global $user;
+
   if (empty($bcid)) {
     drupal_not_found();
     drupal_exit();
@@ -560,40 +521,7 @@ function bookcrossing_book_added($bcid = '') {
     drupal_exit();
   }
 
-
-
-
-
-//  $output = '<div class="bcid-wrapper"><div class="bcid-number-wrapper">';
-//  $output .= '<div class="bcid-number">' . t('This is the number of your book') . '<br />(BookcrossingID):</div>';
-//  $output .= '<div class="bcid">' . $bcid . '</div>';
-//  $output .= '<div class="bcid-descr">' . t('Write it on your book.') . '</div>';
-
   $book = bookcrossing_load_by_bcid($bcid);
-
-//  drupal_add_js('http://connect.facebook.net/ru_RU/all.js', 'external');
-
-  $app_id = variable_get('fboauth_id', '');
-  $init = "window.fbAsyncInit = function() {
-      FB.init({
-        appId      : $app_id,
-        status     : true,
-        cookie     : true,
-        xfbml      : true
-      });
-      release();
-    };
-
-     //Load the SDK Asynchronously
-    (function(d){
-      var js, id = 'facebook-jssdk'; if (d.getElementById(id)) {return;}
-      js = d.createElement('script'); js.id = id; js.async = true;
-      js.src = '//connect.facebook.net/ru_RU/all.js';
-      d.getElementsByTagName('head')[0].appendChild(js);
-    }(document));
-  ";
-
-  drupal_add_js($init, 'inline');
 
   $parents = taxonomy_get_parents_all($book['place']->tid);
   $country = $parents[2]->name;
@@ -601,44 +529,60 @@ function bookcrossing_book_added($bcid = '') {
   $place = $parents[0]->name;
   $path = url('book/' . $book['bid'], array('absolute' => TRUE));
 
-  $release = "function release(){
-       FB.getLoginStatus(function(response) {
-         if (response.status === 'connected') {
-           accessToken = response.authResponse.accessToken;
-           country = '{$country}';
-           city = '{$city}';
-           place = '{$place}';
-           message = '';
-
-           if (country != '' && city != '' && location != '') {
-             FB.api(
-               'https://graph.facebook.com/me/bookcrossing_by:release?book={$path}&country=' + country + '&city=' + city + '&location=' + place + '&message=' + message,
-               'post',
-                function(response) {
-                  if (!response || response.error) {
-                    //alert('Sorry, but error happened while publishing action.');
-                    //console.log(response);
-                  } 
-               }
-             );
-           }
-         }
-       });
-    }";
-
-  drupal_add_js($release, 'inline');  
-
 //  $output .= '<img class="qr-code" src="https://chart.googleapis.com/chart?cht=qr&chs=150x150&chl=' . $path . '&chld=H|1" />';
 
-  $output = '<div class="bcid-wrapper">';
-  $output .= '<div class="bcid-instructions"><p>' . t('Your book is registered. Now you may release it in a public place, so the next reader could find it. To track the journey of the book you should mark it with BCID.') . '</p><p>' . t('We have made a bookplate for you, that you could cut and paste into your book flyleaf:') . '</p></div>';
-  $output .= '<div class="bcid-number-wrapper">';
-  $rand_plate_img_num = rand(1,30);
-  $output .= '<div class="bcid-image-plate" style="background-image: url(\'/sites/default/files/stickers/'. $rand_plate_img_num .'.jpg\');">&nbsp;</div>';
-  $output .= '<div class="qr-code" style="background-image: url(\'https://chart.googleapis.com/chart?cht=qr&chs=100x100&chl=http%3A%2F%2Fbookcrossing.by%2Fbook%2F' . $book['bid'] . '&chld=L|1\');">&nbsp;</div>';
-  $output .= '<div class="bcid-descr">' . t('I am a wonderful book. I travel the world. Read me, share your review and release me so others could find me') . '<br><br>' . t('Go to') . '<p style="font-weight: bold; font-size: 15px; padding: 5px;">bookcrossing.by</p>' . t('enter BCID (find below) to book history') . '</div>';
-  $output .= '<div class="bcid">' . $bcid . '</div>';
-  $output .= '</div><div class="bcid-scissors">&nbsp;</div></div>';
+  $exlibris_url = '/sites/default/files/stickers/'. rand(1,30) .'.jpg';
+  $gift_url = '/sites/default/files/gifts/'. rand(1,7) .'.jpg';
+
+  $output = '';
+  $output .= '<div class="span8">';
+  $output .= '  <div class="bcid-wrapper">';
+  $output .= '    <div class="bcid-instructions">';
+  $output .= '      <p>' . t('Your book is registered. Now you may release it in a public place, so the next reader could find it. To track the journey of the book you should mark it with BCID.') . '</p>';
+  $output .= '      <p>' . t('We have made a bookplate for you, that you could cut and paste into your book flyleaf:') . '</p>';
+  $output .= '    </div>';
+  $output .= '    <div class="bcid-number-wrapper">';
+  $output .= '      <div class="bcid-image-plate" style="background-image: url(\''. $exlibris_url .'\');">&nbsp;</div>';
+  $output .= '      <div class="qr-code" style="background-image: url(\'https://chart.googleapis.com/chart?cht=qr&chs=100x100&chl=http%3A%2F%2Fbookcrossing.by%2Fbook%2F' . $book['bid'] . '&chld=L|1\');">&nbsp;</div>';
+  $output .= '      <div class="bcid-descr">' . t('I am a wonderful book. I travel the world. Read me, share your review and release me so others could find me') . '<br><br>' . t('Go to') . '<p style="font-weight: bold; font-size: 15px; padding: 5px;">bookcrossing.by</p>' . t('enter BCID (find below) to book history') . '</div>';
+  $output .= '      <div class="bcid">' . $bcid . '</div>';
+  $output .= '    </div>';
+  $output .= '    <div class="bcid-scissors">&nbsp;</div>';
+  $output .= '    <div class="bcid-instructions hidden-phone">';
+  $output .= '      <p style="width:300px;"><img src="/sites/default/files/help/book-added-help.png" /></p>';
+  $output .= '    </div>';
+  $output .= '  </div>';
+  $output .= '</div>';
+
+  // Add css and js here, so it's always available when we're showing buttons.
+  // Don't have to worry about adding them more than once.
+  $output .= '<div class="span3">';
+  $loaded = libraries_load('rrssb');
+  if($loaded) 
+  {
+    $output .= '<div class="bcid-instructions"><h3>' . t('Spread the word') . '</h3>';
+    $output .= '<p>' . t('Share with your friends where you have left the book') . '</p>';
+    // $output .= '<a href="https://www.facebook.com/sharer/sharer.php?u='.$path.'" class="btn btn-primary">Facebook</a>';
+    // $output .= '<a href="#" class="btn btn-primary">Vkontakte</a>';
+    // $output .= '<a href="https://twitter.com/intent/tweet?text='.t('I have just released a book. Check it out.').' '.$path.'" class="btn btn-primary">Twitter</a>';
+    $output .= '<p>' . bookcrossing_share_buttons(array('facebook','vk','twitter','pinterest'), t('I have just released a book. Check it out.'), 'img', $path) . '</p>';
+    $output .= '</div>';
+  }
+
+  $output .= '<div class="bcid-instructions"><h3>' . t('Thank you for a book!') . '</h3><p>'.t('And here is a gift for you').'</p></div>';
+  $output .= '<p><img src="'.$gift_url.'"/></p>';
+  $output .= '<div class="bcid-instructions"><p>' . t('More books you read, more gifts you get ;)') . '</p></div>';
+
+  $output .= '<h3>'.t('What next').'</h3>';
+  $output .= '<p><i class="icon-chevron-right"></i> '.l(t('Release one more book'), url('release-book', array('absolute' => TRUE)) ).'</p>';
+  $output .= '<p><i class="icon-chevron-right"></i> '.l(t('See a book you have released'), $path).'</p>';
+  $output .= '<p><i class="icon-chevron-right"></i> '.l(t('Go hunting for books in our catalog'), url('books', array('absolute' => TRUE)) ).'</p>';
+  $output .= '</div>';
+
+  // $output .= '<div class="row">';
+  // $output .= '<div class="span12">';
+
+  // $output .= '</div></div>';
 
   unset($_SESSION['added-new-book']);
 

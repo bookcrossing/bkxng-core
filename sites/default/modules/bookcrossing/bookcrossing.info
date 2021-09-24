@@ -1,6 +1,17 @@
-name = Bookcrossing
-description = Creates node type book for and adding other features for bookcrossing.
+name = BookCrossing
+description = Creates node type book and provides BookCrossing functionality.
+package = "bookcrossing"
 
-version = VERSION
-core = 7.x
- 
+; dependencies[] = ds (>=7.x-1.7, <7.x-2.0)
+dependencies[] = ds
+dependencies[] = field_validation
+dependencies[] = hierarchical_select
+dependencies[] = hybridauth
+dependencies[] = pathauto
+dependencies[] = token
+
+version = 7.x-2.3
+core = 7.x 
+project = "bookcrossing"
+
+configure = admin/config/bookcrossing/settings

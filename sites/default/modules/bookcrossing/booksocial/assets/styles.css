@@ -1,0 +1,5 @@
+.ref-title {font-size:18px; font-weight: bold;}
+.ref-phrase {}
+.ref-censored {background: url("censored.png") center;}
+.ref-page-number {font-size:20px; text-align:right; padding-top:40px;}
+.ref-sheet {color:#191919; border:1px solid #eee; box-shadow:2px 2px 10px 2px #aaa; margin: 20px auto; padding:60px 30px; width:500px;}

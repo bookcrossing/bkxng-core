@@ -263,10 +263,10 @@ function _forum_node_check_node_type($node) {
  * Implements hook_node_view().
  */
 function forum_node_view($node, $view_mode) {
-  $vid = variable_get('forum_nav_vocabulary', 0);
-  $vocabulary = taxonomy_vocabulary_load($vid);
   if (_forum_node_check_node_type($node)) {
     if ($view_mode == 'full' && node_is_page($node)) {
+      $vid = variable_get('forum_nav_vocabulary', 0);
+      $vocabulary = taxonomy_vocabulary_load($vid);
       // Breadcrumb navigation
       $breadcrumb[] = l(t('Home'), NULL);
       $breadcrumb[] = l($vocabulary->name, 'forum');
@@ -922,7 +922,8 @@ function forum_get_topics($tid, $sortby, $forum_per_page) {
   );
 
   $order = _forum_get_topic_order($sortby);
-  for ($i = 0; $i < count($forum_topic_list_header); $i++) {
+  // Skip element with index 0 which is NULL.
+  for ($i = 1; $i < count($forum_topic_list_header); $i++) {
     if ($forum_topic_list_header[$i]['field'] == $order['field']) {
       $forum_topic_list_header[$i]['sort'] = $order['sort'];
     }

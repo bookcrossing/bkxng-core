@@ -347,7 +347,8 @@ function drupal_match_path($path, $patterns) {
  * drupal_bootstrap(DRUPAL_BOOTSTRAP_FULL) makes this function available.
  *
  * @return
- *   The current Drupal URL path.
+ *   The current Drupal URL path. The path is untrusted user input and must be
+ *   treated as such.
  *
  * @see request_path()
  */
@@ -465,13 +466,15 @@ function path_delete($criteria) {
     $criteria = array('pid' => $criteria);
   }
   $path = path_load($criteria);
-  $query = db_delete('url_alias');
-  foreach ($criteria as $field => $value) {
-    $query->condition($field, $value);
+  if (isset($path['source'])) {
+    $query = db_delete('url_alias');
+    foreach ($criteria as $field => $value) {
+      $query->condition($field, $value);
+    }
+    $query->execute();
+    module_invoke_all('path_delete', $path);
+    drupal_clear_path_cache($path['source']);
   }
-  $query->execute();
-  module_invoke_all('path_delete', $path);
-  drupal_clear_path_cache($path['source']);
 }
 
 /**
@@ -560,8 +563,8 @@ function drupal_valid_path($path, $dynamic_allowed = FALSE) {
   elseif ($dynamic_allowed && preg_match('/\/\%/', $path)) {
     // Path is dynamic (ie 'user/%'), so check directly against menu_router table.
     if ($item = db_query("SELECT * FROM {menu_router} where path = :path", array(':path' => $path))->fetchAssoc()) {
-      $item['link_path']  = $form_item['link_path'];
-      $item['link_title'] = $form_item['link_title'];
+      $item['link_path']  = $item['path'];
+      $item['link_title'] = $item['title'];
       $item['external']   = FALSE;
       $item['options'] = '';
       _menu_link_translate($item);
