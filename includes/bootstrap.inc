@@ -799,7 +799,7 @@ function drupal_settings_initialize() {
   else {
     // Otherwise use $base_url as session name, without the protocol
     // to use the same session identifiers across HTTP and HTTPS.
-    list( , $session_name) = explode('://', $base_url, 2);
+    list( , $session_name) = explode('//', $base_url, 2);
     // HTTP_HOST can be modified by a visitor, but we already sanitized it
     // in drupal_settings_initialize().
     if (!empty($_SERVER['HTTP_HOST'])) {
