@@ -1,14 +1,21 @@
 <?php
+
+/**
+ * @file
+ * Definition of views_handler_field_profile_list.
+ */
+
 /**
  * Field handler display a profile list item.
  *
  * @ingroup views_field_handlers
  */
 class views_handler_field_profile_list extends views_handler_field_prerender_list {
+
   /**
    * Break up our field into a proper list.
    */
-  function pre_render(&$values) {
+  public function pre_render(&$values) {
     $this->items = array();
     foreach ($values as $value) {
       $field = $this->get_value($value);
@@ -21,15 +28,25 @@ class views_handler_field_profile_list extends views_handler_field_prerender_lis
     }
   }
 
-  function render_item($count, $item) {
+  /**
+   * {@inheritdoc}
+   */
+  public function render_item($count, $item) {
     return $item['item'];
   }
 
-  function document_self_tokens(&$tokens) {
+  /**
+   * {@inheritdoc}
+   */
+  public function document_self_tokens(&$tokens) {
     $tokens['[' . $this->options['id'] . '-item' . ']'] = t('The text of the profile item.');
   }
 
-  function add_self_tokens(&$tokens, $item) {
+  /**
+   * {@inheritdoc}
+   */
+  public function add_self_tokens(&$tokens, $item) {
     $tokens['[' . $this->options['id'] . '-item' . ']'] = $item['item'];
   }
+
 }

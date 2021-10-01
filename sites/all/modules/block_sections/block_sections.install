@@ -1,0 +1,109 @@
+<?php
+/**
+ * @file
+ * Install functions for the block_sections module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function block_sections_schema() {
+  $schema['block_sections'] = array(
+    'description' => 'The base table for block_sections.',
+    'fields' => array(
+      'sid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary key for identifying a section.',
+      ),
+      'title' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Section title.',
+      ),
+      'paths' => array(
+        'type' => 'text',
+        'not null' => FALSE,
+        'size' => 'big',
+        'description' => 'The paths in which the section is active.',
+      ),
+    ),
+    'primary key' => array('sid'),
+  );
+
+  $schema['block_sections_blocks'] = array(
+    'description' => 'The base table for block_sections blocks.',
+    'fields' => array(
+      'bid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary key for identifying a block.',
+      ),
+      'name' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Human-readable name of a block.',
+      ),
+      'machine_name' => array(
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Machine name of a block.',
+      ),
+    ),
+    'unique keys' => array(
+      'machine_name' => array('machine_name'),
+    ),
+    'primary key' => array('bid'),
+  );
+
+  $schema['block_sections_content'] = array(
+    'description' => 'The base table for block_sections block content.',
+    'fields' => array(
+      'bid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The {block_sections_block}.bid of a block.',
+      ),
+      'sid' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The {block_sections}.sid of a section.',
+      ),
+      'content' => array(
+        'type' => 'text',
+        'not null' => FALSE,
+        'size' => 'big',
+        'description' => 'The content of a block-section combination.',
+      ),
+      'format' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'The {filter_format}.format of the content.',
+      ),
+    ),
+    'foreign keys' => array(
+      'section_block' => array(
+        'table' => 'block_sections_blocks',
+        'columns' => array('bid' => 'bid'),
+      ),
+      'section' => array(
+        'table' => 'block_sections',
+        'columns' => array('sid' => 'sid'),
+      ),
+    ),
+    'primary key' => array('bid', 'sid'),
+  );
+
+  return $schema;
+}

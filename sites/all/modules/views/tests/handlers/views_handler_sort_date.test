@@ -1,7 +1,12 @@
 <?php
 
 /**
- * Test for core views_handler_sort_date handler.
+ * @file
+ * Definition of ViewsHandlerSortDateTest.
+ */
+
+/**
+ * Tests for core views_handler_sort_date handler.
  */
 class ViewsHandlerSortDateTest extends ViewsSqlTest {
   public static function getInfo() {
@@ -16,61 +21,66 @@ class ViewsHandlerSortDateTest extends ViewsSqlTest {
     $expected = array();
     if (!$reverse) {
       switch ($granularity) {
-          case 'second':
-            $expected = array(
-              array('name' => 'John'),
-              array('name' => 'Paul'),
-              array('name' => 'Meredith'),
-              array('name' => 'Ringo'),
-              array('name' => 'George'),
-            );
-            break;
-          case 'minute':
-            $expected = array(
-              array('name' => 'John'),
-              array('name' => 'Paul'),
-              array('name' => 'Ringo'),
-              array('name' => 'Meredith'),
-              array('name' => 'George'),
-            );
-            break;
-          case 'hour':
-            $expected = array(
-              array('name' => 'John'),
-              array('name' => 'Ringo'),
-              array('name' => 'Paul'),
-              array('name' => 'Meredith'),
-              array('name' => 'George'),
-            );
-            break;
-          case 'day':
-            $expected = array(
-              array('name' => 'John'),
-              array('name' => 'Ringo'),
-              array('name' => 'Paul'),
-              array('name' => 'Meredith'),
-              array('name' => 'George'),
-            );
-            break;
-          case 'month':
-            $expected = array(
-              array('name' => 'John'),
-              array('name' => 'George'),
-              array('name' => 'Ringo'),
-              array('name' => 'Paul'),
-              array('name' => 'Meredith'),
-            );
-            break;
-          case 'year':
-            $expected = array(
-              array('name' => 'John'),
-              array('name' => 'George'),
-              array('name' => 'Ringo'),
-              array('name' => 'Paul'),
-              array('name' => 'Meredith'),
-            );
-            break;
-        }
+        case 'second':
+          $expected = array(
+            array('name' => 'John'),
+            array('name' => 'Paul'),
+            array('name' => 'Meredith'),
+            array('name' => 'Ringo'),
+            array('name' => 'George'),
+          );
+          break;
+
+        case 'minute':
+          $expected = array(
+            array('name' => 'John'),
+            array('name' => 'Paul'),
+            array('name' => 'Ringo'),
+            array('name' => 'Meredith'),
+            array('name' => 'George'),
+          );
+          break;
+
+        case 'hour':
+          $expected = array(
+            array('name' => 'John'),
+            array('name' => 'Ringo'),
+            array('name' => 'Paul'),
+            array('name' => 'Meredith'),
+            array('name' => 'George'),
+          );
+          break;
+
+        case 'day':
+          $expected = array(
+            array('name' => 'John'),
+            array('name' => 'Ringo'),
+            array('name' => 'Paul'),
+            array('name' => 'Meredith'),
+            array('name' => 'George'),
+          );
+          break;
+
+        case 'month':
+          $expected = array(
+            array('name' => 'John'),
+            array('name' => 'George'),
+            array('name' => 'Ringo'),
+            array('name' => 'Paul'),
+            array('name' => 'Meredith'),
+          );
+          break;
+
+        case 'year':
+          $expected = array(
+            array('name' => 'John'),
+            array('name' => 'George'),
+            array('name' => 'Ringo'),
+            array('name' => 'Paul'),
+            array('name' => 'Meredith'),
+          );
+          break;
+      }
     }
     else {
       switch ($granularity) {
@@ -83,6 +93,7 @@ class ViewsHandlerSortDateTest extends ViewsSqlTest {
             array('name' => 'John'),
           );
           break;
+
         case 'minute':
           $expected = array(
             array('name' => 'George'),
@@ -90,8 +101,9 @@ class ViewsHandlerSortDateTest extends ViewsSqlTest {
             array('name' => 'Meredith'),
             array('name' => 'Paul'),
             array('name' => 'John'),
-           );
+          );
           break;
+
         case 'hour':
           $expected = array(
             array('name' => 'George'),
@@ -101,6 +113,7 @@ class ViewsHandlerSortDateTest extends ViewsSqlTest {
             array('name' => 'John'),
           );
           break;
+
         case 'day':
           $expected = array(
             array('name' => 'George'),
@@ -110,6 +123,7 @@ class ViewsHandlerSortDateTest extends ViewsSqlTest {
             array('name' => 'Meredith'),
           );
           break;
+
         case 'month':
           $expected = array(
             array('name' => 'John'),
@@ -119,6 +133,7 @@ class ViewsHandlerSortDateTest extends ViewsSqlTest {
             array('name' => 'Meredith'),
           );
           break;
+
         case 'year':
           $expected = array(
             array('name' => 'John'),
@@ -135,7 +150,7 @@ class ViewsHandlerSortDateTest extends ViewsSqlTest {
   }
 
   /**
-   * Test numeric ordering of the result set.
+   * Tests numeric ordering of the result set.
    */
   public function testDateOrdering() {
     foreach (array('second', 'minute', 'hour', 'day', 'month', 'year') as $granularity) {
@@ -158,7 +173,7 @@ class ViewsHandlerSortDateTest extends ViewsSqlTest {
           ),
         ));
 
-        // Change the ordering
+        // Change the ordering.
         $view->display['default']->handler->override_option('sorts', array(
           'created' => array(
             'id' => 'created',
@@ -190,4 +205,5 @@ class ViewsHandlerSortDateTest extends ViewsSqlTest {
       }
     }
   }
+
 }

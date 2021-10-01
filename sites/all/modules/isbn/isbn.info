@@ -1,0 +1,12 @@
+name = ISBN
+description = Keeps track of ISBNs
+version = VERSION
+core = 7.x
+package = "fields"
+
+; Information added by Drupal.org packaging script on 2016-10-26
+version = "7.x-1.0"
+core = "7.x"
+project = "isbn"
+datestamp = "1477485850"
+

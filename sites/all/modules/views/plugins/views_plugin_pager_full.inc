@@ -1,34 +1,56 @@
 <?php
 
 /**
+ * @file
+ * Definition of views_plugin_pager_full.
+ */
+
+/**
  * The plugin to handle full pager.
  *
  * @ingroup views_pager_plugins
  */
 class views_plugin_pager_full extends views_plugin_pager {
-  function summary_title() {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function summary_title() {
     if (!empty($this->options['offset'])) {
       return format_plural($this->options['items_per_page'], '@count item, skip @skip', 'Paged, @count items, skip @skip', array('@count' => $this->options['items_per_page'], '@skip' => $this->options['offset']));
     }
-      return format_plural($this->options['items_per_page'], '@count item', 'Paged, @count items', array('@count' => $this->options['items_per_page']));
+    return format_plural($this->options['items_per_page'], '@count item', 'Paged, @count items', array('@count' => $this->options['items_per_page']));
   }
 
-  function option_definition() {
+  /**
+   * {@inheritdoc}
+   */
+  public function option_definition() {
     $options = parent::option_definition();
     $options['items_per_page'] = array('default' => 10);
     $options['offset'] = array('default' => 0);
     $options['id'] = array('default' => 0);
     $options['total_pages'] = array('default' => '');
+    // Use the same default quantity that core uses by default.
+    $options['quantity'] = array('default' => 9);
     $options['expose'] = array(
       'contains' => array(
         'items_per_page' => array('default' => FALSE, 'bool' => TRUE),
         'items_per_page_label' => array('default' => 'Items per page', 'translatable' => TRUE),
         'items_per_page_options' => array('default' => '5, 10, 20, 40, 60'),
-        'items_per_page_options_all' => array('default' => FALSE),
+        'items_per_page_options_all' => array('default' => FALSE, 'bool' => TRUE),
         'items_per_page_options_all_label' => array('default' => '- All -', 'translatable' => TRUE),
 
         'offset' => array('default' => FALSE, 'bool' => TRUE),
         'offset_label' => array('default' => 'Offset', 'translatable' => TRUE),
+      ),
+    );
+    $options['tags'] = array(
+      'contains' => array(
+        'first' => array('default' => '« first', 'translatable' => TRUE),
+        'previous' => array('default' => '‹ previous', 'translatable' => TRUE),
+        'next' => array('default' => 'next ›', 'translatable' => TRUE),
+        'last' => array('default' => 'last »', 'translatable' => TRUE),
       ),
     );
     return $options;
@@ -37,7 +59,7 @@ class views_plugin_pager_full extends views_plugin_pager {
   /**
    * Provide the default form for setting options.
    */
-  function options_form(&$form, &$form_state) {
+  public function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
     $pager_text = $this->display->handler->get_pager_text();
     $form['items_per_page'] = array(
@@ -68,7 +90,52 @@ class views_plugin_pager_full extends views_plugin_pager {
       '#default_value' => $this->options['total_pages'],
     );
 
-    $form['expose'] = array (
+    $form['quantity'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Number of pager links visible'),
+      '#description' => t('Specify the number of links to pages to display in the pager.'),
+      '#default_value' => $this->options['quantity'],
+    );
+
+    $form['tags'] = array(
+      '#type' => 'fieldset',
+      '#collapsible' => FALSE,
+      '#collapsed' => FALSE,
+      '#tree' => TRUE,
+      '#title' => t('Tags'),
+      '#input' => TRUE,
+      '#description' => t('A lists of labels for the controls in the pager'),
+    );
+
+    $form['tags']['first'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Text for "first"-link'),
+      '#description' => t('Text for "first"-link'),
+      '#default_value' => $this->options['tags']['first'],
+    );
+
+    $form['tags']['previous'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Text for "previous"-link'),
+      '#description' => t('Text for "previous"-link'),
+      '#default_value' => $this->options['tags']['previous'],
+    );
+
+    $form['tags']['next'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Text for "next"-link'),
+      '#description' => t('Text for "next"-link'),
+      '#default_value' => $this->options['tags']['next'],
+    );
+
+    $form['tags']['last'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Text for "last"-link'),
+      '#description' => t('Text for "last"-link'),
+      '#default_value' => $this->options['tags']['last'],
+    );
+
+    $form['expose'] = array(
       '#type' => 'fieldset',
       '#collapsible' => FALSE,
       '#collapsed' => FALSE,
@@ -92,7 +159,7 @@ class views_plugin_pager_full extends views_plugin_pager {
       '#description' => t('Label to use in the exposed items per page form element.'),
       '#default_value' => $this->options['expose']['items_per_page_label'],
       '#dependency' => array(
-        'edit-pager-options-expose-items-per-page' => array(1)
+        'edit-pager-options-expose-items-per-page' => array(1),
       ),
     );
 
@@ -103,10 +170,9 @@ class views_plugin_pager_full extends views_plugin_pager {
       '#description' => t('Set between which values the user can choose when determining the items per page. Separated by comma.'),
       '#default_value' => $this->options['expose']['items_per_page_options'],
       '#dependency' => array(
-        'edit-pager-options-expose-items-per-page' => array(1)
+        'edit-pager-options-expose-items-per-page' => array(1),
       ),
     );
-
 
     $form['expose']['items_per_page_options_all'] = array(
       '#type' => 'checkbox',
@@ -139,19 +205,22 @@ class views_plugin_pager_full extends views_plugin_pager {
       '#description' => t('Label to use in the exposed offset form element.'),
       '#default_value' => $this->options['expose']['offset_label'],
       '#dependency' => array(
-        'edit-pager-options-expose-offset' => array(1)
+        'edit-pager-options-expose-offset' => array(1),
       ),
     );
   }
 
-  function options_validate(&$form, &$form_state) {
+  /**
+   * {@inheritdoc}
+   */
+  public function options_validate(&$form, &$form_state) {
     // Only accept integer values.
     $error = FALSE;
     $exposed_options = $form_state['values']['pager_options']['expose']['items_per_page_options'];
     if (strpos($exposed_options, '.') !== FALSE) {
       $error = TRUE;
     }
-    $options = explode(',',$exposed_options);
+    $options = explode(',', $exposed_options);
     if (!$error && is_array($options)) {
       foreach ($options as $option) {
         if (!is_numeric($option) || intval($option) == 0) {
@@ -177,10 +246,13 @@ class views_plugin_pager_full extends views_plugin_pager {
     }
   }
 
-  function query() {
+  /**
+   * {@inheritdoc}
+   */
+  public function query() {
     if ($this->items_per_page_exposed()) {
       if (!empty($_GET['items_per_page']) && $_GET['items_per_page'] > 0) {
-        $this->options['items_per_page'] = $_GET['items_per_page'];
+        $this->options['items_per_page'] = (int) $_GET['items_per_page'];
       }
       elseif (!empty($_GET['items_per_page']) && $_GET['items_per_page'] == 'All' && $this->options['expose']['items_per_page_options_all']) {
         $this->options['items_per_page'] = 0;
@@ -188,16 +260,15 @@ class views_plugin_pager_full extends views_plugin_pager {
     }
     if ($this->offset_exposed()) {
       if (isset($_GET['offset']) && $_GET['offset'] >= 0) {
-        $this->options['offset'] = $_GET['offset'];
+        $this->options['offset'] = (int) $_GET['offset'];
       }
     }
 
-    $limit = $this->options['items_per_page'];
-    $offset = $this->current_page * $this->options['items_per_page'] + $this->options['offset'];
+    $limit = $this->get_items_per_page();
+    $offset = $this->current_page * $limit + $this->get_offset();
     if (!empty($this->options['total_pages'])) {
       if ($this->current_page >= $this->options['total_pages']) {
-        $limit = $this->options['items_per_page'];
-        $offset = $this->options['total_pages'] * $this->options['items_per_page'];
+        $offset = $this->options['total_pages'] * $limit;
       }
     }
 
@@ -205,21 +276,35 @@ class views_plugin_pager_full extends views_plugin_pager {
     $this->view->query->set_offset($offset);
   }
 
-  function render($input) {
+  /**
+   * {@inheritdoc}
+   */
+  public function render($input) {
     $pager_theme = views_theme_functions('pager', $this->view, $this->display);
+    // The 0, 1, 3, 4 index are correct. See theme_pager documentation.
+    $tags = array(
+      0 => $this->options['tags']['first'],
+      1 => $this->options['tags']['previous'],
+      3 => $this->options['tags']['next'],
+      4 => $this->options['tags']['last'],
+    );
     $output = theme($pager_theme, array(
-      'parameters' => $input, 'element' => $this->options['id']));
+      'tags' => $tags,
+      'element' => $this->get_pager_id(),
+      'parameters' => $input,
+      'quantity' => $this->options['quantity'],
+    ));
     return $output;
   }
 
   /**
    * Set the current page.
    *
-   * @param $number
+   * @param int $number
    *   If provided, the page number will be set to this. If NOT provided,
    *   the page number will be set from the global page array.
    */
-  function set_current_page($number = NULL) {
+  public function set_current_page($number = NULL) {
     if (isset($number)) {
       $this->current_page = $number;
       return;
@@ -237,18 +322,22 @@ class views_plugin_pager_full extends views_plugin_pager {
     // array hasn't been initialized before.
     $page = isset($_GET['page']) ? explode(',', $_GET['page']) : array();
 
-    for ($i = 0; $i <= $this->options['id'] || $i < count($pager_page_array); $i++) {
+    $pager_id = $this->get_pager_id();
+    for ($i = 0; $i <= $pager_id || $i < count($pager_page_array); $i++) {
       $pager_page_array[$i] = empty($page[$i]) ? 0 : $page[$i];
     }
 
-    $this->current_page = intval($pager_page_array[$this->options['id']]);
+    $this->current_page = intval($pager_page_array[$pager_id]);
 
     if ($this->current_page < 0) {
       $this->current_page = 0;
     }
   }
 
-  function get_pager_total() {
+  /**
+   * {@inheritdoc}
+   */
+  public function get_pager_total() {
     if ($items_per_page = intval($this->get_items_per_page())) {
       return ceil($this->total_items / $items_per_page);
     }
@@ -264,7 +353,7 @@ class views_plugin_pager_full extends views_plugin_pager {
    * items available and to update the current page if the requested
    * page is out of range.
    */
-  function update_page_info() {
+  public function update_page_info() {
     if (!empty($this->options['total_pages'])) {
       if (($this->options['total_pages'] * $this->options['items_per_page']) < $this->total_items) {
         $this->total_items = $this->options['total_pages'] * $this->options['items_per_page'];
@@ -277,40 +366,54 @@ class views_plugin_pager_full extends views_plugin_pager {
       // Dump information about what we already know into the globals.
       global $pager_page_array, $pager_total, $pager_total_items, $pager_limits;
       // Set the limit.
-      $pager_limits[$this->options['id']] = $this->options['items_per_page'];
+      $pager_id = $this->get_pager_id();
+      $pager_limits[$pager_id] = $this->options['items_per_page'];
       // Set the item count for the pager.
-      $pager_total_items[$this->options['id']] = $this->total_items;
+      $pager_total_items[$pager_id] = $this->total_items;
       // Calculate and set the count of available pages.
-      $pager_total[$this->options['id']] = $this->get_pager_total();
+      $pager_total[$pager_id] = $this->get_pager_total();
 
-      // See if the requested page was within range:
+      // See if the requested page was within range.
       if ($this->current_page < 0) {
         $this->current_page = 0;
       }
-      else if ($this->current_page >= $pager_total[$this->options['id']]) {
-        // Pages are numbered from 0 so if there are 10 pages, the last page is 9.
-        $this->current_page = $pager_total[$this->options['id']] - 1;
+      elseif ($this->current_page >= $pager_total[$pager_id]) {
+        // Pages are numbered from 0 so if there are 10 pages, the last page is
+        // 9.
+        $this->current_page = $pager_total[$pager_id] - 1;
       }
 
-      // Put this number in to guarantee that we do not generate notices when the pager
-      // goes to look for it later.
-      $pager_page_array[$this->options['id']] = $this->current_page;
+      // Put this number in to guarantee that we do not generate notices when
+      // the pager goes to look for it later.
+      $pager_page_array[$pager_id] = $this->current_page;
     }
   }
 
-  function uses_exposed() {
+  /**
+   *
+   */
+  public function uses_exposed() {
     return $this->items_per_page_exposed() || $this->offset_exposed();
   }
 
-  function items_per_page_exposed() {
+  /**
+   *
+   */
+  public function items_per_page_exposed() {
     return !empty($this->options['expose']['items_per_page']);
   }
 
-  function offset_exposed() {
+  /**
+   *
+   */
+  public function offset_exposed() {
     return !empty($this->options['expose']['offset']);
   }
 
-  function exposed_form_alter(&$form, &$form_state) {
+  /**
+   * {@inheritdoc}
+   */
+  public function exposed_form_alter(&$form, &$form_state) {
     if ($this->items_per_page_exposed()) {
       $options = explode(',', $this->options['expose']['items_per_page_options']);
       $sanitized_options = array();
@@ -341,11 +444,15 @@ class views_plugin_pager_full extends views_plugin_pager {
     }
   }
 
-  function exposed_form_validate(&$form, &$form_state) {
+  /**
+   * {@inheritdoc}
+   */
+  public function exposed_form_validate(&$form, &$form_state) {
     if (!empty($form_state['values']['offset']) && trim($form_state['values']['offset'])) {
       if (!is_numeric($form_state['values']['offset']) || $form_state['values']['offset'] < 0) {
-        form_set_error('offset', t('Offset must be an number greather or equal than 0.'));
+        form_set_error('offset', t('Offset must be a number greater than or equal to 0.'));
       }
     }
   }
+
 }

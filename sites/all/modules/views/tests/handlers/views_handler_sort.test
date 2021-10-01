@@ -1,7 +1,12 @@
 <?php
 
 /**
- * Test for core views_handler_sort handler.
+ * @file
+ * Definition of ViewsHandlerSortTest.
+ */
+
+/**
+ * Tests for core views_handler_sort handler.
  */
 class ViewsHandlerSortTest extends ViewsSqlTest {
   public static function getInfo() {
@@ -13,12 +18,12 @@ class ViewsHandlerSortTest extends ViewsSqlTest {
   }
 
   /**
-   * Test numeric ordering of the result set.
+   * Tests numeric ordering of the result set.
    */
   public function testNumericOrdering() {
     $view = $this->getBasicView();
 
-    // Change the ordering
+    // Change the ordering.
     $view->display['default']->handler->override_option('sorts', array(
       'age' => array(
         'order' => 'ASC',
@@ -41,7 +46,7 @@ class ViewsHandlerSortTest extends ViewsSqlTest {
 
     $view = $this->getBasicView();
 
-    // Reverse the ordering
+    // Reverse the ordering.
     $view->display['default']->handler->override_option('sorts', array(
       'age' => array(
         'order' => 'DESC',
@@ -64,12 +69,12 @@ class ViewsHandlerSortTest extends ViewsSqlTest {
   }
 
   /**
-   * Test string ordering of the result set.
+   * Tests string ordering of the result set.
    */
   public function testStringOrdering() {
     $view = $this->getBasicView();
 
-    // Change the ordering
+    // Change the ordering.
     $view->display['default']->handler->override_option('sorts', array(
       'name' => array(
         'order' => 'ASC',
@@ -92,7 +97,7 @@ class ViewsHandlerSortTest extends ViewsSqlTest {
 
     $view = $this->getBasicView();
 
-    // Reverse the ordering
+    // Reverse the ordering.
     $view->display['default']->handler->override_option('sorts', array(
       'name' => array(
         'order' => 'DESC',
@@ -113,4 +118,5 @@ class ViewsHandlerSortTest extends ViewsSqlTest {
       'views_test_age' => 'age',
     ));
   }
+
 }

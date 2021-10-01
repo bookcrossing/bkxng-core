@@ -1,0 +1,408 @@
+<?php
+
+/**
+ * @file
+ * getlocations_smartip.module
+ * @author Bob Hutchinson http://drupal.org/user/52366
+ * @copyright GNU GPL
+ *
+ * Provides a smartip facility.
+ * for Drupal 7
+ */
+
+define('GETLOCATIONS_SMARTIP_PATH', drupal_get_path('module', 'getlocations_smartip'));
+
+/**
+ * Implements hook_help().
+ */
+function getlocations_smartip_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#getlocations_smartip':
+      $output = '<p>' . t('Provide a smartip facility on a map.') . '</p>';
+      return $output;
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function getlocations_smartip_permission() {
+  $perms = array();
+  $perms['access getlocations smartip'] = array(
+    'title' => t('Access Getlocations Smartip'),
+    'description' => t('View and use the Getlocations_smartip module.')
+  );
+  return $perms;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function getlocations_smartip_menu() {
+  $items = array();
+
+  $items[GETLOCATIONS_ADMIN_PATH . '/smartip'] = array(
+    'title' => 'Smartip',
+    'description' => 'Configure Getlocations smartip',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('getlocations_smartip_settings_form'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 14,
+  );
+#  if (module_exists('smart_ip')) {
+    $items['getlocations_smartip/callback'] = array(
+      'page callback' => 'getlocations_smartip_callback',
+      'access arguments' => array('access content'),
+      'type' => MENU_CALLBACK,
+    );
+#  }
+
+  return $items;
+}
+
+/**
+ * Set up default settings.
+ *
+ * @return array $newdefaults
+ *
+ */
+function getlocations_smartip_defaults($settings = '') {
+
+  $getlocations_smartip_defaults = array(
+    'smartip_button'       => 0, // checkbox
+    'smartip_button_label' => t('Show current IP position'), // tf
+    'smartip_marker'       => 'drupal',
+    'smartip_marker_title' => t('Your current IP position'),
+    'smartip_bubble'       => 0, // checkbox
+    'smartip_center'       => 0, // checkbox
+    'smartip_zoom'         => -1,
+    'smartip_callback'     => 'getlocations_smartip/callback',
+  );
+  #$settings = '';
+  if ($settings) {
+    $getlocations_smartip_defaults = getlocations_adjust_vars($getlocations_smartip_defaults, $settings);
+  }
+  else {
+    $getlocations_smartip_defaults = variable_get('getlocations_smartip_defaults', $getlocations_smartip_defaults);
+  }
+
+  return $getlocations_smartip_defaults;
+}
+
+/**
+ * Function to display the getlocations_smartip admin settings form
+ * @return
+ *   Returns the form.
+ */
+function getlocations_smartip_settings_form() {
+
+  $getlocations_smartip_defaults = getlocations_smartip_defaults();
+
+  $getlocations_smartip_paths = getlocations_smartip_paths_get();
+
+  $form = array();
+
+  $form['getlocations_smartip_defaults'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Getlocations Smartip Default settings'),
+    '#description' => t('The settings here will provide the defaults for Getlocations Smartip.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    // This will store all the defaults in one variable.
+    '#tree' => TRUE,
+  );
+
+  $form['getlocations_smartip_defaults'] += getlocations_smartip_map_display_options_form($getlocations_smartip_defaults);
+
+  $form['getlocations_smartip_paths'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Javascript paths'),
+    '#description' => t('For advanced users who want to supply their own javascript.'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    // This will store all the defaults in one variable.
+    '#tree' => TRUE,
+  );
+
+  $form['getlocations_smartip_paths']['getlocations_smartip_path'] = getlocations_element_path(
+    t('Path to getlocations_smartip javascript file'),
+    $getlocations_smartip_paths['getlocations_smartip_path'],
+    70,
+    128,
+    t('Where the getlocations_smartip javascript file is located.')
+  );
+  $form['getlocations_smartip_paths']['getlocations_smartip_admin_path'] = getlocations_element_path(
+    t('Path to getlocations_smartip_admin javascript file'),
+    $getlocations_smartip_paths['getlocations_smartip_admin_path'],
+    70,
+    128,
+    t('Where the getlocations_smartip_admin javascript file is located.')
+  );
+
+  $form['getlocations_smartip_paths']['reset'] = getlocations_element_dd(
+    t('Reset'),
+    0,
+    array(0 => t('No'), 1 => t('Reset'), 2 => t('Reset to minified')),
+    t('Reset the paths to the defaults.')
+  );
+
+  $form = system_settings_form($form);
+  unset($form['#theme']);
+  $form['#theme'] = 'getlocations_smartip_settings_form';
+  $form['#validate'][] = 'getlocations_smartip_settings_validate';
+  return $form;
+
+}
+
+/**
+ * Admin settings form validation.
+ *
+ */
+function getlocations_smartip_settings_validate($form, &$form_state) {
+
+  $reset = $form_state['values']['getlocations_smartip_paths']['reset'];
+  unset($form_state['values']['getlocations_smartip_paths']['reset']);
+  if ($reset == 1) {
+    $form_state['values']['getlocations_smartip_paths'] = getlocations_smartip_paths_get(TRUE);
+  }
+  elseif ($reset == 2) {
+    $form_state['values']['getlocations_smartip_paths'] = getlocations_smartip_paths_get(FALSE ,TRUE);
+  }
+
+}
+
+/**
+ * Javascript paths.
+ * @param bool $reset
+ *  Set to true to force reset.
+ * @param bool $min
+ *  Set to true to provide minified versions.
+ *
+ * @return array
+ *
+ */
+function getlocations_smartip_paths_get($reset = FALSE, $min = FALSE) {
+  $jq_upd = getlocations_check_jquery_version(TRUE);
+
+  if ($min) {
+    $defaults = array(
+      'getlocations_smartip_path'       => GETLOCATIONS_SMARTIP_PATH . '/js/getlocations_smartip.min.js',
+      'getlocations_smartip_admin_path' => GETLOCATIONS_SMARTIP_PATH . ($jq_upd '/js/getlocations_smartip_admin_1.min.js' : '/js/getlocations_smartip_admin.min.js'),
+    );
+  }
+  else {
+    $defaults = array(
+      'getlocations_smartip_path'       => GETLOCATIONS_SMARTIP_PATH . '/js/getlocations_smartip.js',
+      'getlocations_smartip_admin_path' => GETLOCATIONS_SMARTIP_PATH . ($jq_upd '/js/getlocations_smartip_admin_1.js' : '/js/getlocations_smartip_admin.js'),
+    );
+  }
+  if ($reset || $min) {
+    $getlocations_smartip_paths = $defaults;
+  }
+  else {
+    $settings = variable_get('getlocations_smartip_paths', $defaults);
+    $getlocations_smartip_paths = getlocations_adjust_vars($defaults, $settings);
+  }
+  return $getlocations_smartip_paths;
+}
+
+/**
+ * @param array $defaults
+ *  Settings
+ *
+ * @param string $mapid
+ *  Unique map identifier used in javascript to allow multiple maps
+ *
+ */
+function getlocations_smartip_js_settings_do($defaults, $mapid) {
+  $settings = array(
+    $mapid => array(
+    'smartip_button'       => $defaults['smartip_button'],
+    'smartip_button_label' => $defaults['smartip_button_label'],
+    'smartip_marker'       => $defaults['smartip_marker'],
+    'smartip_marker_title' => $defaults['smartip_marker_title'],
+    'smartip_bubble'       => $defaults['smartip_bubble'],
+    'smartip_center'       => $defaults['smartip_center'],
+    'smartip_zoom'         => $defaults['smartip_zoom'],
+    'smartip_callback'     => $defaults['smartip_callback'],
+    ),
+  );
+  drupal_add_js(array('getlocations_smartip' => $settings), 'setting');
+  getlocations_smartip_js_do();
+}
+
+/**
+ * Add js and css to page.
+ *
+ */
+function getlocations_smartip_js_do() {
+  static $getlocations_smartip_js_done = FALSE;
+  if (! $getlocations_smartip_js_done) {
+    $getlocations_smartip_paths = getlocations_smartip_paths_get();
+    drupal_add_js($getlocations_smartip_paths['getlocations_smartip_path'], array('weight' => 50));
+    drupal_add_css(GETLOCATIONS_SMARTIP_PATH . '/getlocations_smartip.css');
+  }
+  $getlocations_smartip_js_done = TRUE;
+}
+
+/**
+ * @param array $defaults
+ *  Settings
+ *
+ * Returns form
+ *
+ */
+function getlocations_smartip_map_display_options_form($defaults) {
+
+  if (empty($defaults['smartip_button_label'])) {
+    $getlocations_smartip_defaults = getlocations_smartip_defaults();
+    $defaults['smartip_button']       = $getlocations_smartip_defaults['smartip_button'];
+    $defaults['smartip_button_label'] = $getlocations_smartip_defaults['smartip_button_label'];
+    $defaults['smartip_marker']       = $getlocations_smartip_defaults['smartip_marker'];
+    $defaults['smartip_marker_title'] = $getlocations_smartip_defaults['smartip_marker_title'];
+    $defaults['smartip_bubble']       = $getlocations_smartip_defaults['smartip_bubble'];
+    $defaults['smartip_center']       = $getlocations_smartip_defaults['smartip_center'];
+    $defaults['smartip_zoom']         = $getlocations_smartip_defaults['smartip_zoom'];
+    $defaults['smartip_callback']     = $getlocations_smartip_defaults['smartip_callback'];
+  }
+
+  $form = _getlocations_smartip_map_display_options_form($defaults);
+  return $form;
+
+}
+
+/**
+ * Actual settings form.
+ *
+ */
+function _getlocations_smartip_map_display_options_form($defaults) {
+
+  $getlocations_smartip_paths = getlocations_smartip_paths_get();
+  drupal_add_js($getlocations_smartip_paths['getlocations_smartip_admin_path']);
+
+  $form['smartip_button'] = getlocations_element_map_checkbox(
+    t('Show Smartip button'),
+    $defaults['smartip_button']
+  );
+  $form['smartip_button']['#suffix'] = '<div id="wrap-getlocations-smartip-button">';
+
+  $form['smartip_button_label'] = getlocations_element_map_tf(
+    t('Smartip button label'),
+    $defaults['smartip_button_label'],
+    '',
+    30,
+    30,
+    TRUE
+  );
+  $markers = getlocations_get_marker_titles();
+  $form['smartip_marker'] = getlocations_element_map_marker(
+    t('Smartip Map marker'),
+    $markers,
+    $defaults['smartip_marker'],
+    ''
+  );
+  $form['smartip_marker_title'] = getlocations_element_map_tf(
+    t('Smartip Marker title'),
+    $defaults['smartip_marker_title'],
+    '',
+    30,
+    30,
+    TRUE
+  );
+
+  $form['smartip_bubble'] = getlocations_element_map_checkbox(
+    t('Show bubble on Smartip Marker click'),
+    $defaults['smartip_bubble'],
+    t('This only applies if the location has been Geocoded.')
+  );
+
+  $form['smartip_zoom'] = array(
+    '#type' => 'select',
+    '#title' => t('Smartip marker Zoom'),
+    '#default_value' => $defaults['smartip_zoom'],
+    '#options' => array('-1' => t('None')) + drupal_map_assoc(range(0, 21)),
+  );
+
+  $form['smartip_callback'] = array('#type' => 'value', '#value' => $defaults['smartip_callback']);
+
+  $form['smartip_center'] = getlocations_element_map_checkbox(
+    t('Center the Smartip marker on the map'),
+    $defaults['smartip_center']
+  );
+  $form['smartip_center']['#suffix'] = '</div>';
+
+  return $form;
+
+}
+
+/**
+ * @return
+ *   Returns location array
+ *
+ */
+function getlocations_smartip_callback() {
+  $location = getlocations_smartip_get();
+  drupal_json_output($location);
+}
+
+/**
+ * @return
+ *   Returns location array
+ *
+ */
+function getlocations_smartip_get() {
+  $location = FALSE;
+  if (module_exists('smart_ip')) {
+    global $user;
+    if ($user->uid > 0 && isset($user->data['geoip_location'])) {
+      $location = $user->data['geoip_location'];
+    }
+    elseif (isset($_SESSION['smart_ip']['location'])) {
+      $location = $_SESSION['smart_ip']['location'];
+    }
+  }
+  return $location;
+}
+
+/**
+ * Implements hook_theme().
+ *
+ * This lets us tell Drupal about our theme functions and their arguments.
+ */
+function getlocations_smartip_theme() {
+  return array(
+    'getlocations_smartip_settings_form' => array(
+      'render element' => 'form',
+    ),
+    'getlocations_smartip_button' => array(
+      'variables' => array(
+        'defaults' => array(),
+        'mapid' => ''
+      ),
+    ),
+  );
+}
+
+function theme_getlocations_smartip_settings_form($variables) {
+  $form = $variables['form'];
+  $output = '';
+  $link = getlocations_markerpicker_link($form['getlocations_smartip_defaults']['smartip_marker']['#id'], 'm');
+  $form['getlocations_smartip_defaults']['smartip_marker']['#field_suffix'] = '&nbsp;' . $link;
+
+  $output .= drupal_render_children($form);
+  return $output;
+}
+
+function theme_getlocations_smartip_button($variables) {
+  $defaults = $variables['defaults'];
+  $mapid = $variables['mapid'];
+  $output = '';
+
+  if (isset($defaults['smartip_button']) && $defaults['smartip_button']) {
+    $smartipbtn = '<input type="button" value="' . $defaults['smartip_button_label'] . '" id="getlocations_smartip_show_' . $mapid . '" class="form-submit"  />';
+    $smartipbtn .= '<div class="getlocations_smartip_throbber getlocations_smartip_throbber_inactive" id="getlocations_smartip_throbber_' . $mapid . '">&nbsp;&nbsp;&nbsp;&nbsp;</div>';
+    $output .= $smartipbtn;
+  }
+  return $output;
+}

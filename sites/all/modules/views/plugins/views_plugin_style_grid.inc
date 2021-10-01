@@ -1,7 +1,8 @@
 <?php
+
 /**
  * @file
- * Contains the grid style plugin.
+ * Definition of views_plugin_style_grid.
  */
 
 /**
@@ -10,16 +11,18 @@
  * @ingroup views_style_plugins
  */
 class views_plugin_style_grid extends views_plugin_style {
+
   /**
-   * Set default options
+   * Set default options.
    */
-  function option_definition() {
+  public function option_definition() {
     $options = parent::option_definition();
 
     $options['columns'] = array('default' => '4');
     $options['alignment'] = array('default' => 'horizontal');
-    $options['fill_single_line'] = array('default' => TRUE);
+    $options['fill_single_line'] = array('default' => TRUE, 'bool' => TRUE);
     $options['summary'] = array('default' => '');
+    $options['caption'] = array('default' => '');
 
     return $options;
   }
@@ -27,7 +30,7 @@ class views_plugin_style_grid extends views_plugin_style {
   /**
    * Render the given style.
    */
-  function options_form(&$form, &$form_state) {
+  public function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
     $form['columns'] = array(
       '#type' => 'textfield',
@@ -51,11 +54,19 @@ class views_plugin_style_grid extends views_plugin_style {
       '#default_value' => !empty($this->options['fill_single_line']),
     );
 
+    $form['caption'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Short description of table'),
+      '#description' => t('Include a caption for better accessibility of your table.'),
+      '#default_value' => $this->options['caption'],
+    );
+
     $form['summary'] = array(
       '#type' => 'textfield',
       '#title' => t('Table summary'),
-      '#description' => t('This value will be displayed as table-summary attribute in the html. Set this for better accessiblity of your site.'),
+      '#description' => t('This value will be displayed as table-summary attribute in the html. Use this to give a summary of complex tables.'),
       '#default_value' => $this->options['summary'],
     );
   }
+
 }

@@ -1,8 +1,7 @@
 <?php
 
 /**
- * @file views_content.module
- *
+ * @file
  * Provides views as panels content, configurable by the administrator.
  * Each view provided as panel content must be configured in advance,
  * but once configured, building panels with views is a little bit simpler.
@@ -29,8 +28,9 @@ function views_content_menu() {
 }
 
 /**
- * Implementation of hook_ctools_plugin_dierctory() to let the system know
- * where our content_type plugins are.
+ * Implements hook_ctools_plugin_dierctory().
+ *
+ * To let the system know where our content_type plugins are.
  */
 function views_content_ctools_plugin_directory($owner, $plugin_type) {
   if ($owner == 'ctools') {
@@ -280,4 +280,18 @@ function _views_content_get_context_from_display($view, $id, $parent, $required 
     'view name' => $view->name,
     'view display id' => $id,
   );
+}
+
+/**
+ * Implements hook_get_pane_links_alter().
+ */
+function views_content_get_pane_links_alter(&$links, $pane, $content_type) {
+  if ($pane->type === 'views_panes') {
+    list($view_name, $display_name) = explode('-', $pane->subtype);
+    $destination = array('destination' => current_path());
+    $links['top'][] = array(
+      'title' => t('Edit view'),
+      'href' => url('admin/structure/views/view/' . $view_name . '/edit/' . $display_name, array('query' => $destination, 'absolute' => TRUE)),
+    );
+  }
 }

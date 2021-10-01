@@ -1,0 +1,63 @@
+.custom-off {
+  float: left;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  background: url('custom.png') no-repeat 0px 0px;
+}
+.custom1-on {
+  float: left;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  background: url('custom.png') no-repeat 0px -14px;
+}
+.custom2-on {
+  float: left;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  background: url('custom.png') no-repeat 0px -28px;
+}
+.custom3-on {
+  float: left;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  background: url('custom.png') no-repeat 0px -42px;
+}
+.custom4-on {
+  float: left;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  background: url('custom.png') no-repeat 0px -56px;
+}
+.custom5-on {
+  float: left;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  background: url('custom.png') no-repeat 0px -70px;
+}
+.custom6-on {
+  float: left;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  background: url('custom.png') no-repeat 0px -84px;
+}
+.custom7-on {
+  float: left;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  background: url('custom.png') no-repeat 0px -98px;
+}
+.custom8-on {
+  float: left;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  background: url('custom.png') no-repeat 0px -112px;
+}

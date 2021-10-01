@@ -2,9 +2,13 @@
 
 /**
  * @file
+ * Definition of ViewsPluginStyleTestCase.
+ */
+
+/**
  * Tests some general style plugin related functionality.
  */
-class ViewsPluginStyleTestCase extends ViewsSqlTest {
+class ViewsPluginStyleTestCase extends ViewsPluginStyleTestBase {
   public static function getInfo() {
     return array(
       'name' => 'Styles',
@@ -74,6 +78,7 @@ class ViewsPluginStyleTestCase extends ViewsSqlTest {
     $expected = array();
     $expected['Job: Singer'] = array();
     $expected['Job: Singer']['group'] = 'Job: Singer';
+    $expected['Job: Singer']['level'] = '0';
     $expected['Job: Singer']['rows'][0] = new StdClass();
     $expected['Job: Singer']['rows'][0]->views_test_name = 'John';
     $expected['Job: Singer']['rows'][0]->views_test_job = 'Singer';
@@ -84,6 +89,7 @@ class ViewsPluginStyleTestCase extends ViewsSqlTest {
     $expected['Job: Singer']['rows'][1]->views_test_id = '2';
     $expected['Job: Drummer'] = array();
     $expected['Job: Drummer']['group'] = 'Job: Drummer';
+    $expected['Job: Drummer']['level'] = '0';
     $expected['Job: Drummer']['rows'][2] = new StdClass();
     $expected['Job: Drummer']['rows'][2]->views_test_name = 'Ringo';
     $expected['Job: Drummer']['rows'][2]->views_test_job = 'Drummer';
@@ -157,8 +163,10 @@ class ViewsPluginStyleTestCase extends ViewsSqlTest {
     $expected = array();
     $expected['Job: Singer'] = array();
     $expected['Job: Singer']['group'] = 'Job: Singer';
+    $expected['Job: Singer']['level'] = 0;
     $expected['Job: Singer']['rows']['Age: 25'] = array();
     $expected['Job: Singer']['rows']['Age: 25']['group'] = 'Age: 25';
+    $expected['Job: Singer']['rows']['Age: 25']['level'] = 1;
     $expected['Job: Singer']['rows']['Age: 25']['rows'][0] = new StdClass();
     $expected['Job: Singer']['rows']['Age: 25']['rows'][0]->views_test_name = 'John';
     $expected['Job: Singer']['rows']['Age: 25']['rows'][0]->views_test_job = 'Singer';
@@ -166,6 +174,7 @@ class ViewsPluginStyleTestCase extends ViewsSqlTest {
     $expected['Job: Singer']['rows']['Age: 25']['rows'][0]->views_test_id = '1';
     $expected['Job: Singer']['rows']['Age: 27'] = array();
     $expected['Job: Singer']['rows']['Age: 27']['group'] = 'Age: 27';
+    $expected['Job: Singer']['rows']['Age: 27']['level'] = 1;
     $expected['Job: Singer']['rows']['Age: 27']['rows'][1] = new StdClass();
     $expected['Job: Singer']['rows']['Age: 27']['rows'][1]->views_test_name = 'George';
     $expected['Job: Singer']['rows']['Age: 27']['rows'][1]->views_test_job = 'Singer';
@@ -173,14 +182,15 @@ class ViewsPluginStyleTestCase extends ViewsSqlTest {
     $expected['Job: Singer']['rows']['Age: 27']['rows'][1]->views_test_id = '2';
     $expected['Job: Drummer'] = array();
     $expected['Job: Drummer']['group'] = 'Job: Drummer';
+    $expected['Job: Drummer']['level'] = 0;
     $expected['Job: Drummer']['rows']['Age: 28'] = array();
     $expected['Job: Drummer']['rows']['Age: 28']['group'] = 'Age: 28';
+    $expected['Job: Drummer']['rows']['Age: 28']['level'] = 1;
     $expected['Job: Drummer']['rows']['Age: 28']['rows'][2] = new StdClass();
     $expected['Job: Drummer']['rows']['Age: 28']['rows'][2]->views_test_name = 'Ringo';
     $expected['Job: Drummer']['rows']['Age: 28']['rows'][2]->views_test_job = 'Drummer';
     $expected['Job: Drummer']['rows']['Age: 28']['rows'][2]->views_test_age = '28';
     $expected['Job: Drummer']['rows']['Age: 28']['rows'][2]->views_test_id = '3';
-
 
     // Alter the results to support the stripped case.
     if ($stripped) {
@@ -201,7 +211,6 @@ class ViewsPluginStyleTestCase extends ViewsSqlTest {
       $view->style_plugin->options['grouping'][0] = array('field' => 'job', 'rendered' => TRUE, 'rendered_strip' => TRUE);
       $view->style_plugin->options['grouping'][1] = array('field' => 'age', 'rendered' => TRUE, 'rendered_strip' => TRUE);
     }
-
 
     // The newer api passes the value of the grouping as well.
     $sets_new_rendered = $view->style_plugin->render_grouping($view->result, $view->style_plugin->options['grouping'], TRUE);
@@ -227,4 +236,35 @@ class ViewsPluginStyleTestCase extends ViewsSqlTest {
       $this->assertEqual($sets_new_value, $expected, t('The style plugins should proper group the results with grouping by the value.'));
     }
   }
+
+  /**
+   * Tests custom css classes.
+   */
+  function testCustomRowClasses() {
+    $view = $this->getBasicView();
+
+    // Setup some random css class.
+    $view->init_display();
+    $view->init_style();
+    $random_name = drupal_html_class($this->randomName());
+    $view->style_plugin->options['row_class'] = $random_name . " test-token-[name]";
+
+    $rendered_output = $view->preview();
+    $this->storeViewPreview($rendered_output);
+
+    $rows = $this->elements->body->div->div->div;
+    $count = 0;
+    foreach ($rows as $row) {
+      $attributes = $row->attributes();
+      $class = (string) $attributes['class'][0];
+      $this->assertTrue(strpos($class, $random_name) !== FALSE, 'Make sure that a custom css class is added to the output.');
+
+      // Check token replacement.
+      $name = drupal_clean_css_identifier($view->field['name']->get_value($view->result[$count]));
+      $this->assertTrue(strpos($class, "test-token-$name") !== FALSE, 'Make sure that a token in custom css class is replaced.');
+
+      $count++;
+    }
+  }
+
 }

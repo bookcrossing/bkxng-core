@@ -2,14 +2,9 @@
 
 /**
  * @file
- *
  * Provides views data and handlers for locale.module.
- */
-
-/**
- * @defgroup views_locale_module locale.module handlers
  *
- * @{
+ * @ingroup views_module_handlers
  */
 
 /**
@@ -17,7 +12,6 @@
  */
 function locale_views_data() {
   // Basic table information.
-
   // Define the base group of this table.
   $data['locales_source']['table']['group']  = t('Locale source');
 
@@ -28,7 +22,7 @@ function locale_views_data() {
     'help' => t('A source string for translation, in English or the default site language.'),
   );
 
-  // lid
+  // Locale ID / 'lid'.
   $data['locales_source']['lid'] = array(
     'title' => t('LID'),
     'help' => t('The ID of the source string.'),
@@ -49,7 +43,7 @@ function locale_views_data() {
     ),
   );
 
-  // location
+  // Location.
   $data['locales_source']['location'] = array(
     'group' => t('Locale source'),
     'title' => t('Location'),
@@ -57,7 +51,7 @@ function locale_views_data() {
     'field' => array(
       'handler' => 'views_handler_field',
       'click sortable' => TRUE,
-     ),
+    ),
     'sort' => array(
       'handler' => 'views_handler_sort',
     ),
@@ -69,7 +63,7 @@ function locale_views_data() {
     ),
   );
 
-  // Group field
+  // Group field.
   $data['locales_source']['textgroup'] = array(
     'group' => t('Locale source'),
     'title' => t('Group'),
@@ -86,7 +80,7 @@ function locale_views_data() {
     ),
   );
 
-  // Source field
+  // Source field.
   $data['locales_source']['source'] = array(
     'group' => t('Locale source'),
     'title' => t('Source'),
@@ -99,7 +93,7 @@ function locale_views_data() {
     ),
   );
 
-  // Version field
+  // Version field.
   $data['locales_source']['version'] = array(
     'group' => t('Locale source'),
     'title' => t('Version'),
@@ -126,13 +120,12 @@ function locale_views_data() {
   );
 
   // ----------------------------------------------------------------------
-  // Locales target table
-
-  // Define the base group of this table. Fields that don't
-  // have a group defined will go into this field by default.
+  // 'locales_target' table.
+  // Define the base group of this table. Fields that don't have a group
+  // defined will go into this field by default.
   $data['locales_target']['table']['group']  = t('Locale target');
 
-  // Join information
+  // Join information.
   $data['locales_target']['table']['join'] = array(
     'locales_source' => array(
       'left_field' => 'lid',
@@ -140,7 +133,7 @@ function locale_views_data() {
     ),
   );
 
-  // Translation field
+  // Translation field.
   $data['locales_target']['translation'] = array(
     'group' => t('Locale target'),
     'title' => t('Translation'),
@@ -153,7 +146,7 @@ function locale_views_data() {
     ),
   );
 
-  // Language field
+  // Language field.
   $data['locales_target']['language'] = array(
     'group' => t('Locale target'),
     'title' => t('Language'),
@@ -179,7 +172,7 @@ function locale_views_data() {
     ),
   );
 
-  // Plural
+  // Plural.
   $data['locales_target']['plural'] = array(
     'group' => t('Locale target'),
     'title' => t('Plural'),
@@ -202,5 +195,32 @@ function locale_views_data() {
 }
 
 /**
- * @}
+ * Implements hook_views_data_alter().
  */
+function locale_views_data_alter(&$data) {
+  // Language field.
+  $data['node']['language'] = array(
+    'title' => t('Language'),
+    'help' => t('The language the content is in.'),
+    'field' => array(
+      'handler' => 'views_handler_field_node_language',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_node_language',
+    ),
+    'argument' => array(
+      'handler' => 'views_handler_argument_node_language',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
+    ),
+  );
+  $data['node']['specific_language'] = array(
+    'title' => t('Specific language'),
+    'help' => t('Sort by a specific language that the content is in.'),
+    'sort' => array(
+      'handler' => 'views_handler_sort_node_language',
+    ),
+  );
+}

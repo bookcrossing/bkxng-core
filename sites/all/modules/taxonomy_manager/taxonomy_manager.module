@@ -731,7 +731,7 @@ function taxonomy_manager_tree_term_extra_info($term) {
   $term_parents = taxonomy_get_parents($term->tid);
 
   if ($term_children_count > 0) {
-    $extra_info = t('Children Count:') . ' ' . $term_children_count;
+    $extra_info = t('Children Count: @count', array('@count' => $term_children_count));
   }
 
   if (count($term_parents) >= 1) {
@@ -745,6 +745,17 @@ function taxonomy_manager_tree_term_extra_info($term) {
     }
     $extra_info .= implode(', ', $p_names);
   }
+
+  if (module_exists('synonyms')) {
+    $full_term = taxonomy_term_load($term->tid);
+    $term_synonyms = synonyms_get_term_synonyms($full_term);
+    $term_synonyms_count = sizeof($term_synonyms);
+    if ($term_synonyms_count > 0) {
+      $extra_info .= !empty($extra_info) ? ' | ' : '';
+      $extra_info .= t('Synonyms Count: @count', array('@count' => $term_synonyms_count));
+    }
+  }
+
   return $extra_info;
 }
 

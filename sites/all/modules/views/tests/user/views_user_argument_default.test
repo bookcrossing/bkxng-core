@@ -2,10 +2,17 @@
 
 /**
  * @file
- * Tests views user argument default plugin.
+ * Definition of ViewsUserArgumentDefault.
  */
 
+/**
+ * Tests views user argument default plugin.
+ */
 class ViewsUserArgumentDefault extends ViewsSqlTest {
+
+  /**
+   *
+   */
   public static function getInfo() {
     return array(
       'name' => 'Tests user argument default plugin',
@@ -14,11 +21,15 @@ class ViewsUserArgumentDefault extends ViewsSqlTest {
     );
   }
 
+  /**
+   *
+   */
   public function test_plugin_argument_default_current_user() {
     // Create a user to test.
     $account = $this->drupalCreateUser();
 
-    // Switch the user, we have to check the global user too, because drupalLogin is only for the simpletest browser.
+    // Switch the user, we have to check the global user too, because
+    // drupalLogin is only for the simpletest browser.
     $this->drupalLogin($account);
     global $user;
     $admin = $user;
@@ -37,8 +48,11 @@ class ViewsUserArgumentDefault extends ViewsSqlTest {
     drupal_save_session(TRUE);
   }
 
+  /**
+   *
+   */
   function view_plugin_argument_default_current_user() {
-    $view = new view;
+    $view = new view();
     $view->name = 'test_plugin_argument_default_current_user';
     $view->description = '';
     $view->tag = '';
@@ -84,4 +98,5 @@ class ViewsUserArgumentDefault extends ViewsSqlTest {
 
     return $view;
   }
+
 }

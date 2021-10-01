@@ -1,6 +1,10 @@
 <?php
 
-// Set this so we can tell that the file has been included at some point.
+/**
+ * @file
+ * Set this so we can tell that the file has been included at some point.
+ */
+
 define('CTOOLS_AJAX_INCLUDED', 1);
 
 /**
@@ -50,6 +54,34 @@ function ctools_ajax_text_button($text, $dest, $alt, $class = '', $type = 'use-a
 }
 
 /**
+ * Render an icon and related text as a link. This will automatically apply an AJAX class
+ * to the link and add the appropriate javascript to make this happen.
+ *
+ * Note: 'html' => true so be sure any text is vetted! Chances are these kinds of buttons will
+ * not use user input so this is a very minor concern.
+ *
+ * @param $text
+ *   The text that will be displayed as the link.
+ * @param $image
+ *   The icon image to include in the link.
+ * @param $dest
+ *   The destination of the link.
+ * @param $alt
+ *   The title text of the link.
+ * @param $class
+ *   Any class to apply to the link. @todo this should be a options array.
+ * @param $type
+ *   A type to use, in case a different behavior should be attached. Defaults
+ *   to ctools-use-ajax.
+ */
+function ctools_ajax_icon_text_button($text, $image, $dest, $alt, $class = '', $type = 'use-ajax') {
+  drupal_add_library('system', 'drupal.ajax');
+  $rendered_image = theme('image', array('path' => $image));
+  $link_content = $rendered_image . "<span>" . $text . "</span>";
+  return l($link_content, $dest, array('html' => TRUE, 'attributes' => array('class' => array($type, $class), 'title' => $alt)));
+}
+
+/**
  * Set a single property to a value, on all matched elements.
  *
  * @param $selector
@@ -57,17 +89,17 @@ function ctools_ajax_text_button($text, $dest, $alt, $class = '', $type = 'use-a
  * @param $name
  *   The name or key: of the data attached to this selector.
  * @param $value
- *  The value of the data.
+ *   The value of the data.
  */
 function ctools_ajax_command_attr($selector, $name, $value) {
   ctools_add_js('ajax-responder');
   return array(
-     'command' => 'attr',
-     'selector' => $selector,
-     'name' => $name,
-     'value' => $value,
-   );
- }
+    'command' => 'attr',
+    'selector' => $selector,
+    'name' => $name,
+    'value' => $value,
+  );
+}
 
 /**
  * Force a client-side redirect.
@@ -126,4 +158,3 @@ function ctools_ajax_render_error($error = '') {
   print ajax_render($commands);
   exit;
 }
-

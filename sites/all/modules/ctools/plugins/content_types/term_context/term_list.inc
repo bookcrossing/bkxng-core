@@ -1,9 +1,11 @@
 <?php
 
 /**
+ * @file
  * Plugins are described by creating a $plugin array which will be used
  * by the system that includes this file.
  */
+
 $plugin = array(
   'single' => TRUE,
   'title' => t('List of related terms'),
@@ -11,11 +13,17 @@ $plugin = array(
   'description' => t('Terms related to an existing term; may be child, siblings or top level.'),
   'required context' => new ctools_context_required(t('Term'), array('term', 'taxonomy_term')),
   'category' => t('Taxonomy term'),
-  'defaults' => array('title' => '', 'type' => 'child', 'list_type' => 'ul', 'path' => 'taxonomy/term'),
+  'defaults' => array(
+    'title' => '',
+    'type' => 'child',
+    'include_current_term' => FALSE,
+    'list_type' => 'ul',
+    'path' => 'taxonomy/term',
+  ),
 );
 
 function ctools_term_list_content_type_render($subtype, $conf, $panel_args, $context) {
-  $term = isset($context->data) ? clone($context->data) : NULL;
+  $term = isset($context->data) ? clone $context->data : NULL;
   $block = new stdClass();
   $block->module = 'term-list';
   $path = empty($conf['path']) ? 'taxonomy/term/%tid' : $conf['path'];
@@ -34,12 +42,15 @@ function ctools_term_list_content_type_render($subtype, $conf, $panel_args, $con
     $block->delta = $conf['type'];
     switch ($conf['type']) {
       case 'related':
-        // FIXME this no longer exists, must be done with Field API
+        // @todo this no longer exists, must be done with Field API.
         // $terms = taxonomy_get_related($term->tid);
         break;
 
       case 'child':
       default:
+        if (!empty($conf['include_current_term'])) {
+          $terms[] = $term;
+        }
         $terms = taxonomy_get_children($term->tid);
         break;
 
@@ -49,6 +60,9 @@ function ctools_term_list_content_type_render($subtype, $conf, $panel_args, $con
 
       case 'parent':
         $terms = taxonomy_get_parents($term->tid);
+        if (!empty($conf['include_current_term'])) {
+          $terms[] = $term;
+        }
         $block->title = count($terms) == 1 ? t('Parent term') : t('Parent terms');
         break;
 
@@ -66,7 +80,7 @@ function ctools_term_list_content_type_render($subtype, $conf, $panel_args, $con
 
       case 'synonyms':
         // FIXME this no longer exists, must be done with Field API
-//        $terms = taxonomy_get_synonyms($term->tid);
+        //        $terms = taxonomy_get_synonyms($term->tid);.
         break;
     }
 
@@ -116,6 +130,20 @@ function ctools_term_list_content_type_edit_form($form, &$form_state) {
     '#suffix' => '</div>',
   );
 
+  $form['include_current_term'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Include the current term in the list'),
+    '#default_value' => !empty($conf['include_current_term']),
+    '#prefix' => '<div class="clearfix no-float">',
+    '#suffix' => '</div>',
+    '#states' => array(
+      'invisible' => array(
+        ':input[name="type"], unique1' => array('!value' => 'child'),
+        ':input[name="type"], unique2' => array('!value' => 'parent'),
+      ),
+    ),
+  );
+
   $form['list_type'] = array(
     '#type' => 'select',
     '#title' => t('List type'),
@@ -143,4 +171,3 @@ function ctools_term_list_content_type_edit_form_submit($form, &$form_state) {
     $form_state['conf'][$key] = $form_state['values'][$key];
   }
 }
-

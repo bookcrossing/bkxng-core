@@ -1,26 +1,39 @@
 <?php
+
+/**
+ * @file
+ * Definition of views_handler_field_comment_username.
+ */
+
 /**
  * Field handler to allow linking to a user account or homepage.
  *
  * @ingroup views_field_handlers
  */
 class views_handler_field_comment_username extends views_handler_field {
+
   /**
    * Override init function to add uid and homepage fields.
    */
-  function init(&$view, &$data) {
+  public function init(&$view, &$data) {
     parent::init($view, $data);
     $this->additional_fields['uid'] = 'uid';
     $this->additional_fields['homepage'] = 'homepage';
   }
 
-  function option_definition() {
+  /**
+   * {@inheritdoc}
+   */
+  public function option_definition() {
     $options = parent::option_definition();
-    $options['link_to_user'] = array('default' => TRUE);
+    $options['link_to_user'] = array('default' => TRUE, 'bool' => TRUE);
     return $options;
   }
 
-  function options_form(&$form, &$form_state) {
+  /**
+   * {@inheritdoc}
+   */
+  public function options_form(&$form, &$form_state) {
     $form['link_to_user'] = array(
       '#title' => t("Link this field to its user or an author's homepage"),
       '#type' => 'checkbox',
@@ -29,7 +42,10 @@ class views_handler_field_comment_username extends views_handler_field {
     parent::options_form($form, $form_state);
   }
 
-  function render_link($data, $values) {
+  /**
+   * {@inheritdoc}
+   */
+  public function render_link($data, $values) {
     if (!empty($this->options['link_to_user'])) {
       $account = new stdClass();
       $account->uid = $this->get_value($values, 'uid');
@@ -45,8 +61,12 @@ class views_handler_field_comment_username extends views_handler_field {
     }
   }
 
-  function render($values) {
+  /**
+   * {@inheritdoc}
+   */
+  public function render($values) {
     $value = $this->get_value($values);
     return $this->render_link($this->sanitize_value($value), $values);
   }
+
 }

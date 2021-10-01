@@ -2,13 +2,13 @@
 
 /**
  * @file
- *
- * This is the task handler plugin to handle generating 403, 404 and 301 response codes.
+ * This is the task handler plugin to handle generating 403, 404, 301 and 302
+ * response codes.
  */
 
-// Plugin definition
+// Plugin definition.
 $plugin = array(
-  // is a 'context' handler type, meaning it supports the API of the
+  // Is a 'context' handler type, meaning it supports the API of the
   // context handlers provided by ctools context plugins.
   'handler type' => 'context',
   'visible' => TRUE, // may be added up front.
@@ -108,7 +108,8 @@ function page_manager_http_response_codes() {
     403 => t('403 Access denied'),
     404 => t('404 Page not found'),
     410 => t('410 Gone'),
-    301 => t('301 Redirect'),
+    301 => t('301 Permanent redirect'),
+    302 => t('302 Temporary redirect'),
   );
 }
 
@@ -119,7 +120,7 @@ function page_manager_http_response_admin_summary($handler, $task, $subtask, $pa
   ctools_include('context');
   ctools_include('context-task-handler');
 
-  // Get the operations
+  // Get the operations.
   $operations = page_manager_get_operations($page);
 
   // Get operations for just this handler.
@@ -188,7 +189,7 @@ function page_manager_http_response_admin_summary($handler, $task, $subtask, $pa
 
   $output .= '<div class="clearfix">';
   if ($show_title) {
-  $output .= '<div class="handler-title clearfix">';
+    $output .= '<div class="handler-title clearfix">';
     $output .= '<div class="actions handler-actions">' . $rendered_operations['actions'] . '</div>';
     $output .= '<span class="title-label">' . $title . '</span>';
   }
@@ -213,15 +214,35 @@ function page_manager_http_response_title($handler, $task, $subtask) {
 }
 
 /**
- * General settings for the panel
+ * General settings for the panel.
  */
 function page_manager_http_response_edit_settings($form, &$form_state) {
+  ctools_include('page_manager.admin', 'page_manager', '');
+  ctools_include('export', 'ctools');
+
   $conf = $form_state['handler']->conf;
   $form['title'] = array(
     '#type' => 'textfield',
     '#default_value' => $conf['title'],
     '#title' => t('Administrative title'),
     '#description' => t('Administrative title of this variant.'),
+  );
+
+  $name = isset($conf['name']) ? $conf['name'] : FALSE;
+  $form['name'] = array(
+    '#type' => 'machine_name',
+    '#title' => t('Machine name'),
+    '#required' => FALSE,
+    '#default_value' => $name,
+    '#description' => t("A unique machine-readable name for this variant. It must only contain lowercase letters, numbers, and underscores. This name will be used when exporting the variant. If left empty the variant's name will be used instead."),
+    '#size' => 32,
+    '#maxlength' => 32,
+    '#machine_name' => array(
+      'exists' => 'page_manager_handler_check_machine_name',
+      'source' => array('title'),
+    ),
+    '#field_prefix' => '<span dir="ltr">' . $form_state['task_name'] . '__',
+    '#field_suffix' => '</span>&lrm;',
   );
 
   $form['code'] = array(
@@ -236,7 +257,7 @@ function page_manager_http_response_edit_settings($form, &$form_state) {
     '#type' => 'textfield',
     '#title' => t('Redirect destination'),
     '#default_value' => $conf['destination'],
-    '#dependency' => array('edit-code' => array(301)),
+    '#dependency' => array('edit-code' => array(301, 302)),
     '#description' => t('Enter the path to redirect to. You may use keyword substitutions from contexts. You can use external urls (http://www.example.com/foo) or internal urls (node/1).'),
   );
 
@@ -244,7 +265,33 @@ function page_manager_http_response_edit_settings($form, &$form_state) {
 }
 
 function page_manager_http_response_edit_settings_submit($form, &$form_state) {
+  $machine_name = $form_state['handler']->name;
+  $name = $form_state['task_name'] . '__' . $form_state['values']['name'];
+
+  // If new name doesn't equal machine name, we need to update and redirect.
+  if ($machine_name !== $name) {
+    $form_state['handler']->name = $name;
+    // If there's a trail, we need to replace it for redirection.
+    if (isset($form_state['trail'])) {
+      $form_state['new trail'] = $form_state['trail'];
+      $delta = array_search($machine_name, $form_state['new trail']);
+      $form_state['new trail'][$delta] = $name;
+    }
+    // If handler id is set, replace it.
+    if ($form_state['handler_id']) {
+      $form_state['handler_id'] = $name;
+    }
+    // If we're defining a new custom handler, move page handler to new name.
+    if (isset($form_state['page']->handlers[$machine_name]) && isset($form_state['page']->handler_info[$machine_name])) {
+      $form_state['page']->handlers[$name] = $form_state['page']->handlers[$machine_name];
+      unset($form_state['page']->handlers[$machine_name]);
+      $form_state['page']->handler_info[$name] = $form_state['page']->handler_info[$machine_name];
+      unset($form_state['page']->handler_info[$machine_name]);
+    }
+  }
+
   $form_state['handler']->conf['title'] = $form_state['values']['title'];
+  $form_state['handler']->conf['name'] = $form_state['values']['name'];
   $form_state['handler']->conf['code'] = $form_state['values']['code'];
   $form_state['handler']->conf['destination'] = $form_state['values']['destination'];
 }
@@ -254,7 +301,7 @@ function page_manager_http_response_render($handler, $base_contexts, $args, $tes
   ctools_include('context');
   ctools_include('context-task-handler');
 
-  // Add my contexts
+  // Add my contexts.
   $contexts = ctools_context_handler_get_handler_contexts($base_contexts, $handler);
 
   // Test.
@@ -267,7 +314,7 @@ function page_manager_http_response_render($handler, $base_contexts, $args, $tes
   }
 
   $info['response code'] = $handler->conf['code'];
-  if ($info['response code'] == 301) {
+  if ($info['response code'] == 301 || $info['response code'] == 302) {
     $path = ctools_context_keyword_substitute($handler->conf['destination'], array(), $contexts);
     $url = parse_url($path);
     if (isset($url['query'])) {

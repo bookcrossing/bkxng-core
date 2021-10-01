@@ -1,0 +1,107 @@
+<?php
+
+/**
+ * @file
+ * Installation file for the Menu translation (Node) module.
+ *
+ * @author Francesco Placella, http://www.psegno.it, 2010
+ * @updater Andy Clabaugh, 2012
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function i18n_menu_node_install() {
+  global $i18n_menu_node_install;
+  $i18n_menu_node_install = TRUE;
+
+  $result = db_select('system', 's')
+    ->fields('s', array('weight'))
+    ->condition('name', 'i18n_menu')
+    ->execute()
+    ->fetchAssoc();
+
+  if ($result) {
+    $weight = $result['weight'] + 1;
+    db_update('system')
+      ->fields(array('weight' => $weight))
+      ->condition('name', 'i18n_menu_node')
+      ->execute();
+  }
+}
+
+/**
+ * Implementation of hook_enable().
+ */
+function i18n_menu_node_enable() {
+  global $i18n_menu_node_install;
+  // On install enable node translation for all the node menu items, otherwise
+  // preserve the current settings.
+  $force_status = $i18n_menu_node_install ? variable_get('i18n_menu_node_force_status', TRUE) : NULL;
+  i18n_menu_node_item_translations_refresh_all($force_status);
+}
+
+/**
+ * Implementation of hook_uninstall().
+ *
+ * Delete all variables and remove all the node menu items settings.
+ */
+function i18n_menu_node_uninstall() {
+  $result = db_select('variable', 'v')
+    ->fields('v', array('name'))
+    ->condition('name',  db_like('i18n_menu_node_translation') . '%', 'LIKE')
+    ->execute();
+  while ($row = $result->fetchAssoc()) {
+    variable_del($row['name']);
+  }
+
+  // Load module, as it is disabled already.
+  drupal_load('module', 'i18n_menu_node');
+
+  i18n_menu_node_item_translations_refresh_all(FALSE);
+}
+
+/**
+ * Implementation of hook_requirements().
+ */
+/*function i18n_menu_node_requirements($phase) {
+  $t = get_t();
+  $requirements = array();
+
+  $modules = array(
+    'i18n' => array(
+      'version' => 1.9,
+      'severity' => REQUIREMENT_ERROR,
+    ),
+    'context' => array(
+      'version' => 3.0,
+      'severity' => REQUIREMENT_WARNING,
+    ),
+    'token' => array(
+      'version' => 1.15,
+      'severity' => REQUIREMENT_WARNING,
+    ),
+    'pathauto' => array(
+      'version' => 1.5,
+      'severity' => REQUIREMENT_WARNING,
+    ),
+  );
+
+  foreach ($modules as $module => $data) {
+    if (module_exists($module)) {
+      $file = drupal_get_path('module', $module) ."/$module.info";
+      $info = drupal_parse_info_file($file);
+      $version = explode('-', $info['version']);
+      // We do not support extra version information, dev versions are ignored.
+      if (!empty($version[1]) && version_compare($version[1], $data['version']) < 0 && (empty($version[2]) || $version[2] != 'dev')) {
+        $requirements["i18n_menu_node_$module"] = array(
+          'title' => $t('Menu translation (Node)'),
+          'value' => $t('%module version needs to be at least %min_version', array('%module' => $info['name'], '%min_version' => $data['version'])),
+          'severity' => $data['severity'],
+        );
+      }
+    }
+  }
+
+  return $requirements;
+}*/

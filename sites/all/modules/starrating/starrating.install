@@ -1,0 +1,29 @@
+<?php
+
+/**
+ * @file
+ * Install/update/uninstall functions for starrating module
+ */
+
+/**
+ * Implements hook_field_schema().
+ */
+function starrating_field_schema($field) {
+  if ($field['type'] == 'starrating_rating') {
+    return array(
+      'columns' => array(
+        'value' => array(
+          'type' => 'int',
+          'not null' => FALSE,
+          'unsigned' => TRUE,
+          'default'  => NULL,
+          //'default'  => NULL,
+        ),
+      ),
+      'indexes' => array(
+        'value' => array('value'),
+      ),
+    );
+  }
+}
+

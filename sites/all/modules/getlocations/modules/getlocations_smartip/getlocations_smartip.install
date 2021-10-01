@@ -1,0 +1,25 @@
+<?php
+
+/**
+ * @file
+ * getlocations_smartip.install
+ * @author Bob Hutchinson http://drupal.org/user/52366
+ * @copyright GNU GPL
+ *
+ * getlocations_smartip module installation.
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function getlocations_smartip_uninstall() {
+  variable_del('getlocations_smartip_defaults');
+  variable_del('getlocations_smartip_paths');
+}
+
+/**
+ * Implements hook_enable().
+ */
+function getlocations_smartip_enable() {
+  drupal_set_message(st('Thank you for installing Getlocations smartip. To set it up please visit the <a href="@url">configuration page</a>.', array('@url' => url('admin/config/services/getlocations/smartip'))), 'status');
+}

@@ -1,0 +1,26 @@
+name = String translation
+description = Provides support for translation of user defined strings.
+dependencies[] = locale
+dependencies[] = i18n
+package = Multilingual - Internationalization
+core = 7.x
+
+files[] = i18n_string.admin.inc
+files[] = i18n_string.inc
+files[] = i18n_string.test
+configure = admin/config/regional/i18n/strings
+
+<<<<<<< Updated upstream
+; Information added by Drupal.org packaging script on 2020-06-17
+version = "7.x-1.27"
+core = "7.x"
+project = "i18n"
+datestamp = "1592373390"
+=======
+; Information added by Drupal.org packaging script on 2017-06-17
+version = "7.x-1.18"
+core = "7.x"
+project = "i18n"
+datestamp = "1497704047"
+
+>>>>>>> Stashed changes

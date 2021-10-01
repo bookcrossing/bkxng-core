@@ -1,0 +1,575 @@
+<?php
+/**
+ * @file
+ * The main functionality of the block_sections module.
+ */
+
+/**
+ * Define constants.
+ */
+define('BLOCK_SECTIONS_ADMINISTER', 'administer block sections');
+
+/**
+ * Implements hook_permission().
+ */
+function block_sections_permission() {
+  return array(
+    BLOCK_SECTIONS_ADMINISTER => array(
+      'title' => t('Administer Block Sections'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function block_sections_menu() {
+  $items = array();
+
+  $items['admin/structure/block/add-section-block'] = array(
+    'title' => 'Add section block',
+    'description' => 'Add a new section block.',
+    'access arguments' => array('administer blocks'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('block_sections_add_block_form'),
+    'type' => MENU_LOCAL_ACTION,
+    'file' => 'block_sections.admin.inc',
+  );
+
+  $items['admin/structure/block/delete-section-block'] = array(
+    'title' => 'Delete section block',
+    'access arguments' => array('administer blocks'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('block_sections_delete_block_form'),
+    'type' => MENU_CALLBACK,
+    'file' => 'block_sections.admin.inc',
+  );
+
+  $items['admin/structure/block-sections'] = array(
+    'title' => 'Block Sections',
+    'description' => 'Manage Block Sections.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('block_sections_admin_overview'),
+    'access arguments' => array(BLOCK_SECTIONS_ADMINISTER),
+    'file' => 'block_sections.admin.inc',
+  );
+
+  $items['admin/structure/block-sections/list'] = array(
+    'title' => 'List',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+  );
+
+  $items['admin/structure/block-sections/add'] = array(
+    'title' => 'Add Section',
+    'description' => 'Create a section.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('block_sections_add_section_form'),
+    'access arguments' => array(BLOCK_SECTIONS_ADMINISTER),
+    'type' => MENU_LOCAL_TASK,
+    'file' => 'block_sections.admin.inc',
+    'weight' => 1,
+  );
+
+  $items['admin/structure/block-sections/%block_sections_section/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('block_sections_add_section_form', 3),
+    'access arguments' => array(BLOCK_SECTIONS_ADMINISTER),
+    'type' => MENU_CALLBACK,
+    'file' => 'block_sections.admin.inc',
+  );
+
+  $items['admin/structure/block-sections/%block_sections_section/delete'] = array(
+    'title' => 'Delete',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('block_sections_delete_section_form', 3),
+    'access arguments' => array(BLOCK_SECTIONS_ADMINISTER),
+    'type' => MENU_CALLBACK,
+    'file' => 'block_sections.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_block_info().
+ *
+ * @see block_sections_get_blocks()
+ */
+function block_sections_block_info() {
+  $blocks = array();
+
+  // Get all saved blocks.
+  $section_blocks = block_sections_get_blocks();
+
+  foreach ($section_blocks as $block) {
+    $blocks[$block->machine_name] = array(
+      'info' => t($block->name),
+    );
+  }
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_configure().
+ *
+ * @see block_sections_get_sections()
+ * @see block_sections_get_blocks()
+ * @see block_sections_get_content()
+ */
+function block_sections_block_configure($delta = '') {
+  $form = array();
+  global $user;
+
+  // Get all saved sections.
+  $sections = block_sections_get_sections();
+
+  // Get all saved blocks.
+  $section_blocks = block_sections_get_blocks();
+
+  foreach ($section_blocks as $block) {
+    if ($delta == $block->machine_name) {
+      
+      // Wrap sections into fieldset.
+      $form['sections'] = array(
+        '#type' => 'fieldset',
+        '#title' => t('Sections'),
+        '#description' => t('These are all the available sections. !link.', array('!link' => l(t('Add more sections'), 'admin/structure/block-sections/add'))),
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+      );
+      
+      foreach ($sections as $section) {
+
+        // Get section content, if available.
+        $content = block_sections_get_content($block->bid, $section->sid);
+
+        // Get the default text format allowed for the current user.
+        $allowed_formats = filter_formats($user);
+        $default_format = reset($allowed_formats);
+
+        // Define a content area for each section.
+        $form['sections']['block_' . $block->bid . '_' . $section->sid] = array(
+          '#type' => 'text_format',
+          '#title' => t('Content for section: %title', array('%title' => $section->title)),
+          '#default_value' => (isset($content->content)) ? $content->content : '',
+          '#format' => (isset($content->format)) ? $content->format : $default_format->format,
+        );
+      }
+    }
+  }
+
+  return $form;
+}
+
+/**
+ * Implements hook_block_save().
+ *
+ * @see block_sections_get_sections()
+ * @see block_sections_get_blocks()
+ * @see block_sections_save_content()
+ */
+function block_sections_block_save($delta = '', $edit = array()) {
+  // Get all saved sections.
+  $sections = block_sections_get_sections();
+
+  // Get all saved blocks.
+  $section_blocks = block_sections_get_blocks();
+
+  foreach ($section_blocks as $block) {
+    if ($delta == $block->machine_name) {
+      foreach ($sections as $section) {
+
+        // Get the new content to save.
+        $content = $edit['block_' . $block->bid . '_' . $section->sid];
+
+        // Save the new content.
+        block_sections_save_content($block->bid, $section->sid, $content);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_block_view().
+ *
+ * @see block_sections_get_sections()
+ * @see block_sections_get_blocks()
+ * @see block_sections_parse_paths()
+ * @see block_sections_match()
+ * @see block_sections_get_content()
+ */
+function block_sections_block_view($delta = '') {
+  $blocks = array();
+
+  // Get all saved sections.
+  $sections = block_sections_get_sections();
+
+  // Get all saved blocks.
+  $section_blocks = block_sections_get_blocks();
+
+  // Include both the path alias and normal path for matching.
+  $current_path = array(drupal_get_path_alias($_GET['q']));
+  if ($current_path != $_GET['q']) {
+    $current_path[] = $_GET['q'];
+  }
+
+  foreach ($section_blocks as $block) {
+    if ($delta == $block->machine_name) {
+      foreach ($sections as $section) {
+
+        // Parse section paths.
+        $paths = block_sections_parse_paths($section->paths);
+
+        // Check if section should be active in the current path.
+        if (block_sections_match($current_path, $paths, TRUE)) {
+
+          // Get section content.
+          $content = block_sections_get_content($block->bid, $section->sid);
+
+          // Render section content through selected text format.
+          $blocks['content'] = ($content) ? check_markup($content->content, $content->format) : NULL;
+        }
+      }
+    }
+  }
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter() for block_admin_display_form().
+ *
+ * @see block_sections.admin.inc
+ * @see _block_sections_form_block_admin_display_form_alter()
+ */
+function block_sections_form_block_admin_display_form_alter(&$form, &$form_state, $form_id) {
+  // Load module's file with admin functions.
+  module_load_include('inc', 'block_sections', 'block_sections.admin');
+
+  // Return function to use for altering the form.
+  return _block_sections_form_block_admin_display_form_alter($form, $form_state, $form_id);
+}
+
+/**
+ * Menu autoloader: Loads the specified section.
+ *
+ * @param int $sid
+ *   Section sid as integer.
+ *
+ * @return object|false
+ *   The loaded section as an object or FALSE if the section is not found.
+ */
+function block_sections_section_load($sid) {
+  $result = block_sections_get_sections($sid);
+  return ($result) ? $result : FALSE;
+}
+
+/**
+ * Gets one or all sections defined by the module.
+ *
+ * If $sid is given, one section is returned. Else, all sections are returned.
+ *
+ * @param int $sid
+ *   (optional) Section sid as an integer.
+ *
+ * @return array|object
+ *   Array with all section objects or if $sid is given, one section object.
+ */
+function block_sections_get_sections($sid = NULL) {
+  // Prepare query.
+  $query = db_select('block_sections', 'b')
+    ->fields('b');
+
+  // If $sid is provided, add condition.
+  if ($sid) {
+    $query->condition('sid', $sid);
+  }
+
+  // Use fetchObject() or fetchAll() depending on if $sid is provided or not.
+  $result = ($sid) ? $query->execute()->fetchObject() : $query->execute()->fetchAll();
+
+  return $result;
+}
+
+/**
+ * Gets one or all blocks defined by the module.
+ *
+ * If $bid is given, one section is returned. Else, all blocks are returned.
+ *
+ * @param int $bid
+ *   (optional) Block bid as an integer.
+ *
+ * @return array|object
+ *   Array with all block objects or if $bid is given, one block object.
+ */
+function block_sections_get_blocks($bid = NULL) {
+  // Prepare query.
+  $query = db_select('block_sections_blocks', 'b')
+    ->fields('b');
+
+  // If $bid is provided, add condition.
+  if ($bid) {
+    $query->condition('bid', $bid);
+  }
+
+  // Use fetchObject() or fetchAll() depending on if $bid is provided or not.
+  $result = ($bid) ? $query->execute()->fetchObject() : $query->execute()->fetchAll();
+
+  return $result;
+}
+
+/**
+ * Gets a block by name.
+ *
+ * @param string $machine_name
+ *   Machine name of the block.
+ *
+ * @return object
+ *   The fetched block as an object.
+ */
+function block_sections_get_block_by_name($machine_name) {
+  $result = db_select('block_sections_blocks', 'b')
+    ->fields('b')
+    ->condition('machine_name', $machine_name)
+    ->execute()
+    ->fetchObject();
+
+  return $result;
+}
+
+/**
+ * Gets block contents for specified section.
+ *
+ * @param int $bid
+ *   Block bid as an integer.
+ * @param int $sid
+ *   Section sid as an integer.
+ *
+ * @return object
+ *   Block section content as an object.
+ */
+function block_sections_get_content($bid, $sid) {
+  $result = db_select('block_sections_content', 'b')
+    ->fields('b')
+    ->condition('bid', $bid)
+    ->condition('sid', $sid)
+    ->execute()
+    ->fetchObject();
+
+  return $result;
+}
+
+/**
+ * Saves block contents for specified section.
+ *
+ * @param int $bid
+ *   Block bid as an integer.
+ * @param int $sid
+ *   Section sid as an integer.
+ * @param array $content
+ *   Associative array with content to save.
+ *
+ * @see block_sections_get_content()
+ */
+function block_sections_save_content($bid, $sid, $content) {
+  // Set table name.
+  $table = 'block_sections_content';
+
+  // Prepare the $record object for insertion.
+  $record = new stdClass();
+  $record->bid = $bid;
+  $record->sid = $sid;
+  $record->content = $content['value'];
+  $record->format = $content['format'];
+
+  // Check if record exists.
+  $update = block_sections_get_content($bid, $sid);
+
+  // If record exists, make this an update.
+  $primary_keys = ($update) ? array('bid', 'sid') : array();
+
+  if ($update || (!$update && !empty($record->content))) {
+    drupal_write_record($table, $record, $primary_keys);
+  }
+}
+
+/**
+ * Deletes all block contents from specified block or section.
+ *
+ * @param int $id
+ *   Block bid or section sid as an integer.
+ * @param string $field
+ *   Field name to use ('bid' or 'sid').
+ *
+ * @return bool
+ *   TRUE if deletion was successful. Defaults to FALSE.
+ */
+function block_sections_delete_content($id, $field) {
+  if ($field == 'bid' || $field == 'sid') {
+    $query = db_delete('block_sections_content')
+      ->condition($field, $id)
+      ->execute();
+    return TRUE;
+  }
+  return FALSE;
+}
+
+/**
+ * Saves a section.
+ *
+ * @param object $section
+ *   The section to be saved as an object.
+ *
+ * @see block_sections_get_sections()
+ */
+function block_sections_save_section($section) {
+  // Set table name.
+  $table = 'block_sections';
+
+  // Check if record exists.
+  $update = (isset($section->sid)) ? block_sections_get_sections($section->sid) : NULL;
+
+  // If record exists, make this an update.
+  $primary_keys = ($update) ? array('sid') : array();
+
+  drupal_write_record($table, $section, $primary_keys);
+}
+
+/**
+ * Saves a block.
+ *
+ * @param object $block
+ *   The block to be saved as an object.
+ *
+ * @see block_sections_get_blocks()
+ */
+function block_sections_save_block($block) {
+  // Set table name.
+  $table = 'block_sections_blocks';
+
+  // Check if record exists.
+  $update = (isset($block->bid)) ? block_sections_get_blocks($block->bid) : NULL;
+
+  // If record exists, make this an update.
+  $primary_keys = ($update) ? array('bid') : array();
+
+  drupal_write_record($table, $block, $primary_keys);
+}
+
+/**
+ * Deletes a section.
+ *
+ * @param int $sid
+ *   Section sid as an integer.
+ */
+function block_sections_delete_section($sid) {
+  db_delete('block_sections')
+    ->condition('sid', $sid)
+    ->execute();
+}
+
+/**
+ * Deletes a block.
+ *
+ * @param int $bid
+ *   Block bid as an integer.
+ * @param string $machine_name
+ *   Machine name of the block.
+ */
+function block_sections_delete_block($bid, $machine_name) {
+  db_delete('block')
+    ->condition('module', 'block_sections')
+    ->condition('delta', $machine_name)
+    ->execute();
+  db_delete('block_sections_blocks')
+    ->condition('bid', $bid)
+    ->execute();
+}
+
+/**
+ * Helper function for cleaning / rebuilding the menu.
+ */
+function block_sections_clear_menu_cache() {
+  // Rebuild the menu.
+  menu_rebuild();
+}
+
+/**
+ * Match the subject against a set of regex patterns.
+ *
+ * Similar to drupal_match_path() but also handles negation through the use
+ * of the ~ character.
+ *
+ * @param mixed $subject
+ *   The subject string or an array of strings to be matched.
+ * @param array $patterns
+ *   An array of patterns. Any patterns that begin with ~ are considered
+ *   negative or excluded conditions.
+ * @param boolean $path
+ *   Whether the given subject should be matched as a Drupal path. If TRUE,
+ *   '<front>' will be replaced with the site frontpage when matching against
+ *   $patterns.
+ */
+function block_sections_match($subject, $patterns, $path = FALSE) {
+  static $regexps;
+  $match = FALSE;
+  $positives = $negatives = 0;
+  $subject = !is_array($subject) ? array($subject) : $subject;
+  $patterns = empty($patterns) ? array() : $patterns;
+  foreach ($patterns as $pattern) {
+    if (strpos($pattern, '~') === 0) {
+      $negate = TRUE;
+      $negatives++;
+    }
+    else {
+      $negate = FALSE;
+      $positives++;
+    }
+    $pattern = ltrim($pattern, '~');
+    if (!isset($regexps[$pattern])) {
+      if ($path) {
+        $regexps[$pattern] = '/^(' . preg_replace(array('/(\r\n?|\n)/', '/\\\\\*/', '/(^|\|)\\\\<front\\\\>($|\|)/'), array('|', '.*', '\1' . preg_quote(variable_get('site_frontpage', 'node'), '/') . '\2'), preg_quote($pattern, '/')) . ')$/';
+      }
+      else {
+        $regexps[$pattern] = '/^(' . preg_replace(array('/(\r\n?|\n)/', '/\\\\\*/'), array('|', '.*'), preg_quote($pattern, '/')) . ')$/';
+      }
+    }
+    foreach ($subject as $value) {
+      if (preg_match($regexps[$pattern], $value)) {
+        if ($negate) {
+          return FALSE;
+        }
+        $match = TRUE;
+      }
+    }
+  }
+  // If there are **only** negative conditions and we've gotten this far none
+  // we actually have a match.
+  if ($positives === 0 && $negatives) {
+    return TRUE;
+  }
+  return $match;
+}
+
+/**
+ * Parse through the paths of a section and explode them at newlines.
+ *
+ * @return array
+ *   Array with the parsed paths.
+ */
+function block_sections_parse_paths($paths) {
+  $parsed = array();
+  $items = explode("\n", $paths);
+  if (!empty($items)) {
+    foreach ($items as $v) {
+      $v = trim($v);
+      if (!empty($v)) {
+        $parsed[] = $v;
+      }
+    }
+  }
+
+  return $parsed;
+}

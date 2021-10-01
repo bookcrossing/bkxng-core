@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * @file
+ * Definition of ViewsHandlerArgumentNullTest.
+ */
+
+/**
+ * Tests the core views_handler_argument_null handler.
+ */
 class ViewsHandlerArgumentNullTest extends ViewsSqlTest {
   public static function getInfo() {
     return array(
@@ -17,7 +25,7 @@ class ViewsHandlerArgumentNullTest extends ViewsSqlTest {
   }
 
   public function testAreaText() {
-    // Test validation
+    // Test validation.
     $view = $this->getBasicView();
 
     // Add a null argument.

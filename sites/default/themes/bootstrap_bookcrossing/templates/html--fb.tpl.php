@@ -1,6 +1,6 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML+RDFa 1.0//EN"
-    "http://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd">
-<html xmlns:fb="https://www.facebook.com/2008/fbml" xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?php print $language->language; ?>" version="XHTML+RDFa 1.0" dir="<?php print $language->dir; ?>"<?php print $rdf_namespaces; ?>>
+    "https://www.w3.org/MarkUp/DTD/xhtml-rdfa-1.dtd">
+<html xmlns:fb="https://www.facebook.com/2008/fbml" xmlns="https://www.w3.org/1999/xhtml" xml:lang="<?php print $language->language; ?>" version="XHTML+RDFa 1.0" dir="<?php print $language->dir; ?>"<?php print $rdf_namespaces; ?>>
 
 <head>
     <meta charset="utf-8">

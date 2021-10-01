@@ -23,22 +23,9 @@ function ctools_passthrough($module, $type, &$items) {
     require_once DRUPAL_ROOT . '/' . $file->uri;
     list($tool) = explode('.', $file->name, 2);
 
-    $function = $module . '_' . str_replace ('-', '_', $tool) . '_' . str_replace('-', '_', $type);
+    $function = $module . '_' . str_replace('-', '_', $tool) . '_' . str_replace('-', '_', $type);
     if (function_exists($function)) {
       $function($items);
     }
   }
 }
-
-/**
- * Implementation of hook_theme_registry_alter()
- */
-function ctools_theme_registry_alter(&$registry) {
-  // Move this one last last last so it can catch changes made by modules and themes.
-  $key = array_search('ctools_preprocess_page', $registry['page']['preprocess functions']);
-  if ($key) {
-    unset($registry['page']['preprocess functions'][$key]);
-  }
-  $registry['page']['preprocess functions'][] = 'ctools_preprocess_page';
-}
-

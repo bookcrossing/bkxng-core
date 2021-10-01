@@ -1,7 +1,8 @@
 <?php
+
 /**
  * @file
- * Contains the table style plugin.
+ * Definition of views_plugin_style_table.
  */
 
 /**
@@ -23,17 +24,22 @@ class views_plugin_style_table extends views_plugin_style {
    */
   public $order;
 
-  function option_definition() {
+  /**
+   * {@inheritdoc}
+   */
+  public function option_definition() {
     $options = parent::option_definition();
 
     $options['columns'] = array('default' => array());
+    $options['class'] = array('default' => array());
     $options['default'] = array('default' => '');
     $options['info'] = array('default' => array());
-    $options['override'] = array('default' => TRUE);
-    $options['sticky'] = array('default' => FALSE);
+    $options['override'] = array('default' => TRUE, 'bool' => TRUE);
+    $options['sticky'] = array('default' => FALSE, 'bool' => TRUE);
     $options['order'] = array('default' => 'asc');
+    $options['caption'] = array('default' => '', 'translatable' => TRUE);
     $options['summary'] = array('default' => '', 'translatable' => TRUE);
-    $options['empty_table'] = array('default' => FALSE);
+    $options['empty_table'] = array('default' => FALSE, 'bool' => TRUE);
 
     return $options;
   }
@@ -43,7 +49,7 @@ class views_plugin_style_table extends views_plugin_style {
    *
    * @return bool
    */
-  function build_sort() {
+  public function build_sort() {
     if (!isset($_GET['order']) && ($this->options['default'] == -1 || empty($this->view->field[$this->options['default']]))) {
       return TRUE;
     }
@@ -60,7 +66,7 @@ class views_plugin_style_table extends views_plugin_style {
   /**
    * Add our actual sort criteria
    */
-  function build_sort_post() {
+  public function build_sort_post() {
     if (!isset($_GET['order'])) {
       // check for a 'default' clicksort. If there isn't one, exit gracefully.
       if (empty($this->options['default'])) {
@@ -109,10 +115,10 @@ class views_plugin_style_table extends views_plugin_style {
    * - Any fields not currently represented must be added.
    * - Columns must be re-ordered to match the fields.
    *
-   * @param $columns
+   * @param array $columns
    *   An array of all fields; the key is the id of the field and the
    *   value is the id of the column the field should be in.
-   * @param $fields
+   * @param array $fields
    *   The fields to use for the columns. If not provided, they will
    *   be requested from the current display. The running render should
    *   send the fields through, as they may be different than what the
@@ -121,7 +127,7 @@ class views_plugin_style_table extends views_plugin_style {
    * @return array
    *    An array of all the sanitized columns.
    */
-  function sanitize_columns($columns, $fields = NULL) {
+  public function sanitize_columns($columns, $fields = NULL) {
     $sanitized = array();
     if ($fields === NULL) {
       $fields = $this->display->handler->get_option('fields');
@@ -155,7 +161,7 @@ class views_plugin_style_table extends views_plugin_style {
   /**
    * Render the given style.
    */
-  function options_form(&$form, &$form_state) {
+  public function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
     $handlers = $this->display->handler->get_handlers('field');
     if (empty($handlers)) {
@@ -173,16 +179,32 @@ class views_plugin_style_table extends views_plugin_style {
 
     $form['sticky'] = array(
       '#type' => 'checkbox',
-      '#title' => t('Enable Drupal style "sticky" table headers (Javascript)'),
+      '#title' => t('Enable Drupal style "sticky" table headers (JavaScript)'),
       '#default_value' => !empty($this->options['sticky']),
       '#description' => t('(Sticky header effects will not be active for preview below, only on live output.)'),
+    );
+
+    $form['caption'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Short description of table'),
+      '#description' => t('Include a caption for better accessibility of your table.'),
+      '#default_value' => $this->options['caption'],
+      '#maxlength' => 255,
     );
 
     $form['summary'] = array(
       '#type' => 'textfield',
       '#title' => t('Table summary'),
-      '#description' => t('This value will be displayed as table-summary attribute in the html. Set this for better accessiblity of your site.'),
+      '#description' => t('This value will be displayed as table-summary attribute in the html. Use this to give a summary of complex tables.'),
       '#default_value' => $this->options['summary'],
+      '#maxlength' => 255,
+    );
+    
+    $form['class'] = array(
+      '#type' => 'textfield',
+      '#title' => t('CSS classes'),
+      '#description' => t('Add CSS classes to the table; multiple classes may be separated by spaces.'),
+      '#default_value' => $this->options['class'],
       '#maxlength' => 255,
     );
 
@@ -192,7 +214,7 @@ class views_plugin_style_table extends views_plugin_style {
 
     $columns = $this->sanitize_columns($this->options['columns']);
 
-    // Create an array of allowed columns from the data we know:
+    // Create an array of allowed columns from the data we know.
     $field_names = $this->display->handler->get_field_labels();
 
     if (isset($this->options['default'])) {
@@ -283,7 +305,7 @@ class views_plugin_style_table extends views_plugin_style {
       '#type' => 'checkbox',
       '#title' => t('Show the empty text in the table'),
       '#default_value' => $this->options['empty_table'],
-      '#description' => t('Per default the table is hidden for an empty view. With this option it is posible to show an empty table with the text in it.'),
+      '#description' => t('Per default the table is hidden for an empty view. With this option it is possible to show an empty table with the text in it.'),
     );
 
     $form['description_markup'] = array(
@@ -291,7 +313,10 @@ class views_plugin_style_table extends views_plugin_style {
     );
   }
 
-  function even_empty() {
+  /**
+   *
+   */
+  public function even_empty() {
     return parent::even_empty() || !empty($this->options['empty_table']);
   }
 }

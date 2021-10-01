@@ -1,0 +1,19 @@
+/**
+ * @file
+ * getlocations_smartip.css
+ * @author Bob Hutchinson http://drupal.org/user/52366
+ * @copyright GNU GPL
+ *
+ */
+.getlocations_smartip_throbber {
+  background-image: url('/misc/throbber.gif');
+  background-position: 100% 2px;
+  background-repeat: repeat-y;
+}
+.getlocations_smartip_throbber_active {
+  background-position: 100% -18px;
+}
+.getlocations_smartip_throbber_inactive {
+  background-position: 100% 2px;
+}
+

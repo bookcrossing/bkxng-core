@@ -1,0 +1,15 @@
+name = Getlocations Smartip
+description = Integrates the smart_ip module.
+core = 7.x
+package = "Location"
+php = 5
+dependencies[] = getlocations
+dependencies[] = smart_ip
+configure = admin/config/services/getlocations/smartip
+
+; Information added by Drupal.org packaging script on 2016-02-17
+version = "7.x-1.17+21-dev"
+core = "7.x"
+project = "getlocations"
+datestamp = "1455720546"
+

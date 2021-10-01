@@ -5,6 +5,7 @@
  * Catalog functionality for bookcrossing site.
  */
 
+require_once ('BookCatalog.inc');
 
 /**
  * Helper function that generates charset for different languages and numbers.
@@ -210,7 +211,7 @@ function bookcrossing_catalog_get_sort_types()
     $types = array(
         'date' => array(
             'title' => t('date'),
-            'path' => '',
+            'path' => 'date',
             'callback' => 'bookcrossing_catalog_sort_by_date',
             'grouping_callback' => 'bookcrossing_catalog_get_date',
             'filter_callback' => 'bookcrossing_catalog_filter_by_date',
@@ -265,7 +266,7 @@ function bookcrossing_catalog_get_view_types()
     $types = array(
         'tiles' => array(
             'title' => t('tiles'),
-            'path' => '',
+            'path' => 'tiles',
         ),
         'covers' => array(
             'title' => t('covers'),

@@ -1,0 +1,17 @@
+name = Menu translation (Node)
+description = Allows a single node menu item to point to different node translations depending on the current language.
+dependencies[] = i18n
+dependencies[] = menu
+dependencies[] = i18n_block
+dependencies[] = i18n_string
+dependencies[] = i18n_menu
+dependencies[] = translation
+package = Multilingual - Internationalization
+core = 7.x
+
+; Information added by drupal.org packaging script on 2013-09-30
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "i18n_menu_node"
+datestamp = "1380582463"
+

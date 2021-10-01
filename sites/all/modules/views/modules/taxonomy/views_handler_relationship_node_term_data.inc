@@ -1,17 +1,21 @@
 <?php
+
 /**
  * @file
- * Views' relationship handlers.
+ * Definition of views_handler_relationship_node_term_data.
  */
-
 
 /**
  * Relationship handler to return the taxonomy terms of nodes.
  *
  * @ingroup views_relationship_handlers
  */
-class views_handler_relationship_node_term_data extends views_handler_relationship  {
-  function init(&$view, &$options) {
+class views_handler_relationship_node_term_data extends views_handler_relationship {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function init(&$view, &$options) {
     parent::init($view, $options);
 
     // Convert legacy vids option to machine name vocabularies.
@@ -25,13 +29,19 @@ class views_handler_relationship_node_term_data extends views_handler_relationsh
     }
   }
 
-  function option_definition() {
+  /**
+   * {@inheritdoc}
+   */
+  public function option_definition() {
     $options = parent::option_definition();
     $options['vocabularies'] = array('default' => array());
     return $options;
   }
 
-  function options_form(&$form, &$form_state) {
+  /**
+   * {@inheritdoc}
+   */
+  public function options_form(&$form, &$form_state) {
     $vocabularies = taxonomy_get_vocabularies();
     $options = array();
     foreach ($vocabularies as $voc) {
@@ -51,21 +61,21 @@ class views_handler_relationship_node_term_data extends views_handler_relationsh
   /**
    * Called to implement a relationship in a query.
    */
-  function query() {
+  public function query() {
     $this->ensure_my_table();
 
     $def = $this->definition;
     $def['table'] = 'taxonomy_term_data';
 
     if (!array_filter($this->options['vocabularies'])) {
-      $term_node = $this->query->add_table('taxonomy_index', $this->relationship);
-      $def['left_table'] = 'taxonomy_index';
+      $taxonomy_index = $this->query->add_table('taxonomy_index', $this->relationship);
+      $def['left_table'] = $taxonomy_index;
       $def['left_field'] = 'tid';
       $def['field'] = 'tid';
       $def['type'] = empty($this->options['required']) ? 'LEFT' : 'INNER';
     }
     else {
-      // If vocabularies are supplied join a subselect instead
+      // If vocabularies are supplied join a subselect instead.
       $def['left_table'] = $this->table_alias;
       $def['left_field'] = 'nid';
       $def['field'] = 'nid';
@@ -75,7 +85,9 @@ class views_handler_relationship_node_term_data extends views_handler_relationsh
       $query->addJoin($def['type'], 'taxonomy_vocabulary', 'tv', 'td.vid = tv.vid');
       $query->addJoin($def['type'], 'taxonomy_index', 'tn', 'tn.tid = td.tid');
       $query->condition('tv.machine_name', array_filter($this->options['vocabularies']));
-      $query->addTag('term_access');
+      if (empty($this->query->options['disable_sql_rewrite'])) {
+        $query->addTag('taxonomy_term_access');
+      }
       $query->fields('td');
       $query->fields('tn', array('nid'));
       $def['table formula'] = $query;
@@ -87,9 +99,10 @@ class views_handler_relationship_node_term_data extends views_handler_relationsh
     $join->construct();
     $join->adjusted = TRUE;
 
-    // use a short alias for this:
+    // Use a short alias for this.
     $alias = $def['table'] . '_' . $this->table;
 
     $this->alias = $this->query->add_relationship($alias, $join, 'taxonomy_term_data', $this->relationship);
   }
+
 }

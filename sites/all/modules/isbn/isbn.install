@@ -1,0 +1,21 @@
+<?php
+
+/**
+ * @file
+ * Defines schema for ISBN fields
+ */
+
+/**
+ * Implements hook_field_schema().
+ */
+function isbn_field_schema($field) {
+  return array(
+    'columns' => array(
+      'isbn' => array(
+        'type' => 'varchar',
+         'length' => 255,
+         'not null' => FALSE,
+      ),
+    ),
+  );
+}

@@ -493,8 +493,9 @@ td.taxonomy-term-data-operations {
   padding-bottom: 0px;
 }
 
+/* hide descriptions, they use too much space */
 #taxonomy-term-data .filter-guidelines {
-  display:none; //hide descriptions, they use too much space
+  display:none;
 }
 
 .term-data-form-file-field-info {

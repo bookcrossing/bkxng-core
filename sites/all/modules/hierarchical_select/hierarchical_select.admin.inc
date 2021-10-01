@@ -249,59 +249,65 @@ function hierarchical_select_admin_import_submit($form, &$form_state) {
 /**
  * Given a config array, create the export code for it.
  *
- * @param $config
+ * @param array $config
  *   A Hierarchical Select config array, as described in API.txt
- * @return
+ * @return string
  *   The code as it would appear in an editor.
  */
 function _hierarchical_select_create_export_code($config) {
-  $output = '';
+  $output = _hierarchical_select_create_code_from_array($config);
+  $output = '$config = ' . $output . ";\n";
+  return $output;
+}
 
-  $output .= "\$config = array(\n";
-  $output .= "  'config_id'       => '" . $config['config_id'] . "',\n";
-  $output .= "  'save_lineage'    => " . $config['save_lineage'] . ",\n";
-  $output .= "  'enforce_deepest' => " . $config['enforce_deepest'] . ",\n";
-  $output .= "  'entity_count'    => " . $config['entity_count'] . ",\n";
-  $output .= "  'require_entity'  => " . $config['require_entity'] . ",\n";
-  $output .= "  'resizable'       => " . $config['resizable'] . ",\n";
-  $output .= "  'level_labels' => array(\n";
-  $output .= "    'status' => " . $config['level_labels']['status'] . ",\n";
-  $output .= "    'labels' => array(\n";
-  if (isset($config['level_labels']['labels'])) {
-    foreach ($config['level_labels']['labels'] as $depth => $label) {
-      $label = str_replace("'", "\'", $label);
-      $output .= "      $depth => '$label',\n";
-    }
+/**
+ * Given a array, create the export code for it.
+ *
+ * This functions is a refactoring of features_var_export() to use with the
+ * hierarchical select module.
+ *
+ * @param mixed $config
+ *   A value to export as code.
+ * @param string $prefix
+ *   Padding for nested array.
+ * @param boolean $init
+ *   Indicator of the first level of the export.
+ * @return string
+ *   The code as it would appear in an editor.
+ */
+function _hierarchical_select_create_code_from_array($var, $prefix = '', $init = TRUE) {
+  $output = "";
+  $type = gettype($var);
+  switch ($type) {
+    case 'array':
+      if (empty($var)) {
+        $output = "array()";
+      }
+      else {
+        $output = "array(\n";
+        foreach ($var as $key => $value) {
+          $value = _hierarchical_select_create_code_from_array($value, '  ', FALSE);
+          $output .= "  '$key' => " . $value . ",\n";
+        }
+        $output .= ')';
+      }
+      break;
+    case 'string':
+      $var = str_replace("\n", "***BREAK***", $var);
+      $output = var_export($var, TRUE);
+      break;
+    case 'boolean':
+      $var = empty($var) ? 'FALSE' : 'TRUE';
+      $output = var_export($var, TRUE);
+      break;
+    default:
+      $output = var_export($var, TRUE);
   }
-  $output .= "    ),\n";
-  $output .= "  ),\n";
-  $output .= "  'dropbox' => array(\n";
-  $output .= "    'status'    => " . $config['dropbox']['status'] . ",\n";
-  $output .= "    'title'     => '" . str_replace("'", "\'", $config['dropbox']['title']) . "',\n";
-  $output .= "    'limit'     => " . $config['dropbox']['limit'] . ",\n";
-  $output .= "    'reset_hs'  => " . $config['dropbox']['reset_hs'] . ",\n";
-  $output .= "  ),\n";
-  $output .= "  'editability' => array(\n";
-  $output .= "    'status' => " . $config['editability']['status'] . ",\n";
-  $output .= "    'item_types' => array(\n";
-  if (isset($config['editability']['item_types'])) {
-    foreach ($config['editability']['item_types'] as $depth => $item_type) {
-      $item_type = str_replace("'", "\'", $item_type);
-      $output .= "      $depth => '$item_type',\n";
-    }
+  if ($prefix) {
+    $output = str_replace("\n", "\n$prefix", $output);
   }
-  $output .= "    ),\n";
-  $output .= "    'allowed_levels' => array(\n";
-  if (isset($config['editability']['allowed_levels'])) {
-    foreach ($config['editability']['allowed_levels'] as $depth => $allowed_level) {
-      $output .= "      $depth => $allowed_level,\n";
-    }
+  if ($init) {
+    $output = str_replace("***BREAK***", "\n", $output);
   }
-  $output .= "    ),\n";
-  $output .= "    'allow_new_levels' => " . $config['editability']['allow_new_levels'] . ",\n";
-  $output .= "    'max_levels'       => " . $config['editability']['max_levels'] . ",\n";
-  $output .= "  ),\n";
-  $output .= ");\n";
-
   return $output;
 }

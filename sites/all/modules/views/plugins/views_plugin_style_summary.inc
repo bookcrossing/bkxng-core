@@ -1,7 +1,8 @@
 <?php
+
 /**
  * @file
- * Contains the default summary style plugin, which displays items in an HTML list.
+ * Definition of views_plugin_style_summary.
  */
 
 /**
@@ -10,7 +11,11 @@
  * @ingroup views_style_plugins
  */
 class views_plugin_style_summary extends views_plugin_style {
-  function option_definition() {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function option_definition() {
     $options = parent::option_definition();
 
     $options['base_path'] = array('default' => '');
@@ -21,13 +26,19 @@ class views_plugin_style_summary extends views_plugin_style {
     return $options;
   }
 
-  function query() {
+  /**
+   * {@inheritdoc}
+   */
+  public function query() {
     if (!empty($this->options['override'])) {
       $this->view->set_items_per_page(intval($this->options['items_per_page']));
     }
   }
 
-  function options_form(&$form, &$form_state) {
+  /**
+   * {@inheritdoc}
+   */
+  public function options_form(&$form, &$form_state) {
     $form['base_path'] = array(
       '#type' => 'textfield',
       '#title' => t('Base path'),
@@ -54,22 +65,26 @@ class views_plugin_style_summary extends views_plugin_style {
       '#title' => t('Items to display'),
       '#default_value' => $this->options['items_per_page'],
       '#dependency' => array(
-        'edit-options-summary-options-' . str_replace('_', '-', $this->definition['name']) . '-override' => array(1)
+        'edit-options-summary-options-' . str_replace('_', '-', $this->definition['name']) . '-override' => array(1),
       ),
     );
   }
 
-  function render() {
+  /**
+   * {@inheritdoc}
+   */
+  public function render() {
     $rows = array();
     foreach ($this->view->result as $row) {
-      // @todo: Include separator as an option.
+      // @todo Include separator as an option.
       $rows[] = $row;
     }
 
     return theme($this->theme_functions(), array(
       'view' => $this->view,
       'options' => $this->options,
-      'rows' => $rows
+      'rows' => $rows,
     ));
   }
+
 }

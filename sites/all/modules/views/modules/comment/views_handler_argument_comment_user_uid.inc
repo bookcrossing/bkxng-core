@@ -1,13 +1,22 @@
 <?php
 
 /**
+ * @file
+ * Definition of views_handler_argument_comment_user_uid.
+ */
+
+/**
  * Argument handler to accept a user id to check for nodes that
  * user posted or commented on.
  *
  * @ingroup views_argument_handlers
  */
 class views_handler_argument_comment_user_uid extends views_handler_argument {
-  function title() {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function title() {
     if (!$this->argument) {
       $title = variable_get('anonymous', t('Anonymous'));
     }
@@ -21,7 +30,10 @@ class views_handler_argument_comment_user_uid extends views_handler_argument {
     return check_plain($title);
   }
 
-  function default_actions($which = NULL) {
+  /**
+   * {@inheritdoc}
+   */
+  public function default_actions($which = NULL) {
     // Disallow summary views on this argument.
     if (!$which) {
       $actions = parent::default_actions();
@@ -35,7 +47,10 @@ class views_handler_argument_comment_user_uid extends views_handler_argument {
     }
   }
 
-  function query($group_by = FALSE) {
+  /**
+   * {@inheritdoc}
+   */
+  public function query($group_by = FALSE) {
     $this->ensure_my_table();
 
     $subselect = db_select('comment', 'c');
@@ -50,7 +65,11 @@ class views_handler_argument_comment_user_uid extends views_handler_argument {
     $this->query->add_where(0, $condition);
   }
 
-  function get_sort_name() {
+  /**
+   * {@inheritdoc}
+   */
+  public function get_sort_name() {
     return t('Numerical', array(), array('context' => 'Sort order'));
   }
+
 }

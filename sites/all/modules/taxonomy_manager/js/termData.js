@@ -68,13 +68,15 @@ Drupal.attachTermDataForm = function() {
  */
 Drupal.loadTermDataForm = function(tid, refreshTree) {
   // Triggers an AJAX button
+    var $checked = "";
+    $checked = refreshTree ? "checked" : "";
   $('#edit-load-tid').val(tid);
-  if (refreshTree) {
-    $('#edit-load-tid-refresh-tree').attr("checked", "checked");
+  try {
+      $('#edit-load-tid-refresh-tree').prop("checked", refreshTree);
+  }catch (err){
+      $('#edit-load-tid-refresh-tree').attr("checked", $checked);
   }
-  else {
-    $('#edit-load-tid-refresh-tree').attr("checked", "");
-  }
+
   $('#edit-load-tid-submit').click();
 }
 

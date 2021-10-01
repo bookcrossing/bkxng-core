@@ -25,12 +25,16 @@
 /**
  * Rebuild project list
  *
+ * @param $refresh
+ *   TRUE: Refresh project list.
+ *
  * @return array
+ *   Array of project objects to be considered for translation update.
  */
-function l10n_update_build_projects() {
+function l10n_update_build_projects($refresh = FALSE) {
   module_load_include('inc', 'l10n_update');
   // Get all stored projects, including disabled ones
-  $current = l10n_update_get_projects(NULL, TRUE);
+  $current = l10n_update_get_projects($refresh, TRUE);
   // Now get the new project list, just enabled ones
   $projects = l10n_update_project_list();
 
@@ -43,34 +47,18 @@ function l10n_update_build_projects() {
 
   $default_server = l10n_update_default_server();
 
-  if (module_exists('update')) {
-    $projects_info = update_get_available(TRUE);
-  }
   foreach ($projects as $name => $data) {
-    if (isset($projects_info[$name]['releases']) && $projects_info[$name]['project_status'] != 'not-fetched') {
-      // Find out if a dev version is installed.
-      if (preg_match("/^[0-9]+\.x-([0-9]+)\..*-dev$/", $data['info']['version'], $matches)) {
-        // Find a suitable release to use as alternative translation.
-        foreach ($projects_info[$name]['releases'] as $project_release) {
-          // The first release with the same major release number which is not 
-          // a dev release is the one. Releases are sorted the most recent first.
-          if ($project_release['version_major'] == $matches[1] &&
-              (!isset($project_release['version_extra']) || $project_release['version_extra'] != 'dev')) {
-            $release = $project_release;
-            break;
-          }
-        }
+    // For dev releases, remove the '-dev' part and trust the translation server
+    // to fall back to the latest stable release for that branch.
+    if (isset($data['info']['version']) && strpos($data['info']['version'], '-dev')) {
+      if (preg_match("/^(\d+\.x-\d+\.).*$/", $data['info']['version'], $matches)) {
+        // Example matches: 7.x-1.x-dev, 7.x-1.0-alpha1+5-dev => 7.x-1.x
+        $data['info']['version'] = $matches[1] . 'x';
       }
-      elseif ($name == "drupal" || preg_match("/HEAD/", $data['info']['version'], $matches)) {
-        // Pick latest available release.
-        $release = array_shift($projects_info[$name]['releases']);
+      elseif (preg_match("/^(\d+\.).*$/", $data['info']['version'], $matches)) {
+        // Example match: 7.33-dev => 7.x (Drupal core)
+        $data['info']['version'] = $matches[1] . 'x';
       }
-
-      if (!empty($release['version'])) {
-        $data['info']['version'] = $release['version'];
-      }
-
-      unset($release);
     }
 
     $data += array(
@@ -101,7 +89,13 @@ function l10n_update_build_projects() {
     }
     // Create / update project record
     $update = empty($current[$name]) ? array() : array('name');
-    drupal_write_record('l10n_update_project', $project, $update);
+    // @todo Use db_merge() to avoid problems with saving existing projects.
+    try {
+      drupal_write_record('l10n_update_project', $project, $update);
+    }
+    catch (Exception $e) {
+      watchdog('l10n_update', 'Could not insert a project into the l10n_update_project table, possibly because it already exists.', NULL, WATCHDOG_INFO);
+    }
     $projects[$name] = $project;
   }
   return $projects;
@@ -136,7 +130,7 @@ function l10n_update_project_refresh($modules) {
   $projects = array();
 
   // Get all current projects, including the recently installed.
-  $current_projects = l10n_update_build_projects();
+  $current_projects = l10n_update_build_projects(TRUE);
   // Collect project data of newly installed projects.
   foreach ($modules as $name) {
     if (isset($current_projects[$name])) {
@@ -210,7 +204,7 @@ function _l10n_update_project_info_list(&$projects, $list, $project_type, $disab
         'name' => $project_name,
         'info' => $file->info,
         'datestamp' => isset($file->info['datestamp']) ? $file->info['datestamp'] : 0,
-        'includes' => array($file->name => $file->info['name']),
+        'includes' => array($file->name => isset($file->info['name']) ? $file->info['name'] : $file->name),
         'project_type' => $project_name == 'drupal' ? 'core' : $project_type,
       );
     }

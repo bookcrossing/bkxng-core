@@ -2,12 +2,19 @@
 
 /**
  * @file
+ * Definition of ViewsUpgradeTestCase.
+ */
+
+/**
  * Try to test the upgrade path of all conversions.
  *
  * You can find all conversions by searching for "moved to".
  */
-
 class ViewsUpgradeTestCase extends ViewsSqlTest {
+
+  /**
+   *
+   */
   public static function getInfo() {
     return array(
       'name' => 'Views Upgrade test',
@@ -16,14 +23,21 @@ class ViewsUpgradeTestCase extends ViewsSqlTest {
     );
   }
 
-  protected function setUp() {
-//     // To import a view the user needs use PHP for settings rights, so enable php module.
-    parent::setUp();
+  /**
+   * {@inheritdoc}
+   */
+  public function setUp(array $modules = array()) {
+    parent::setUp($modules);
 
+    // To import a view the user needs use PHP for settings rights, so enable
+    // PHP module.
     module_enable(array('php'));
     $this->resetAll();
   }
 
+  /**
+   *
+   */
   function viewsData() {
     $data = parent::viewsData();
     $data['views_test']['old_field_1']['moved to'] = array('views_test', 'id');
@@ -38,6 +52,9 @@ class ViewsUpgradeTestCase extends ViewsSqlTest {
     return $data;
   }
 
+  /**
+   *
+   */
   function debugField($field) {
     $keys = array('id', 'table', 'field', 'actual_field', 'original_field', 'real_field');
     $info = array();
@@ -48,7 +65,7 @@ class ViewsUpgradeTestCase extends ViewsSqlTest {
   }
 
   /**
-   * Test the moved to parameter in general.
+   * Tests the moved to parameter in general.
    */
   public function testMovedTo() {
     // Test moving on field lavel.
@@ -56,8 +73,11 @@ class ViewsUpgradeTestCase extends ViewsSqlTest {
     $view->update();
     $view->build();
 
-//     $this->assertEqual('old_field_1', $view->field['old_field_1']->options['id'], "Id shouldn't change during conversion");
-//     $this->assertEqual('id', $view->field['old_field_1']->field, 'The field should change during conversion');
+    // $this->assertEqual('old_field_1',
+    //   $view->field['old_field_1']->options['id'],
+    //   "Id shouldn't change during conversion");
+    // $this->assertEqual('id', $view->field['old_field_1']->field,
+    //   'The field should change during conversion');
     $this->assertEqual('id', $view->field['old_field_1']->real_field);
     $this->assertEqual('views_test', $view->field['old_field_1']->table);
     $this->assertEqual('old_field_1', $view->field['old_field_1']->original_field, 'The field should have stored the original_field');
@@ -67,11 +87,13 @@ class ViewsUpgradeTestCase extends ViewsSqlTest {
     $view->update();
     $view->build();
 
-//     $this->assertEqual('old_field_2', $view->field['old_field_2']->options['id']);
+    // $this->assertEqual('old_field_2',
+    //   $view->field['old_field_2']->options['id']);
     $this->assertEqual('name', $view->field['old_field_2']->real_field);
     $this->assertEqual('views_test', $view->field['old_field_2']->table);
 
-//     $this->assertEqual('old_field_3', $view->filter['old_field_3']->options['id']);
+    // $this->assertEqual('old_field_3',
+    //   $view->filter['old_field_3']->options['id']);
     $this->assertEqual('age', $view->filter['old_field_3']->real_field);
     $this->assertEqual('views_test', $view->filter['old_field_3']->table);
 
@@ -81,13 +103,14 @@ class ViewsUpgradeTestCase extends ViewsSqlTest {
     $view->build();
 
     $this->assertEqual('views_test', $view->base_table, 'Make sure that view->base_table gets automatically converted.');
-//     $this->assertEqual('id', $view->field['id']->field, 'If we move a whole table fields of this table should work, too.');
+    // $this->assertEqual('id', $view->field['id']->field,
+    //  'If we move a whole table fields of this table should work, too.');
     $this->assertEqual('id', $view->field['id']->real_field, 'To run the query right the real_field has to be set right.');
     $this->assertEqual('views_test', $view->field['id']->table);
   }
 
   /**
-   * Test a import via ui.
+   * Tests a import via ui.
    *
    * To ensure the general functionality, the recent comments view from drupal6
    * is used.
@@ -103,8 +126,11 @@ class ViewsUpgradeTestCase extends ViewsSqlTest {
     $this->assertText('Recent comments');
   }
 
+  /**
+   *
+   */
   public function viewsMovedToField() {
-    $view = new view;
+    $view = new view();
     $view->name = 'test_views_move_to_field';
     $view->description = '';
     $view->tag = '';
@@ -124,8 +150,11 @@ class ViewsUpgradeTestCase extends ViewsSqlTest {
     return $view;
   }
 
+  /**
+   *
+   */
   public function viewsMovedToHandler() {
-    $view = new view;
+    $view = new view();
     $view->name = 'test_views_move_to_handler';
     $view->description = '';
     $view->tag = '';
@@ -149,8 +178,11 @@ class ViewsUpgradeTestCase extends ViewsSqlTest {
     return $view;
   }
 
+  /**
+   *
+   */
   public function viewsMovedToTable() {
-    $view = new view;
+    $view = new view();
     $view->name = 'test_views_move_to_table';
     $view->description = '';
     $view->tag = '';
@@ -170,6 +202,9 @@ class ViewsUpgradeTestCase extends ViewsSqlTest {
     return $view;
   }
 
+  /**
+   *
+   */
   protected function viewUpgradeImport() {
     $import = '
       $view = new view;
@@ -269,6 +304,7 @@ class ViewsUpgradeTestCase extends ViewsSqlTest {
       $handler->display->display_options["block_description"] = "Recent comments view"
 ;';
 
-      return $import;
+    return $import;
   }
+
 }

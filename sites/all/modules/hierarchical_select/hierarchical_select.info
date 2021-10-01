@@ -3,12 +3,11 @@ description = Simplifies the selection of one or multiple items in a hierarchica
 package = Form Elements
 
 core = 7.x
-
+configure = admin/config/content/hierarchical_select
 files[] = tests/internals.test
 
-; Information added by drupal.org packaging script on 2011-09-16
-version = "7.x-3.0-alpha5"
+; Information added by Drupal.org packaging script on 2018-06-29
+version = "7.x-3.0-beta9"
 core = "7.x"
 project = "hierarchical_select"
-datestamp = "1316201202"
-
+datestamp = "1530242028"

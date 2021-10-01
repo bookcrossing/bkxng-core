@@ -86,7 +86,7 @@ function ctools_content_process(&$plugin, $info) {
 /**
  * Fetch metadata on a specific content_type plugin.
  *
- * @param $content type
+ * @param mixed $content
  *   Name of a panel content type.
  *
  * @return
@@ -146,7 +146,7 @@ function ctools_content_get_subtypes($type) {
     if (is_array($function)) {
       $subtypes = $function;
     }
-    else if (function_exists($function)) {
+    elseif (function_exists($function)) {
       // Cast to array to prevent errors from non-array returns.
       $subtypes = (array) $function($plugin);
     }
@@ -155,6 +155,11 @@ function ctools_content_get_subtypes($type) {
   // Walk through the subtypes and ensure minimal settings are
   // retained.
   foreach ($subtypes as $id => $subtype) {
+    // Ensure that the 'subtype_id' value exists.
+    if (!isset($subtype['subtype_id'])) {
+      $subtypes[$id]['subtype_id'] = $id;
+    }
+
     // Use exact name since this is a modify by reference.
     ctools_content_prepare_subtype($subtypes[$id], $plugin);
   }
@@ -202,6 +207,13 @@ function ctools_content_get_subtype($type, $subtype_id) {
   }
 
   if ($subtype) {
+    // Ensure that the 'subtype_id' value exists. This is also done in
+    // ctools_content_get_subtypes(), but it wouldn't be called if the plugin
+    // provides the subtype through its own function.
+    if (!isset($subtype['subtype_id'])) {
+      $subtype['subtype_id'] = $subtype_id;
+    }
+
     ctools_content_prepare_subtype($subtype, $plugin);
   }
   return $subtype;
@@ -217,6 +229,7 @@ function ctools_content_prepare_subtype(&$subtype, $plugin) {
     }
   }
 
+  // Trigger hook_ctools_content_subtype_alter().
   drupal_alter('ctools_content_subtype', $subtype, $plugin);
 }
 
@@ -241,9 +254,10 @@ function ctools_content_prepare_subtype(&$subtype, $plugin) {
  *   Any incoming content, if this display is a wrapper.
  *
  * @return
- *   The content as rendered by the plugin. This content should be an array
- *   with the following possible keys:
+ *   The content as rendered by the plugin, or NULL.
+ *   This content should be an object with the following possible properties:
  *   - title: The safe to render title of the content.
+ *   - title_heading: The title heading.
  *   - content: The safe to render HTML content.
  *   - links: An array of links associated with the content suitable for
  *     theme('links').
@@ -293,21 +307,22 @@ function ctools_content_render($type, $subtype, $conf, $keywords = array(), $arg
       $content->subtype = $subtype;
     }
 
-    // Override the title if configured to
+    // Override the title if configured to.
     if (!empty($conf['override_title'])) {
       // Give previous title as an available substitution here.
       $keywords['%title'] = empty($content->title) ? '' : $content->title;
       $content->original_title = $keywords['%title'];
       $content->title = $conf['override_title_text'];
+      $content->title_heading = isset($conf['override_title_heading']) ? $conf['override_title_heading'] : 'h2';
     }
 
     if (!empty($content->title)) {
-      // Perform substitutions
+      // Perform substitutions.
       if (!empty($keywords) || !empty($context)) {
         $content->title = ctools_context_keyword_substitute($content->title, $keywords, $context);
       }
 
-      // Sterilize the title
+      // Sterilize the title.
       $content->title = filter_xss_admin($content->title);
 
       // If a link is specified, populate.
@@ -318,7 +333,7 @@ function ctools_content_render($type, $subtype, $conf, $keywords = array(), $arg
         else {
           $url = $content->title_link;
         }
-        // set defaults so we don't bring up notices
+        // Set defaults so we don't bring up notices.
         $url += array('href' => '', 'attributes' => array(), 'query' => array(), 'fragment' => '', 'absolute' => NULL, 'html' => TRUE);
         $content->title = l($content->title, $url['href'], $url);
       }
@@ -339,7 +354,16 @@ function ctools_content_editable($type, $subtype, $conf) {
     return FALSE;
   }
 
-  if ($function = ctools_plugin_get_function($subtype, 'check editable')) {
+  $function = FALSE;
+
+  if (!empty($subtype['check editable'])) {
+    $function = ctools_plugin_get_function($subtype, 'check editable');
+  }
+  elseif (!empty($type['check editable'])) {
+    $function = ctools_plugin_get_function($type, 'check editable');
+  }
+
+  if ($function) {
     return $function($type, $subtype, $conf);
   }
 
@@ -362,7 +386,7 @@ function ctools_content_admin_title($type, $subtype, $conf, $context = NULL) {
   if (is_array($type)) {
     $plugin = $type;
   }
-  else if (is_string($type)) {
+  elseif (is_string($type)) {
     $plugin = ctools_get_content_type($type);
   }
   else {
@@ -380,10 +404,10 @@ function ctools_content_admin_title($type, $subtype, $conf, $context = NULL) {
 
     return $function($subtype, $conf, $pane_context);
   }
-  else if (isset($plugin['admin title'])) {
+  elseif (isset($plugin['admin title'])) {
     return $plugin['admin title'];
   }
-  else if (isset($plugin['title'])) {
+  elseif (isset($plugin['title'])) {
     return $plugin['title'];
   }
 }
@@ -418,7 +442,7 @@ function ctools_content_get_defaults($plugin, $subtype) {
   if (isset($plugin['defaults'])) {
     $defaults = $plugin['defaults'];
   }
-  else if (isset($subtype['defaults'])) {
+  elseif (isset($subtype['defaults'])) {
     $defaults = $subtype['defaults'];
   }
   if (isset($defaults)) {
@@ -427,7 +451,7 @@ function ctools_content_get_defaults($plugin, $subtype) {
         return $return;
       }
     }
-    else if (is_array($defaults)) {
+    elseif (is_array($defaults)) {
       return $defaults;
     }
   }
@@ -461,7 +485,7 @@ function ctools_content_admin_info($type, $subtype, $conf, $context = NULL) {
 
   if (empty($output) || !is_object($output)) {
     $output = new stdClass();
-    // replace the _ with " " for a better output
+    // Replace the _ with " " for a better output.
     $subtype = check_plain(str_replace("_", " ", $subtype));
     $output->title = $subtype;
     $output->content = t('No info available.');
@@ -470,7 +494,7 @@ function ctools_content_admin_info($type, $subtype, $conf, $context = NULL) {
 }
 
 /**
- * Add the default FAPI elements to the content type configuration form
+ * Add the default FAPI elements to the content type configuration form.
  */
 function ctools_content_configure_form_defaults($form, &$form_state) {
   $plugin = $form_state['plugin'];
@@ -504,8 +528,26 @@ function ctools_content_configure_form_defaults($form, &$form_state) {
       '#size' => 35,
       '#id' => 'override-title-textfield',
       '#dependency' => array('override-title-checkbox' => array(1)),
-      '#dependency_type' => 'disable',
+      '#dependency_type' => 'hidden',
     );
+    $form['override_title_heading'] = array(
+      '#type' => 'select',
+      '#default_value' => isset($conf['override_title_heading']) ? $conf['override_title_heading'] : 'h2',
+      '#options' => array(
+        'h1' => t('h1'),
+        'h2' => t('h2'),
+        'h3' => t('h3'),
+        'h4' => t('h4'),
+        'h5' => t('h5'),
+        'h6' => t('h6'),
+        'div' => t('div'),
+        'span' => t('span'),
+      ),
+      '#id' => 'override-title-heading',
+      '#dependency' => array('override-title-checkbox' => array(1)),
+      '#dependency_type' => 'hidden',
+    );
+
     $form['aligner_stop'] = array(
       '#markup' => '</div>',
     );
@@ -536,6 +578,7 @@ function ctools_content_configure_form_defaults_submit(&$form, &$form_state) {
   if (isset($form_state['values']['override_title'])) {
     $form_state['conf']['override_title'] = $form_state['values']['override_title'];
     $form_state['conf']['override_title_text'] = $form_state['values']['override_title_text'];
+    $form_state['conf']['override_title_heading'] = $form_state['values']['override_title_heading'];
   }
 }
 
@@ -568,7 +611,7 @@ function ctools_content_form($op, $form_info, &$form_state, $plugin, $subtype_na
     if (!empty($subtype['add form'])) {
       _ctools_content_create_form_info($form_info, $subtype['add form'], $subtype, $subtype, $op);
     }
-    else if (!empty($plugin['add form'])) {
+    elseif (!empty($plugin['add form'])) {
       _ctools_content_create_form_info($form_info, $plugin['add form'], $plugin, $subtype, $op);
     }
   }
@@ -578,7 +621,7 @@ function ctools_content_form($op, $form_info, &$form_state, $plugin, $subtype_na
     if (!empty($subtype['edit form'])) {
       _ctools_content_create_form_info($form_info, $subtype['edit form'], $subtype, $subtype, $op);
     }
-    else if (!empty($plugin['edit form'])) {
+    elseif (!empty($plugin['edit form'])) {
       _ctools_content_create_form_info($form_info, $plugin['edit form'], $plugin, $subtype, $op);
     }
   }
@@ -597,7 +640,7 @@ function _ctools_content_create_form_info(&$form_info, $info, $plugin, $subtype,
     if (empty($subtype['title'])) {
       $title = t('Configure');
     }
-    else if ($op == 'add') {
+    elseif ($op == 'add') {
       $title = t('Configure new !subtype_title', array('!subtype_title' => $subtype['title']));
     }
     else {
@@ -612,7 +655,7 @@ function _ctools_content_create_form_info(&$form_info, $info, $plugin, $subtype,
       ),
     );
   }
-  else if (is_array($info)) {
+  elseif (is_array($info)) {
     $form_info['order'] = array();
     $form_info['forms'] = array();
     $count = 0;
@@ -663,7 +706,7 @@ function ctools_content_get_available_types($contexts = NULL, $has_content = FAL
 
   foreach ($plugins as $id => $plugin) {
     foreach (ctools_content_get_subtypes($plugin) as $subtype_id => $subtype) {
-      // exclude items that require content if we're saying we don't
+      // Exclude items that require content if we're saying we don't
       // provide it.
       if (!empty($subtype['requires content']) && !$has_content) {
         continue;
@@ -687,6 +730,11 @@ function ctools_content_get_available_types($contexts = NULL, $has_content = FAL
         }
       }
 
+      // Check if the content type provides an access callback.
+      if (isset($subtype['create content access']) && function_exists($subtype['create content access']) && !$subtype['create content access']($plugin, $subtype)) {
+        continue;
+      }
+
       // If we made it through all the tests, then we can use this content.
       $available[$id][$subtype_id] = $subtype;
     }
@@ -698,7 +746,6 @@ function ctools_content_get_available_types($contexts = NULL, $has_content = FAL
  * Get an array of all content types that can be fed into the
  * display editor for the add content list, regardless of
  * availability.
- *
  */
 function ctools_content_get_all_types() {
   $plugins = ctools_get_content_types();

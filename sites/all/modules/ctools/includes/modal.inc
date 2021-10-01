@@ -55,9 +55,9 @@ function ctools_modal_add_js() {
         'alt' => t('Close window'),
       )),
       'throbber' => theme('image', array(
-          'path' => ctools_image_path('throbber.gif'),
-          'title' => t('Loading...'),
-          'alt' => t('Loading'),
+        'path' => ctools_image_path('throbber.gif'),
+        'title' => t('Loading...'),
+        'alt' => t('Loading'),
       )),
     ),
   );
@@ -66,6 +66,7 @@ function ctools_modal_add_js() {
   drupal_add_library('system', 'jquery.form');
   drupal_add_library('system', 'drupal.progress');
   drupal_add_library('system', 'drupal.ajax');
+  drupal_add_library('system', 'ui');
   ctools_add_js('modal');
 
   ctools_add_css('modal');
@@ -73,7 +74,7 @@ function ctools_modal_add_js() {
 }
 
 /**
- * @todo this is deprecated
+ * @todo Deprecated this.
  */
 function ctools_modal_add_plugin_js($plugins) {
   $css = array();
@@ -84,7 +85,7 @@ function ctools_modal_add_plugin_js($plugins) {
         if (file_exists($file)) {
           $js[$file] = TRUE;
         }
-        else if (file(exists($subtype['path'] . '/' . $file))) {
+        elseif (file_exists($subtype['path'] . '/' . $file)) {
           $js[$subtype['path'] . '/' . $file] = TRUE;
         }
       }
@@ -94,7 +95,7 @@ function ctools_modal_add_plugin_js($plugins) {
         if (file_exists($file)) {
           $css[$file] = TRUE;
         }
-        else if (file(exists($subtype['path'] . '/' . $file))) {
+        elseif (file_exists($subtype['path'] . '/' . $file)) {
           $css[$subtype['path'] . '/' . $file] = TRUE;
         }
       }
@@ -139,7 +140,7 @@ function ctools_modal_command_dismiss() {
 }
 
 /**
- * Display loading screen in the modal
+ * Display loading screen in the modal.
  */
 function ctools_modal_command_loading() {
   return array(
@@ -187,18 +188,32 @@ function ctools_modal_text_button($text, $dest, $alt, $class = '') {
 /**
  * Wrap a form so that we can use it properly with AJAX. Essentially if the
  * form wishes to render, it automatically does that, otherwise it returns
- * so we can see submission results.
+ * the render array so we can see submission results.
  *
- * @return
+ * @param array $form
+ *   An associative array containing the structure of the form.
+ * @param array $form_state
+ *   An associative array containing the current state of the form.
+ *   If the 'reset_html_ids' key is set to TRUE, it will prevent HTML IDs in
+ *   forms from being incremented.
+ *
+ * @return mixed
  *   The output of the form, if it was rendered. If $form_state['ajax']
  *   is set, this will use ctools_modal_form_render so it will be
  *   a $command object suitable for ajax_render already.
  *
- *   The return will be NULL if the form was successfully submitted unless
- *   you specifically set re_render = TRUE. If ajax is set the
- *   form will never be redirected.
+ *   If the form was not rendered, the raw render array will be returned.
+ *
+ *   If ajax is set the form will never be redirected.
  */
 function ctools_modal_form_wrapper($form_id, &$form_state) {
+  // Since this will run again on form rebuild while still in the modal, prevent
+  // form IDs from being incremented.
+  // @todo https://drupal.org/node/1305882
+  if (!empty($form_state['reset_html_ids']) && !empty($_POST['ajax_html_ids'])) {
+    unset($_POST['ajax_html_ids']);
+  }
+
   // This won't override settings already in.
   $form_state += array(
     're_render' => FALSE,
@@ -206,8 +221,8 @@ function ctools_modal_form_wrapper($form_id, &$form_state) {
   );
 
   $output = drupal_build_form($form_id, $form_state);
- if (!empty($form_state['ajax']) && (!$form_state['executed'] || $form_state['rebuild'])) {
-     return ctools_modal_form_render($form_state, $output);
+  if (!empty($form_state['ajax']) && (!$form_state['executed'] || $form_state['rebuild'])) {
+    return ctools_modal_form_render($form_state, $output);
   }
 
   return $output;

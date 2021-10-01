@@ -1,17 +1,30 @@
 <?php
+
+/**
+ * @file
+ * Definition of views_handler_argument_term_node_tid.
+ */
+
 /**
  * Allow taxonomy term ID(s) as argument.
  *
  * @ingroup views_argument_handlers
  */
 class views_handler_argument_term_node_tid extends views_handler_argument_many_to_one {
-  function option_definition() {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function option_definition() {
     $options = parent::option_definition();
-    $options['set_breadcrumb'] = array('default' => FALSE);
+    $options['set_breadcrumb'] = array('default' => FALSE, 'bool' => TRUE);
     return $options;
   }
 
-  function options_form(&$form, &$form_state) {
+  /**
+   * {@inheritdoc}
+   */
+  public function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
     $form['set_breadcrumb'] = array(
       '#type' => 'checkbox',
@@ -21,7 +34,10 @@ class views_handler_argument_term_node_tid extends views_handler_argument_many_t
     );
   }
 
-  function set_breadcrumb(&$breadcrumb) {
+  /**
+   * {@inheritdoc}
+   */
+  public function set_breadcrumb(&$breadcrumb) {
     if (empty($this->options['set_breadcrumb']) || !is_numeric($this->argument)) {
       return;
     }
@@ -29,9 +45,13 @@ class views_handler_argument_term_node_tid extends views_handler_argument_many_t
     return views_taxonomy_set_breadcrumb($breadcrumb, $this);
   }
 
-  function title_query() {
+  /**
+   * {@inheritdoc}
+   */
+  public function title_query() {
     $titles = array();
     $result = db_select('taxonomy_term_data', 'td')
+      ->addTag('taxonomy_term_access')
       ->fields('td', array('name'))
       ->condition('td.tid', $this->value)
       ->execute();
@@ -40,4 +60,5 @@ class views_handler_argument_term_node_tid extends views_handler_argument_many_t
     }
     return $titles;
   }
+
 }

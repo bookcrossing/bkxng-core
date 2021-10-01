@@ -79,7 +79,7 @@ div.ctools-modal-content .no-float .form-item * {
   float: none;
 }
 
-div.ctools-modal-content .modal-form .no-float label  {
+div.ctools-modal-content .modal-form .no-float label {
   width: auto;
 }
 
@@ -87,6 +87,10 @@ div.ctools-modal-content fieldset,
 div.ctools-modal-content .form-radios,
 div.ctools-modal-content .form-checkboxes {
   clear: left;
+}
+
+div.ctools-modal-content .vertical-tabs-panes > fieldset {
+  clear: none;
 }
 
 div.ctools-modal-content .resizable-textarea {

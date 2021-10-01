@@ -1,7 +1,8 @@
 <?php
+
 /**
  * @file
- * Contains the node RSS row style plugin.
+ * Definition of views_plugin_row_node_rss.
  */
 
 /**
@@ -9,18 +10,30 @@
  * and formats it as an RSS item.
  */
 class views_plugin_row_node_rss extends views_plugin_row {
-  // Basic properties that let the row style follow relationships.
-  var $base_table = 'node';
-  var $base_field = 'nid';
 
-  // Stores the nodes loaded with pre_render.
-  var $nodes = array();
+  /**
+   * Basic properties that let the row style follow relationships.
+   */
+  public $base_table = 'node';
 
-  function option_definition() {
+  /**
+   *
+   */
+  public $base_field = 'nid';
+
+  /**
+   * Stores the nodes loaded with pre_render.
+   */
+  public $nodes = array();
+
+  /**
+   * {@inheritdoc}
+   */
+  public function option_definition() {
     $options = parent::option_definition();
 
     $options['item_length'] = array('default' => 'default');
-    $options['links'] = FALSE;
+    $options['links'] = array('default' => FALSE, 'bool' => TRUE);
 
     return $options;
   }
@@ -28,7 +41,7 @@ class views_plugin_row_node_rss extends views_plugin_row {
   /**
    * Override init function to convert fulltext view-mode to full.
    */
-  function init(&$view, &$display, $options = NULL) {
+  public function init(&$view, &$display, $options = NULL) {
     parent::init($view, $display, $options);
 
     if ($this->options['item_length'] == 'fulltext') {
@@ -36,7 +49,10 @@ class views_plugin_row_node_rss extends views_plugin_row {
     }
   }
 
-  function options_form(&$form, &$form_state) {
+  /**
+   * {@inheritdoc}
+   */
+  public function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
 
     $form['item_length'] = array(
@@ -55,7 +71,7 @@ class views_plugin_row_node_rss extends views_plugin_row {
   /**
    * Return the main options, which are shown in the summary title.
    */
-  function options_form_summary_options() {
+  public function options_form_summary_options() {
     $entity_info = entity_get_info('node');
     $options = array();
     if (!empty($entity_info['view modes'])) {
@@ -68,13 +84,18 @@ class views_plugin_row_node_rss extends views_plugin_row {
     return $options;
   }
 
-  function summary_title() {
+  /**
+   * {@inheritdoc}
+   */
+  public function summary_title() {
     $options = $this->options_form_summary_options();
     return check_plain($options[$this->options['item_length']]);
   }
 
-
-  function pre_render($values) {
+  /**
+   * {@inheritdoc}
+   */
+  public function pre_render($values) {
     $nids = array();
     foreach ($values as $row) {
       $nids[] = $row->{$this->field_alias};
@@ -84,8 +105,11 @@ class views_plugin_row_node_rss extends views_plugin_row {
     }
   }
 
-  function render($row) {
-    // For the most part, this code is taken from node_feed() in node.module
+  /**
+   * {@inheritdoc}
+   */
+  public function render($row) {
+    // For the most part; This code is taken from node_feed() in node.module.
     global $base_url;
 
     $nid = $row->{$this->field_alias};
@@ -98,7 +122,7 @@ class views_plugin_row_node_rss extends views_plugin_row {
       $display_mode = variable_get('feed_item_length', 'teaser');
     }
 
-    // Load the specified node:
+    // Load the specified node.
     $node = $this->nodes[$nid];
     if (empty($node)) {
       return;
@@ -116,7 +140,7 @@ class views_plugin_row_node_rss extends views_plugin_row {
       ),
       array(
         'key' => 'dc:creator',
-        'value' => $node->name,
+        'value' => format_username($node),
       ),
       array(
         'key' => 'guid',
@@ -127,7 +151,6 @@ class views_plugin_row_node_rss extends views_plugin_row {
 
     // The node gets built and modules add to or modify $node->rss_elements
     // and $node->rss_namespaces.
-
     $build_mode = $display_mode;
 
     $build = node_view($node, $build_mode);
@@ -135,8 +158,15 @@ class views_plugin_row_node_rss extends views_plugin_row {
 
     if (!empty($node->rss_namespaces)) {
       $this->view->style_plugin->namespaces = array_merge($this->view->style_plugin->namespaces, $node->rss_namespaces);
-    } else if (module_exists('rdf')) {
-      $this->view->style_plugin->namespaces = array_merge($this->view->style_plugin->namespaces, rdf_get_namespaces());
+    }
+    elseif (function_exists('rdf_get_namespaces')) {
+      // Merge RDF namespaces in the XML namespaces in case they are used
+      // further in the RSS content.
+      $xml_rdf_namespaces = array();
+      foreach (rdf_get_namespaces() as $prefix => $uri) {
+        $xml_rdf_namespaces['xmlns:' . $prefix] = $uri;
+      }
+      $this->view->style_plugin->namespaces += $xml_rdf_namespaces;
     }
 
     // Hide the links if desired.
@@ -160,7 +190,8 @@ class views_plugin_row_node_rss extends views_plugin_row {
     return theme($this->theme_functions(), array(
       'view' => $this->view,
       'options' => $this->options,
-      'row' => $item
+      'row' => $item,
     ));
   }
+
 }

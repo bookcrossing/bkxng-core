@@ -1,22 +1,18 @@
 <?php
+
 /**
  * @file
- * Provide views data and handlers for book.module
- */
-
-/**
- * @defgroup views_book_module book.module handlers
+ * Provide views data and handlers for book.module.
  *
- * @{
+ * @ingroup views_module_handlers
  */
 
 /**
- * Implements hook_views_data()
+ * Implements hook_views_data().
  */
 function book_views_data() {
   // ----------------------------------------------------------------------
-  // book table
-
+  // 'book' table.
   $data['book']['table']['group']  = t('Book');
   $data['book']['table']['join'] = array(
     'node' => array(
@@ -38,8 +34,7 @@ function book_views_data() {
   );
 
   // ----------------------------------------------------------------------
-  // menu_links table -- this is aliased so we can get just book relations
-
+  // 'menu_links' table -- this is aliased so we can get just book relations.
   // Book hierarchy and weight data are now in {menu_links}.
   $data['book_menu_links']['table']['group'] = t('Book');
   $data['book_menu_links']['table']['join'] = array(
@@ -90,9 +85,8 @@ function book_views_data() {
   );
 
   // ----------------------------------------------------------------------
-  // book_parent table -- this is an alias of the book table which
+  // 'book_parent' table -- this is an alias of the book table which
   // represents the parent book.
-
   // The {book} record for the parent node.
   $data['book_parent']['table']['group'] = t('Book');
   $data['book_parent']['table']['join'] = array(
@@ -119,5 +113,16 @@ function book_views_data() {
 }
 
 /**
- * @}
+ * Implements hook_views_plugins().
  */
+function book_views_plugins() {
+  return array(
+    'module' => 'views',
+    'argument default' => array(
+      'book_root' => array(
+        'title' => t('Book root from current node'),
+        'handler' => 'views_plugin_argument_default_book_root',
+      ),
+    ),
+  );
+}

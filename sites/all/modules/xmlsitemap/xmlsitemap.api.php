@@ -24,9 +24,9 @@ function hook_xmlsitemap_link_info() {
       'label' => 'My module',
       'base table' => 'mymodule',
       'entity keys' => array(
-        // Primary ID key on {base table}
+        // Primary ID key on {base table}.
         'id' => 'myid',
-        // Subtype key on {base table}
+        // Subtype key on {base table}.
         'bundle' => 'mysubtype',
       ),
       'path callback' => 'mymodule_path',
@@ -52,18 +52,38 @@ function hook_xmlsitemap_link_info() {
         'rebuild callback' => '',
         // Callback function called from the XML sitemap settings page.
         'settings callback' => '',
-      )
+      ),
     ),
   );
 }
 
 /**
+ * Act on a sitemap link being inserted or updated.
+ *
+ * This hook is currently invoked from xmlsitemap_node_node_update() before
+ * the node sitemap link is saved to the database with revoked access until
+ * the node permissions are checked in the cron.
+ *
+ * @param array $link
+ *   An array with the data of the sitemap link.
+ * @param array $context
+ *   An optional context array containing data related to the link.
+ */
+function hook_xmlsitemap_link_presave_alter(array &$link, array $context) {
+  if ($link['type'] == 'mymodule') {
+    $link['priority'] += 0.5;
+  }
+}
+
+/**
  * Alter the data of a sitemap link before the link is saved.
  *
- * @param $link
+ * @param array $link
  *   An array with the data of the sitemap link.
+ * @param array $context
+ *   An optional context array containing data related to the link.
  */
-function hook_xmlsitemap_link_alter(&$link) {
+function hook_xmlsitemap_link_alter(array &$link, array $context) {
   if ($link['type'] == 'mymodule') {
     $link['priority'] += 0.5;
   }
@@ -72,13 +92,15 @@ function hook_xmlsitemap_link_alter(&$link) {
 /**
  * Inform modules that an XML sitemap link has been created.
  *
- * @param $link
+ * @param array $link
  *   Associative array defining an XML sitemap link as passed into
  *   xmlsitemap_link_save().
+ * @param array $context
+ *   An optional context array containing data related to the link.
  *
  * @see hook_xmlsitemap_link_update()
  */
-function hook_xmlsitemap_link_insert(array $link) {
+function hook_xmlsitemap_link_insert(array $link, array $context) {
   db_insert('mytable')
     ->fields(array(
       'link_type' => $link['type'],
@@ -91,13 +113,15 @@ function hook_xmlsitemap_link_insert(array $link) {
 /**
  * Inform modules that an XML sitemap link has been updated.
  *
- * @param $link
+ * @param array $link
  *   Associative array defining an XML sitemap link as passed into
  *   xmlsitemap_link_save().
+ * @param array $context
+ *   An optional context array containing data related to the link.
  *
  * @see hook_xmlsitemap_link_insert()
  */
-function hook_xmlsitemap_link_update(array $link) {
+function hook_xmlsitemap_link_update(array $link, array $context) {
   db_update('mytable')
     ->fields(array(
       'link_type' => $link['type'],
@@ -105,6 +129,26 @@ function hook_xmlsitemap_link_update(array $link) {
       'link_status' => $link['status'],
     ))
     ->execute();
+}
+
+/**
+ * Respond to XML sitemap link clearing and rebuilding.
+ *
+ * @param array $types
+ *   An array of link types that are being rebuilt.
+ * @param bool $save_custom
+ *   If links with overridden status and/or priority are being removed or not.
+ */
+function hook_xmlsitemap_rebuild_clear(array $types, $save_custom) {
+  db_delete('mytable')
+    ->condition('link_type', $types, 'IN')
+    ->execute();
+}
+
+/**
+ * Respond to XML sitemap regeneration.
+ */
+function hook_xmlsitemap_regenerate_finished() {
 }
 
 /**
@@ -116,7 +160,7 @@ function hook_xmlsitemap_index_links($limit) {
 /**
  * Provide information about contexts available to XML sitemap.
  *
- * @see hook_xmlsitemap_context_info_alter().
+ * @see hook_xmlsitemap_context_info_alter()
  */
 function hook_xmlsitemap_context_info() {
   $info['vocabulary'] = array(
@@ -130,7 +174,7 @@ function hook_xmlsitemap_context_info() {
 /**
  * Alter XML sitemap context info.
  *
- * @see hook_xmlsitemap_context_info().
+ * @see hook_xmlsitemap_context_info()
  */
 function hook_xmlsitemap_context_info_alter(&$info) {
   $info['vocabulary']['label'] = t('Site vocabularies');
@@ -173,9 +217,63 @@ function hook_xmlsitemap_context_url_options_alter(array &$options, array $conte
 }
 
 /**
+ * Alter the content added to an XML sitemap for an individual element.
+ *
+ * This hooks is called when the module is generating the XML content for the
+ * sitemap and allows other modules to alter existing or add additional XML data
+ * for any element by adding additional key value paris to the $element array.
+ *
+ * The key in the element array is then used as the name of the XML child
+ * element to add and the value is the value of that element. For example:
+ *
+ * @code $element['video:title'] = 'Big Ponycorn'; @endcode
+ *
+ * Would result in a child element like <video:title>Big Ponycorn</video:title>
+ * being added to the sitemap for this particular link.
+ *
+ * @param array $element
+ *   The element that will be converted to XML for the link.
+ * @param array $link
+ *   An array of properties providing context about the link that we are
+ *   generating an XML element for.
+ * @param object $sitemap
+ *   The sitemap that is currently being generated.
+ */
+function hook_xmlsitemap_element_alter(array &$element, array $link, $sitemap) {
+  if ($link['subtype'] === 'video') {
+    $node = node_load($link['id']);
+    $element['video:video'] = array(
+      'video:title' => check_plain($node->title),
+      'video:description' => isset($node->body[LANGUAGE_NONE][0]['summary']) ? check_plain($node->body[LANGUAGE_NONE][0]['summary']) : check_plain($node->body[LANGUAGE_NONE][0]['value']),
+      'video:live' => 'no',
+    );
+  }
+}
+
+/**
+ * Alter the attributes used for the root element of the XML sitemap.
+ *
+ * For example add an xmlns:video attribute:
+ *
+ * @code
+ * <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+ *   xmlns:video="https://www.google.com/schemas/sitemap-video/1.1">
+ * @endcode
+ *
+ * @param array $attributes
+ *   An associative array of attributes to use in the root element of an XML
+ *   sitemap.
+ * @param object $sitemap
+ *   The sitemap that is currently being generated.
+ */
+function hook_xmlsitemap_root_attributes_alter(array &$attributes, $sitemap) {
+  $attributes['xmlns:video'] = 'https://www.google.com/schemas/sitemap-video/1.1';
+}
+
+/**
  * Alter the query selecting data from {xmlsitemap} during sitemap generation.
  *
- * @param $query
+ * @param QueryAlterableInterface $query
  *   A Query object describing the composite parts of a SQL query.
  *
  * @see hook_query_TAG_alter()
@@ -207,11 +305,13 @@ function hook_xmlsitemap_sitemap_operations() {
  * This hook is invoked from xmlsitemap_sitemap_delete_multiple() after the XML
  * sitemap has been removed from the table in the database.
  *
- * @param $sitemap
+ * @param object $sitemap
  *   The XML sitemap object that was deleted.
  */
 function hook_xmlsitemap_sitemap_delete(stdClass $sitemap) {
-  db_query("DELETE FROM {mytable} WHERE smid = '%s'", $sitemap->smid);
+  db_delete('mytable')
+    ->condition('smid', $sitemap->smid, '=')
+    ->execute();
 }
 
 /**

@@ -1,5 +1,13 @@
 <?php
 
+/**
+ * @file
+ * Definition of ViewsUiNodeViewsWizard.
+ */
+
+/**
+ * Tests creating node views with the wizard.
+ */
 class ViewsUiNodeViewsWizard extends ViewsUiBaseViewsWizard {
 
   protected function row_style_options($type) {
@@ -56,6 +64,7 @@ class ViewsUiNodeViewsWizard extends ViewsUiBaseViewsWizard {
 
     // Add permission-based access control.
     $display_options['access']['type'] = 'perm';
+    $display_options['access']['perm'] = 'access content';
 
     // Remove the default fields, since we are customizing them here.
     unset($display_options['fields']);
@@ -109,20 +118,24 @@ class ViewsUiNodeViewsWizard extends ViewsUiBaseViewsWizard {
         $display_options['row_options']['links'] = !empty($row_options['links']);
         $display_options['row_options']['comments'] = !empty($row_options['comments']);
         break;
+
       case 'teasers':
         $display_options['row_plugin'] = 'node';
         $display_options['row_options']['build_mode'] = 'teaser';
         $display_options['row_options']['links'] = !empty($row_options['links']);
         $display_options['row_options']['comments'] = !empty($row_options['comments']);
         break;
+
       case 'titles_linked':
         $display_options['row_plugin'] = 'fields';
         $display_options['field']['title']['link_to_node'] = 1;
         break;
+
       case 'titles':
         $display_options['row_plugin'] = 'fields';
         $display_options['field']['title']['link_to_node'] = 0;
         break;
     }
   }
+
 }

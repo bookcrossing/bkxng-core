@@ -1,0 +1,18 @@
+; $id:
+name = Star Rating
+description = Provides star rating field type and formatter
+core = "7.x"
+package = "fields"
+
+dependencies[] = field
+
+files[] = starrating.install
+files[] = starrating.module
+
+
+; Information added by Drupal.org packaging script on 2014-03-27
+version = "7.x-1.1"
+core = "7.x"
+project = "starrating"
+datestamp = "1395938346"
+

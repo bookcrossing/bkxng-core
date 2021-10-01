@@ -1,42 +1,57 @@
 <?php
 
 /**
- * Basic argument handler to implement string arguments that may have length
- * limits.
+ * @file
+ * Definition of views_handler_argument_string.
+ */
+
+/**
+ * Argument handler to implement string arguments that may have length limits.
  *
  * @ingroup views_argument_handlers
  */
 class views_handler_argument_string extends views_handler_argument {
-  function init(&$view, &$options) {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function init(&$view, &$options) {
     parent::init($view, $options);
     if (!empty($this->definition['many to one'])) {
       $this->helper = new views_many_to_one_helper($this);
 
-      // Ensure defaults for these, during summaries and stuff:
+      // Ensure defaults for these, during summaries and stuff.
       $this->operator = 'or';
       $this->value = array();
     }
   }
 
-  function option_definition() {
+  /**
+   * {@inheritdoc}
+   */
+  public function option_definition() {
     $options = parent::option_definition();
 
-    $options['glossary'] = array('default' => FALSE);
+    $options['glossary'] = array('default' => FALSE, 'bool' => TRUE);
     $options['limit'] = array('default' => 0);
     $options['case'] = array('default' => 'none');
     $options['path_case'] = array('default' => 'none');
-    $options['transform_dash'] = array('default' => FALSE);
-    $options['break_phrase'] = array('default' => FALSE);
+    $options['transform_dash'] = array('default' => FALSE, 'bool' => TRUE);
+    $options['break_phrase'] = array('default' => FALSE, 'bool' => TRUE);
+    $options['not'] = array('default' => FALSE, 'bool' => TRUE);
 
     if (!empty($this->definition['many to one'])) {
-      $options['add_table'] = array('default' => FALSE);
-      $options['require_value'] = array('default' => FALSE);
+      $options['add_table'] = array('default' => FALSE, 'bool' => TRUE);
+      $options['require_value'] = array('default' => FALSE, 'bool' => TRUE);
     }
 
     return $options;
   }
 
-  function options_form(&$form, &$form_state) {
+  /**
+   * {@inheritdoc}
+   */
+  public function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
 
     $form['glossary'] = array(
@@ -118,13 +133,19 @@ class views_handler_argument_string extends views_handler_argument {
       '#default_value' => !empty($this->options['break_phrase']),
       '#fieldset' => 'more',
     );
+    $form['not'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Exclude'),
+      '#description' => t('If selected, the numbers entered for the filter will be excluded rather than limiting the view.'),
+      '#default_value' => !empty($this->options['not']),
+      '#fieldset' => 'more',
+    );
   }
 
   /**
-   * Build the summary query based on a string
+   * Build the summary query based on a string.
    */
-  function summary_query() {
-    $this->placeholder_length = $this->placeholder();
+  public function summary_query() {
     if (empty($this->definition['many to one'])) {
       $this->ensure_my_table();
     }
@@ -140,13 +161,7 @@ class views_handler_argument_string extends views_handler_argument {
     else {
       // Add the field.
       $formula = $this->get_formula();
-      $params = array(
-        'placeholders' => array(
-          $this->placeholder_length => intval($this->options['limit']),
-        ),
-      );
-
-      $this->base_alias = $this->query->add_field(NULL, $formula, $this->field . '_truncated', $params);
+      $this->base_alias = $this->query->add_field(NULL, $formula, $this->field . '_truncated');
       $this->query->set_count_field(NULL, $formula, $this->field, $this->field . '_truncated');
     }
 
@@ -159,19 +174,18 @@ class views_handler_argument_string extends views_handler_argument {
    *
    * $this->ensure_my_table() MUST have been called prior to this.
    */
-  function get_formula() {
-    return "SUBSTRING($this->table_alias.$this->real_field, 1, $this->placeholder_length)";
+  public function get_formula() {
+    return "SUBSTRING($this->table_alias.$this->real_field, 1, " . intval($this->options['limit']) . ")";
   }
 
   /**
    * Build the query based upon the formula
    */
-  function query($group_by = FALSE) {
+  public function query($group_by = FALSE) {
     $argument = $this->argument;
     if (!empty($this->options['transform_dash'])) {
       $argument = strtr($argument, '-', ' ');
     }
-    $this->placeholder_length = $this->placeholder();
 
     if (!empty($this->options['break_phrase'])) {
       views_break_phrase_string($argument, $this);
@@ -186,8 +200,6 @@ class views_handler_argument_string extends views_handler_argument {
         $this->helper->formula = TRUE;
       }
       $this->helper->ensure_my_table();
-
-      $this->helper->placeholders = array($this->placeholder_length => intval($this->options['limit']));
       $this->helper->add_filter();
       return;
     }
@@ -203,24 +215,22 @@ class views_handler_argument_string extends views_handler_argument {
     }
 
     if (count($this->value) > 1) {
-      $operator = 'IN';
+      $operator = empty($this->options['not']) ? 'IN' : 'NOT IN';
       $argument = $this->value;
     }
     else {
-      $operator = '=';
+      $operator = empty($this->options['not']) ? '=' : '!=';
     }
 
     if ($formula) {
       $placeholder = $this->placeholder();
-      $placeholder_length = $this->placeholder_length;
-      if ($operator == 'IN') {
-        $field .= " IN($placeholder)";
+      if (count($this->value) > 1) {
+        $field .= " $operator ($placeholder)";
       }
       else {
-        $field .= ' = ' . $placeholder;
+        $field .= " $operator $placeholder";
       }
       $placeholders = array(
-        $placeholder_length => intval($this->options['limit']),
         $placeholder => $argument,
       );
       $this->query->add_where_expression(0, $field, $placeholders);
@@ -230,19 +240,28 @@ class views_handler_argument_string extends views_handler_argument {
     }
   }
 
-  function summary_argument($data) {
-    $value = $this->case_transform($data->{$this->base_alias}, 'path_case');
+  /**
+   * {@inheritdoc}
+   */
+  public function summary_argument($data) {
+    $value = $this->case_transform($data->{$this->base_alias}, $this->options['path_case']);
     if (!empty($this->options['transform_dash'])) {
       $value = strtr($value, ' ', '-');
     }
     return $value;
   }
 
-  function get_sort_name() {
+  /**
+   * {@inheritdoc}
+   */
+  public function get_sort_name() {
     return t('Alphabetical', array(), array('context' => 'Sort order'));
   }
 
-  function title() {
+  /**
+   * {@inheritdoc}
+   */
+  public function title() {
     $this->argument = $this->case_transform($this->argument, $this->options['case']);
     if (!empty($this->options['transform_dash'])) {
       $this->argument = strtr($this->argument, '-', ' ');
@@ -270,11 +289,14 @@ class views_handler_argument_string extends views_handler_argument {
   /**
    * Override for specific title lookups.
    */
-  function title_query() {
+  public function title_query() {
     return drupal_map_assoc($this->value, 'check_plain');
   }
 
-  function summary_name($data) {
+  /**
+   * {@inheritdoc}
+   */
+  public function summary_name($data) {
     return $this->case_transform(parent::summary_name($data), $this->options['case']);
   }
 

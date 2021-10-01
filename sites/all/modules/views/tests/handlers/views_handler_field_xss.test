@@ -1,6 +1,13 @@
 <?php
 
 /**
+ * @file
+ * Definition of ViewsHandlerTestXss.
+ */
+
+/**
+ * Tests the core views_handler_field_css handler.
+ *
  * @see CommonXssUnitTest
  */
 class ViewsHandlerTestXss extends ViewsSqlTest {
@@ -16,12 +23,11 @@ class ViewsHandlerTestXss extends ViewsSqlTest {
     $map = array(
       'John' => 'John',
       "Foo\xC0barbaz" => '',
-      'Fooÿñ' => 'Fooÿñ'
+      'Fooÿñ' => 'Fooÿñ',
     );
 
     return $map;
   }
-
 
   function viewsData() {
     $data = parent::viewsData();
@@ -50,4 +56,5 @@ class ViewsHandlerTestXss extends ViewsSqlTest {
       $counter++;
     }
   }
+
 }

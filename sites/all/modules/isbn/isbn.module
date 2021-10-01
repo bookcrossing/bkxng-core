@@ -1,0 +1,217 @@
+<?php
+
+/**
+ * @file
+ *  Maintains a consistant relationship between nodes and ISBNs.
+ */
+
+/**
+ * Implements hook_field_info().
+ */
+function isbn_field_info() {
+  return array(
+    'isbn' => array(
+      'label' => 'ISBN',
+      'description' => t('This field stores and renders ISBN numbers.'),
+      'default_widget' => 'isbn_textfield',
+      'default_formatter' => 'isbn_default',
+      'property_type' => 'text',
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_validate().
+ */
+function isbn_field_validate($obj_type, $object, $field, $instance, $langcode, $items, &$errors) {
+  foreach ($items as $delta => $item) {
+
+    $isbn = isbn_clean_data($item['isbn']);
+
+    if ($isbn != '' && !isbn_check_10($isbn) && !isbn_check_13($isbn)) {
+
+      if (strlen($isbn) < 10 && strlen($isbn) > 13) {
+        $message = t('"%isbn" isn\'t a valid ISBN number. A valid ISBN number has 10 or 13 digits.', array('%isbn' => $isbn));
+      }
+      else {
+        if (strlen($isbn) == 10 && !isbn_check_10($isbn)) {
+          $message = t('"%isbn" isn\'t a valid 10 digit ISBN number.', array('%isbn' => $isbn));
+        }
+
+        if (strlen($isbn) == 13 && !isbn_check_13($isbn)) {
+          $message = t('"%isbn" isn\'t a valid 13 digit ISBN number.', array('%isbn' => $isbn));
+        }
+      }
+
+      $errors[$field['field_name']][$langcode][$delta][] = array(
+        'error' => "isbn_invalid",
+        'message' => $message,
+      );
+    }
+  }
+}
+
+/**
+ * Implements hook_field_widget_error().
+ */
+function isbn_field_widget_error($element, $error, $form, &$form_state) {
+  form_error($element, $error['message']);
+}
+
+/**
+ * Implements hook_field_is_empty().
+ */
+function isbn_field_is_empty($item, $field) {
+  return empty($item['isbn']);
+}
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function isbn_field_formatter_info() {
+  $formats = array(
+    'isbn_default' => array(
+      'label' => t('Not formated ISBN'),
+      'description' => t('Display the ISBN number without format.'),
+      'field types' => array('isbn'),
+    ),
+  );
+  return $formats;
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function isbn_field_formatter_view($object_type, $object, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+  switch ($display['type']) {
+    case 'isbn_default':
+      foreach ($items as $delta => $item) {
+        $element[$delta] = array('#markup' => $item['isbn']);
+      }
+      break;
+  }
+  return $element;
+}
+
+/**
+ * Implements hook_field_widget_info().
+ */
+function isbn_field_widget_info() {
+  return array(
+    'isbn_textfield' => array(
+      'label' => t('Text field'),
+      'field types' => array('isbn'),
+      'settings' => array('size' => 13),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_widget_settings_form().
+ */
+function isbn_field_widget_settings_form($field, $instance) {
+  $widget = $instance['widget'];
+  $settings = $widget['settings'];
+
+  $form['size'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Size of textfield'),
+    '#default_value' => $settings['size'],
+    '#required' => TRUE,
+    '#element_validate' => array('_element_validate_integer_positive'),
+  );
+  return $form;
+}
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function isbn_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $base) {
+  $element = $base;
+  $element['isbn'] = $base + array(
+    '#type' => 'textfield',
+    '#default_value' => isset($items[$delta]['isbn']) ? $items[$delta]['isbn'] : NULL,
+    '#size' => $instance['widget']['settings']['size'],
+    '#prefix' => '<div class="text-full-wrapper">',
+    '#suffix' => '</div>',
+  );
+  return $element;
+}
+
+/**
+ * Implements hook_field_presave().
+ */
+function isbn_field_presave($entity_type, $entity, $field, $instance, $langcode, &$items) {
+  if ($field['type'] == 'isbn') {
+    foreach ($items as $delta => $item) {
+      // Cleaning the data before saving it.
+      if (isset($item['isbn'])) {
+        $items[$delta]['isbn'] = isbn_clean_data($item['isbn']);
+      }
+    }
+  }
+}
+
+/**
+ * Remove all non-valid characters.
+ *
+ * @param $isbn
+ *   The ISBN number typed by the user.
+ *
+ * @return
+ *   The ISBN number without invalid characters.
+ */
+function isbn_clean_data($isbn) {
+  return preg_replace('/([^xX0-9]*)/', "", $isbn);
+}
+
+/**
+ * Check if the ISBN number is a valid 10 digit.
+ *
+ * @param $isbn
+ *   The ISBN number with only valid characters.
+ *
+ * @return
+ *   True if it's a valid 10 digit ISBN number, false otherwise.
+ */
+function isbn_check_10($isbn) {
+  if (strlen($isbn) < 10) {
+    return FALSE;
+  }
+  $check = 0;
+
+  for ($i = 0; $i < 9; $i++) {
+    $check += (10 - $i) * $isbn[$i];
+  }
+
+  $tenth = $isbn[9]; // tenth digit (aka checksum or check digit)
+  $check += (strtoupper($tenth) == 'X') ? 10 : $tenth;
+  return $check % 11 == 0;
+}
+
+/**
+ * Check if the ISBN number is a valid 13 digit.
+ *
+ * @param $isbn
+ *   The ISBN number with only valid characters.
+ *
+ * @return
+ *   True if it's a valid 13 digit ISBN number, false otherwise.
+ */
+function isbn_check_13($isbn) {
+  if (strlen($isbn) < 13) {
+    return FALSE;
+  }
+  $check = 0;
+
+  for ($i = 0; $i < 13; $i+=2) {
+    $check += $isbn[$i];
+  }
+
+  for ($i = 1; $i < 12; $i+=2) {
+    $check += 3 * $isbn[$i];
+  }
+
+  return ($check % 10) == 0;
+}

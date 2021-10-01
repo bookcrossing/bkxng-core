@@ -1,11 +1,16 @@
 <?php
 
 /**
+ * @file
+ * Main file for XML sitemap Modal.
+ */
+
+/**
  * Implements hook_menu_alter().
  */
 function xmlsitemap_modal_menu_alter(&$items) {
   foreach ($items as $path => $item) {
-    if (!empty($item['modal']) && strpos($path, '%ctools_js') === FALSE && $item['page callback'] ==='drupal_get_form') {
+    if (!empty($item['modal']) && strpos($path, '%ctools_js') === FALSE && $item['page callback'] === 'drupal_get_form') {
       $items["$path/%ctools_js"] = $item;
       $items["$path/%ctools_js"]['page callback'] = 'xmlsitemap_modal_get_form';
       $items["$path/%ctools_js"]['page arguments'][] = substr_count($path, '/') + 1;
@@ -27,7 +32,7 @@ function xmlsitemap_modal_get_form() {
 
     $form_state = array(
       'ajax' => TRUE,
-      'args' => $args,
+      'build_info' => array('args' => $args),
     );
     $commands = ctools_modal_form_wrapper($form_id, $form_state);
 
@@ -37,8 +42,8 @@ function xmlsitemap_modal_get_form() {
         $commands[] = ctools_ajax_command_redirect($_GET['destination']);
       }
     }
-    return ajax_render($commands);
-    //return ctools_ajax_render($commands);
+    print ajax_render($commands);
+    exit;
   }
   else {
     array_unshift($args, $form_id);
@@ -73,7 +78,7 @@ function xmlsitemap_modal_xmlsitemap_operation_link_alter(array &$link) {
       $link['href'] = trim($link['href'], '/');
     }
 
-    // @todo Remove when http://drupal.org/node/565808 is fixed.
+    // @todo Remove when https://www.drupal.org/node/565808 is fixed.
     if (substr($link['href'], -4) === 'nojs') {
       $link['href'] .= '/';
     }

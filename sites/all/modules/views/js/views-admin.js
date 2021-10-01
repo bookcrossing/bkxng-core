@@ -1,3 +1,7 @@
+/**
+ * @file
+ * Some basic behaviors and utility functions for Views UI.
+ */
 Drupal.viewsUi = {};
 
 Drupal.behaviors.viewsUiEditView = {};
@@ -183,7 +187,8 @@ Drupal.viewsUi.addItemForm.prototype.handleCheck = function (event) {
   else {
     var length = this.checkedItems.length;
     var position = jQuery.inArray(label, this.checkedItems);
-    // Delete the item from the list and take sure that the list doesn't have undefined items left.
+    // Delete the item from the list and take sure that the list doesn't have
+    // undefined items left.
     for (var i = 0; i < this.checkedItems.length; i++) {
       if (i == position) {
         this.checkedItems.splice(i, 1);
@@ -205,7 +210,7 @@ Drupal.viewsUi.addItemForm.prototype.handleCheck = function (event) {
  */
 Drupal.viewsUi.addItemForm.prototype.refreshCheckedItems = function() {
   // Perhaps we should precache the text div, too.
-  this.$selected_div.find('.views-selected-options').html(this.checkedItems.join(', '));
+  this.$selected_div.find('.views-selected-options').html(Drupal.checkPlain(this.checkedItems.join(', ')));
   Drupal.viewsUi.resizeModal('', true);
 }
 
@@ -225,8 +230,8 @@ Drupal.behaviors.viewsUiRenderAddViewButton.attach = function (context, settings
   if (!$menu.length) {
     return;
   }
-  var $addDisplayDropdown = $('<li class="add"><a href="#"><span class="icon add"></span>Add</a><ul class="action-list" style="display:none;"></ul></li>');
-  var $displayButtons = $menu.nextAll('input.add-display').detach();
+  var $addDisplayDropdown = $('<li class="add"><a href="#"><span class="icon add"></span>' + Drupal.t('Add') + '</a><ul class="action-list" style="display:none;"></ul></li>');
+  var $displayButtons = $menu.nextAll('.add-display').detach();
   $displayButtons.appendTo($addDisplayDropdown.find('.action-list')).wrap('<li>')
     .parent().first().addClass('first').end().last().addClass('last');
   // Remove the 'Add ' prefix from the button labels since they're being palced
@@ -241,7 +246,7 @@ Drupal.behaviors.viewsUiRenderAddViewButton.attach = function (context, settings
   });
   $addDisplayDropdown.appendTo($menu);
 
-  // Add the click handler for the add display button
+  // Add the click handler for the add display button.
   $('li.add > a', $menu).bind('click', function (event) {
     event.preventDefault();
     var $trigger = $(this);
@@ -251,10 +256,11 @@ Drupal.behaviors.viewsUiRenderAddViewButton.attach = function (context, settings
   // away from the item. We use mouseleave instead of mouseout because
   // the user is going to trigger mouseout when she moves from the trigger
   // link to the sub menu items.
-  // We use the live binder because the open class on this item will be
+  //
+  // We use the 'li.add' selector because the open class on this item will be
   // toggled on and off and we want the handler to take effect in the cases
   // that the class is present, but not when it isn't.
-  $('li.add', $menu).live('mouseleave', function (event) {
+  $menu.delegate('li.add', 'mouseleave', function (event) {
     var $this = $(this);
     var $trigger = $this.children('a[href="#"]');
     if ($this.children('.action-list').is(':visible')) {
@@ -347,7 +353,7 @@ Drupal.viewsUi.OptionsSearch.prototype.handleKeyup = function (event) {
 
   // Determine the user's search query. The search text has been converted to
   // lowercase.
-  search = this.$searchBox.val().toLowerCase();
+  search = (this.$searchBox.val() || '').toLowerCase();
   words = search.split(' ');
   wordsLength = words.length;
 
@@ -663,7 +669,7 @@ Drupal.viewsUi.rearrangeFilterHandler.prototype.modifyTableDrag = function () {
 
     // Make sure the "group" dropdown is properly updated when rows are dragged
     // into an empty filter group. This is borrowed heavily from the block.js
-    // implementation of tableDrag.onDrop().
+    // Implements tableDrag.onDrop().
     var groupRow = $(this.rowObject.element).prevAll('tr.group-message').get(0);
     var groupName = groupRow.className.replace(/([^ ]+[ ]+)*group-([^ ]+)-message([ ]+[^ ]+)*/, '$2');
     var groupField = $('select.views-group-select', this.rowObject.element);
@@ -764,12 +770,20 @@ Drupal.behaviors.viewsFilterConfigSelectAll.attach = function(context) {
   $('#views-ui-config-item-form div.form-item-options-value-all', context).once(function() {
     $(this).show();
   })
-  .find('input[type=checkbox]')
-  .click(function() {
-    var checked = $(this).is(':checked');
-    // Update all checkbox beside the select all checkbox.
-    $(this).parents('.form-checkboxes').find('input[type=checkbox]').each(function() {
-      $(this).attr('checked', checked);
+    .find('input[type=checkbox]')
+    .click(function() {
+      var checked = $(this).is(':checked');
+      // Update all checkbox beside the select all checkbox.
+      $(this).parents('.form-checkboxes').find('input[type=checkbox]').each(function() {
+        $(this).attr('checked', checked);
+      });
+    });
+  // Uncheck the select all checkbox if any of the others are unchecked.
+  $('#views-ui-config-item-form div.form-type-checkbox').not($('.form-item-options-value-all')).find('input[type=checkbox]').each(function() {
+    $(this).click(function() {
+      if ($(this).is('checked') == 0) {
+        $('#edit-options-value-all').removeAttr('checked');
+      }
     });
   });
 };
@@ -815,7 +829,7 @@ Drupal.behaviors.viewsRemoveIconClass.attach = function (context, settings) {
     $('.icon', $this).removeClass('icon');
     $('.horizontal', $this).removeClass('horizontal');
   });
-}
+};
 
 /**
  * Change "Expose filter" buttons into checkboxes.
@@ -823,12 +837,39 @@ Drupal.behaviors.viewsRemoveIconClass.attach = function (context, settings) {
 Drupal.behaviors.viewsUiCheckboxify = {};
 Drupal.behaviors.viewsUiCheckboxify.attach = function (context, settings) {
   var $ = jQuery;
-  var $buttons = $('#edit-options-expose-button-button').once('views-ui-checkboxify');
+  var $buttons = $('#edit-options-expose-button-button, #edit-options-group-button-button').once('views-ui-checkboxify');
   var length = $buttons.length;
   var i;
   for (i = 0; i < length; i++) {
     new Drupal.viewsUi.Checkboxifier($buttons[i]);
   }
+};
+
+/**
+ * Change the default widget to select the default group according to the
+ * selected widget for the exposed group.
+ */
+Drupal.behaviors.viewsUiChangeDefaultWidget = {};
+Drupal.behaviors.viewsUiChangeDefaultWidget.attach = function (context, settings) {
+  var $ = jQuery;
+  function change_default_widget(multiple) {
+    if (multiple) {
+      $('input.default-radios').hide();
+      $('td.any-default-radios-row').parent().hide();
+      $('input.default-checkboxes').show();
+    }
+    else {
+      $('input.default-checkboxes').hide();
+      $('td.any-default-radios-row').parent().show();
+      $('input.default-radios').show();
+    }
+  }
+  // Update on widget change.
+  $('input[name="options[group_info][multiple]"]').change(function() {
+    change_default_widget($(this).attr("checked"));
+  });
+  // Update the first time the form is rendered.
+  $('input[name="options[group_info][multiple]"]').trigger('change');
 };
 
 /**
@@ -840,13 +881,14 @@ Drupal.behaviors.viewsUiCheckboxify.attach = function (context, settings) {
 Drupal.viewsUi.Checkboxifier = function (button) {
   var $ = jQuery;
   this.$button = $(button);
-  this.$parent = this.$button.parent('div.views-expose');
-  this.$checkbox = this.$parent.find('input:checkbox');
+  this.$parent = this.$button.parent('div.views-expose, div.views-grouped');
+  this.$input = this.$parent.find('input:checkbox, input:radio');
   // Hide the button and its description.
   this.$button.hide();
-  this.$parent.find('.exposed-description').hide();
+  this.$parent.find('.exposed-description, .grouped-description').hide();
 
-  this.$checkbox.click($.proxy(this, 'clickHandler'));
+  this.$input.click($.proxy(this, 'clickHandler'));
+
 };
 
 /**
@@ -885,7 +927,7 @@ Drupal.behaviors.viewsUiOverrideSelect.attach = function (context, settings) {
         $submit.val(Drupal.t('Apply (this display)'));
       }
     })
-    .trigger('change');
+      .trigger('change');
   });
 
 };
@@ -894,13 +936,14 @@ Drupal.viewsUi.resizeModal = function (e, no_shrink) {
   var $ = jQuery;
   var $modal = $('.views-ui-dialog');
   var $scroll = $('.scroll', $modal);
-  if ($modal.size() == 0 || $modal.css('display') == 'none') {
+  if ($modal.length == 0 || $modal.css('display') == 'none') {
     return;
   }
 
-  var maxWidth = parseInt($(window).width() * .85); // 70% of window
-  var minWidth = parseInt($(window).width() * .6); // 70% of window
-
+  var maxWidth = parseInt($(window).width() * .85);
+  // 70% of window.
+  var minWidth = parseInt($(window).width() * .6);
+  // 70% of window.
   // Set the modal to the minwidth so that our width calculation of
   // children works.
   $modal.css('width', minWidth);
@@ -935,15 +978,14 @@ Drupal.viewsUi.resizeModal = function (e, no_shrink) {
 
   // Now, calculate what the difference between the scroll and the modal
   // will be.
-
   var difference = 0;
   difference += parseInt($scroll.css('padding-top'));
   difference += parseInt($scroll.css('padding-bottom'));
-  difference += $('.views-override').outerHeight(true);
-  difference += $('.views-messages').outerHeight(true);
-  difference += $('#views-ajax-title').outerHeight(true);
-  difference += $('.views-add-form-selected').outerHeight(true);
-  difference += $('.form-buttons', $modal).outerHeight(true);
+  difference += $('.views-override').outerHeight(true) || 0;
+  difference += $('.views-messages').outerHeight(true) || 0;
+  difference += $('#views-ajax-title').outerHeight(true) || 0;
+  difference += $('.views-add-form-selected').outerHeight(true) || 0;
+  difference += $('.form-buttons', $modal).outerHeight(true) || 0;
 
   height = scrollHeight + difference;
 
@@ -960,7 +1002,7 @@ Drupal.viewsUi.resizeModal = function (e, no_shrink) {
     width = maxWidth;
   }
 
-  // Get where we should move content to
+  // Get where we should move content to.
   var top = ($(window).height() / 2) - (height / 2);
   var left = ($(window).width() / 2) - (width / 2);
 
