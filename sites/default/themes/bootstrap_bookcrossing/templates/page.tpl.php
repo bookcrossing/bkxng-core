@@ -79,15 +79,15 @@
                     </nav>
                 <?php else : ?>
                     <nav class="user clearfix">
-                        <i class="icon-user"></i> <a href="#loginModal" role="button" data-toggle="modal" rel="nofollow"><?php print t('Log in'); ?></a>
+                        <i class="icon-user"></i> <a href="/login" role="button" rel="nofollow"><?php print t('Log in'); ?></a>
                     </nav>
                 <?php endif; ?>
                 <!--close user nav-->
             </div>
             <div class="span4 offset4 pull-right visible-desktop">
                 <?php print render($page['social_buttons']); ?>
-
-        <!--         <ul class="social hidden-phone">
+<!-- 
+                <ul class="social hidden-phone">
                     <li id="fb-wrapper">
                         <div class="fb-like" data-href="http://www.facebook.com/bookcrossing.by" data-send="false"
                              data-layout="button_count" data-width="450" data-show-faces="false" data-font="tahoma"></div>
@@ -97,7 +97,7 @@
                                 frameborder="0" scrolling="0" width="130" height="20"></iframe>
                     </li>
                 </ul>
-         -->
+ -->
             </div>
         </div>
     </section>
@@ -138,7 +138,7 @@
                                 </li>
                             <?php else: ?>
                                 <li>
-                                    <a href="#releaseModal" role="button" data-toggle="modal" rel="nofollow"><span class="btn btn-success btn-large"><?php print t('Release book'); ?></span></a>
+                                    <a href="/login" role="button" rel="nofollow"><span class="btn btn-success btn-large"><?php print t('Release book'); ?></span></a>
                                 </li>
                             <?php endif; ?>
                             <li class="divider-vertical"></li>

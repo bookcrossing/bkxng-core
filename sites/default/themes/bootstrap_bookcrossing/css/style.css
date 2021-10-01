@@ -731,30 +731,39 @@ div.my-shelf a:hover {
   margin-bottom: 0;
 }
 
-  .book-no-image-container.cl-0 {
-    background: #1f111f url("../images/covers/0.jpg");
-  }
-  .book-no-image-container.cl-436936 {
-    background-image: url("../images/covers/436936.jpg");
-  }
-  .book-no-image-container.cl-5b80ad {
-    background-image: url("../images/covers/5b80ad.jpg");
-  }
-  .book-no-image-container.cl-5c606b {
-    background-image: url("../images/covers/5c606b.jpg");
-  }
-  .book-no-image-container.cl-693e2b {
-    background-image: url("../images/covers/693e2b.jpg");
-  }
-  .book-no-image-container.cl-bb2c26 {
-    background-image: url("../images/covers/bb2c26.jpg");
-  }
-  .book-no-image-container.cl-e23263 {
-    background-image: url("../images/covers/e23263.jpg");
-  }
-  .book-no-image-container.cl-f2c747 {
-    background-image: url("../images/covers/f2c747.jpg");
-  }
+.cover-large-book::before {
+  top: 0;
+  bottom: -17px;
+  left: -24px;
+  right: -15px;
+  border-width: 35px 26px 46px 56px;
+  border-image: url("../images/3d-cover/book-large.png") 35 26 46 56 stretch stretch;
+}
+
+.book-no-image-container.cl-0 {
+  background: #1f111f url("../images/covers/0.jpg");
+}
+.book-no-image-container.cl-436936 {
+  background-image: url("../images/covers/436936.jpg");
+}
+.book-no-image-container.cl-5b80ad {
+  background-image: url("../images/covers/5b80ad.jpg");
+}
+.book-no-image-container.cl-5c606b {
+  background-image: url("../images/covers/5c606b.jpg");
+}
+.book-no-image-container.cl-693e2b {
+  background-image: url("../images/covers/693e2b.jpg");
+}
+.book-no-image-container.cl-bb2c26 {
+  background-image: url("../images/covers/bb2c26.jpg");
+}
+.book-no-image-container.cl-e23263 {
+  background-image: url("../images/covers/e23263.jpg");
+}
+.book-no-image-container.cl-f2c747 {
+  background-image: url("../images/covers/f2c747.jpg");
+}
 
 .node-bookcrossing.view-mode-default .book-no-image-container,
 .node-bookcrossing.view-mode-front_page .book-no-image-container {

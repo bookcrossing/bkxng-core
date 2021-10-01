@@ -367,9 +367,9 @@ function bookcrossing_view_book($book = array()) {
 
   bookcrossing_meta_og($book);
 
-  //$_SESSION['book_to_like'] = $book['bid'];
+  // $_SESSION['book_to_like'] = $book['bid'];
   
-  bookcrossing_add_fb_js($book['bid'], url('book/' . $book['bid'], array('absolute' => TRUE)));
+  // bookcrossing_add_fb_js($book['bid'], url('book/' . $book['bid'], array('absolute' => TRUE)));
 
   $data_href = url('book/' . $book['bid'], array('absolute' => TRUE));
 
