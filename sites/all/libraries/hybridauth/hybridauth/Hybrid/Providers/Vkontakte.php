@@ -40,7 +40,7 @@ class Hybrid_Providers_Vkontakte extends Hybrid_Provider_Model_OAuth2 {
 	);
 
 	// default VK API version
-	public $version = '5.21';
+	public $version = '5.131';
 
 	/**
 	 * IDp wrappers initializer
